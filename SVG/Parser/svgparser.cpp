@@ -8,7 +8,7 @@ SVGParser::SVGParser(QObject *parent) : QObject(parent)
     _rootItem = nullptr;
 }
 
-CPrimitive * SVGParser::getRootItem()
+CPrimitive * SVGParser::rootItem() const
 {
     return _rootItem;
 }
@@ -43,12 +43,10 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
         if ( token==QXmlStreamReader::StartDocument ) continue;
         if ( token==QXmlStreamReader::StartElement ) {
             if ( _xml->name()=="svg" ) { //-- svg сам по себе как группа, парсим
-                parseGroup(currentLevel, _xml->attributes().value("transform").toString());
+                parseGroup(&currentLevel, _xml);
             } else
             if ( _xml->name()=="g" ) {
-                CGroup * g = new CGroup();
-                currentLevel = static_cast<CPrimitive*>(CNodeInterface::levelDown(currentLevel, g));
-                parseGroup(g, _xml->attributes().value("transform").toString());
+                parseGroup(&currentLevel, _xml);
             } else
             if ( _xml->name()=="path" ) {
                 parsePath(currentLevel, _xml);
@@ -124,10 +122,21 @@ CMatrix SVGParser::parseTransform(QString transform)
 
 }
 
-bool SVGParser::parseGroup(CPrimitive * level, QString transforms)
+/**
+* @brief Парсим группу
+* @param level
+* @param xml
+* @return
+*/
+bool SVGParser::parseGroup(CPrimitive **level, QXmlStreamReader * xml)
 {
-    Q_UNUSED(level)
-    _globalMatrix = parseTransform(transforms); //TODO: Домножать новую, что бы не затирать прежнюю
+
+    CGroup * g = new CGroup();
+    if ( xml->attributes().hasAttribute("id")) g->setID(xml->attributes().value("id").toString());
+    *level = static_cast<CPrimitive*>(CNodeInterface::levelDown(*level, g));
+
+    _globalMatrix = parseTransform(xml->attributes().value("transform").toString()); //TODO: Домножать новую, что бы не затирать прежнюю?
+
 
     return true;
 }
@@ -144,6 +153,8 @@ bool SVGParser::parsePath(CPrimitive * level, QXmlStreamReader * xml)
 
     CSS::Style style = parseStyle(xml);
     path->setStyles(style);
+
+    if ( xml->attributes().hasAttribute("id")) path->setID(xml->attributes().value("id").toString());
 
     CPoint openPathCoords(0,0); //-- Запоминаем в каких координатах открыли путь, что бы потом можно было закрыть
 
@@ -172,6 +183,14 @@ bool SVGParser::parsePath(CPrimitive * level, QXmlStreamReader * xml)
         while (( posCommandParams = rxCommandParams.indexIn(rxCommands.cap(2), posCommandParams)) != -1) {
             params.append(rxCommandParams.cap(1).toDouble());            
             posCommandParams+= rxCommandParams.matchedLength();
+        }
+
+        //-- Если текущий путь уже закрыт, значит дальше создаём составной путь
+        if ( path->isClosed() ) {
+            CPath * nextPath = new CPath();
+            nextPath->setStyles(style);
+            CNodeInterface::addNext(path, nextPath);
+            path = nextPath;
         }
 
         //-- Ну и погнали парсить сами команды
@@ -345,10 +364,7 @@ bool SVGParser::parsePath(CPrimitive * level, QXmlStreamReader * xml)
             _globalCoords.set(pe);
             openPathCoords.set(0,0);
 
-            //-- Всё, что дальше, считаем новым путём
-            path = new CPath();
-            path->setStyles(style);
-            CNodeInterface::addNext(level, path);
+            //-- Всё, что дальше, будем считать новым путём
 
         } else { //-- Какая-то другая комманда, о которой мы не знаем
             qWarning()<<"Unknow command"<<command;
@@ -370,6 +386,8 @@ bool SVGParser::parsePath(CPrimitive * level, QXmlStreamReader * xml)
 bool SVGParser::parseRect(CPrimitive *level, QXmlStreamReader *xml)
 {
     CPath * rect = new CPath();
+    if ( xml->attributes().hasAttribute("id")) rect->setID(xml->attributes().value("id").toString());
+
     CNodeInterface::addNext(level, rect);
 
     QString transforms = xml->attributes().value("transform").toString();
@@ -435,7 +453,6 @@ CSS::Style SVGParser::parseStyle(QXmlStreamReader * xml)
 bool SVGParser::parseLine(CPrimitive * level, QXmlStreamReader * xml)
 {    
 
-
     QString x1 = xml->attributes().value("x1").toString();
     QString y1 = xml->attributes().value("y1").toString();
     QString x2 = xml->attributes().value("x2").toString();
@@ -446,6 +463,7 @@ bool SVGParser::parseLine(CPrimitive * level, QXmlStreamReader * xml)
 
     CLine * line = new CLine(p1, p2);
     line->setStyles(parseStyle(xml));
+    if ( xml->attributes().hasAttribute("id")) line->setID(xml->attributes().value("id").toString());
 
     CNodeInterface::addNext(level, line);
 

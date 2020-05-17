@@ -33,7 +33,7 @@ public:
     explicit SVGParser(QObject *parent = nullptr);
     ParseStatus parse(QIODevice *device);
 
-    CPrimitive * getRootItem();
+    CPrimitive * rootItem() const;
 
 signals:
 
@@ -48,7 +48,7 @@ private:
 
     CSS::CssParser * _cssParser;
 
-    bool parseGroup(CPrimitive * level, QString transforms);
+    bool parseGroup(CPrimitive **level, QXmlStreamReader * xml);
     bool parsePath(CPrimitive * level, QXmlStreamReader * xml);
     bool parseRect(CPrimitive * level, QXmlStreamReader * xml);
     bool parseLine(CPrimitive * level, QXmlStreamReader * xml);

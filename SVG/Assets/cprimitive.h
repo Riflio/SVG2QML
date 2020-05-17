@@ -60,8 +60,8 @@ public:
     virtual void rotate(const CPoint &center, double angle);
     virtual void scale(double sX, double sY);
 
-    int ID() const;
-    void setID(int id);
+    QString ID() const;
+    void setID(QString id);
 
     friend QDataStream& operator <<(QDataStream &dataStream, const CPrimitive &p) { Q_UNUSED(p); return dataStream; }
 
@@ -84,7 +84,7 @@ protected:
     CPoints _points;
     CSS::Style _styles; //-- Собранные стили этого элемента
     mutable CBoundingBox _bbox; //-- Ограничительная рамка
-    int _id; //-- Просто айдишник для чего-либо
+    QString _id; //-- Просто айдишник
 
     void drawPath(const QPainterPath &path, QPainter *painter);
 

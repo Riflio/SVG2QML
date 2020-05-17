@@ -6,19 +6,19 @@ CPrimitive::CPrimitive(const CPrimitive&other)
 {    
 }
 
-CPrimitive::CPrimitive():CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(PT_NONE), _id(-1)
+CPrimitive::CPrimitive():CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(PT_NONE), _id("")
 {
     needUpdate();
 }
 
 CPrimitive::CPrimitive(PrimitiveType type)
-    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(type), _id(-1)
+    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(type), _id("")
 {
     needUpdate();
 }
 
 CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2)
-    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false),_type(type), _id(-1)
+    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false),_type(type), _id("")
 {
     _points.add(p1);
     _points.add(p2);
@@ -26,7 +26,7 @@ CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2)
 }
 
 CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, const CPoint &p3, const CPoint &p4)
-    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(type), _id(-1)
+    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(type), _id("")
 {
     _points.add(p1);
     _points.add(p2);
@@ -36,7 +36,7 @@ CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, c
 }
 
 CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, const CPoint &p3, const CPoint &p4, const CPoint &p5, const CPoint &p6)
-    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(type), _id(-1)
+    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(type), _id("")
 {
     _points.add(p1);
     _points.add(p2);
@@ -228,12 +228,12 @@ void CPrimitive::scale(double sX, double sY)
     needUpdate(); //TODO: Можно просто так же маштабировать ограничительную рамку, если в дальнейшем только она из изменяемых останется
 }
 
-int CPrimitive::ID() const
+QString CPrimitive::ID() const
 {
     return _id;
 }
 
-void CPrimitive::setID(int id)
+void CPrimitive::setID(QString id)
 {
     _id = id;
 }
