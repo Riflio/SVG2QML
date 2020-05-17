@@ -76,3 +76,6 @@ HEADERS += \
     SVG/Generator/svggenerator.h \
     SVG/Parser/svgparser.h \
     appcore.h
+
+DISTFILES += \
+    tests/test1.svg
