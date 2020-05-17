@@ -19,7 +19,7 @@ SVGGenerator::GenerateStatus SVGGenerator::generate(QIODevice *device, CPrimitiv
     _xml->writeStartDocument();
     _xml->writeStartElement("svg");
 
-    CNodeInterface * itm = rootItm-down;
+    CNodeInterface * itm = rootItm->down;
 
     do {
         CPrimitive * p = static_cast<CPrimitive*>(itm);

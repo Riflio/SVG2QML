@@ -36,7 +36,8 @@ SOURCES += \
         SVG/Generator/svggenerator.cpp \
         SVG/Parser/svgparser.cpp \
         appcore.cpp \
-        main.cpp
+        main.cpp \
+        qmlgenerator.cpp
 
 RESOURCES += qml.qrc
 
@@ -75,7 +76,8 @@ HEADERS += \
     SVG/Classes/cpolygon.h \
     SVG/Generator/svggenerator.h \
     SVG/Parser/svgparser.h \
-    appcore.h
+    appcore.h \
+    qmlgenerator.h
 
 DISTFILES += \
     tests/test1.svg

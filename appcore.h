@@ -5,8 +5,8 @@
 #include <QFile>
 #include <QXmlStreamReader>
 
-
 #include "SVG/Parser/svgparser.h"
+#include "qmlgenerator.h"
 
 class AppCore : public QObject
 {
@@ -22,6 +22,7 @@ public slots:
 
 private:
     SVGParser * _parser;
+    QMLGenerator * _qmlGenerator;
 };
 
 #endif // APPCORE_H
