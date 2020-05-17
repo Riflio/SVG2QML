@@ -9,21 +9,22 @@ SVGGenerator::SVGGenerator(QObject *parent) : QObject(parent)
 
 SVGGenerator::GenerateStatus SVGGenerator::generate(QIODevice *device, CPrimitive * rootItm)
 {
-    if ( !device->open(QIODevice::WriteOnly|QIODevice::Text) ) {
+    if ( !device->isOpen() && !device->open(QIODevice::WriteOnly|QIODevice::Text) ) {
         qWarning()<<"Device not opened!";
         return GS_NOFILE;
     }
 
     _xml = new QXmlStreamWriter(device);
 
-
     _xml->writeStartDocument();
     _xml->writeStartElement("svg");
 
-    CNodeInterface * itm = rootItm;
+    CNodeInterface * itm = rootItm-down;
 
     do {
         CPrimitive * p = static_cast<CPrimitive*>(itm);
+
+        if ( p==nullptr ) break;
 
         if ( p->type()==CPrimitive::PT_PATH ) {
             _xml->writeStartElement("path");
@@ -33,18 +34,22 @@ SVGGenerator::GenerateStatus SVGGenerator::generate(QIODevice *device, CPrimitiv
         }
 
         if ( p->type()==CPrimitive::PT_GROUP ) {
-            //_xml->writeStartElement("g");
+            _xml->writeStartElement("g");
         }
 
         if ( itm->down!=nullptr ) {
             itm = itm->down;
-        }  else if ( itm->next!=nullptr ) {
+        } else if ( itm->next!=nullptr ) {
             itm = itm->next;
         } else if ( itm->up!=nullptr ) {
             while(true) {
                 if ( itm->up==nullptr ) { itm = nullptr; break; }
+
+                if ( (static_cast<CPrimitive*>(itm))->type()==CPrimitive::PT_GROUP) {
+                    _xml->writeEndElement();
+                }
+
                 itm = itm->up;
-                //_xml->writeEndElement();
                 if ( itm->next!=nullptr ) { itm = itm->next; break; }
             }
         } else {
@@ -52,7 +57,6 @@ SVGGenerator::GenerateStatus SVGGenerator::generate(QIODevice *device, CPrimitiv
         }
 
     } while( itm!=nullptr );
-
 
 
 
@@ -70,7 +74,7 @@ QString SVGGenerator::generatePath(CNodeInterface **itm)
     if ( (itm==nullptr) || (*itm==nullptr) ) throw -1;
     CPath * path = static_cast<CPath*>(*itm);
 
-    if ( path->down == nullptr) return  QString();
+    if ( path->down == nullptr) return QString();
 
     bool isClosed = path->isClosed();
     bool isFirst = true;
@@ -99,18 +103,20 @@ QString SVGGenerator::generatePath(CNodeInterface **itm)
             res.append("L");
             res.append(l->points().p2().toString());
         } else
-        if ( p->type()==CPrimitive::PT_GROUP ) {
-
+        if ( p->type()==CPrimitive::PT_PATH ) { //-- Составной путь. Завершаем и начинаем новый
+            if ( isClosed ) { res.append("Z"); }
+            isClosed = (static_cast<CPath*>(*itm))->isClosed();
+            isFirst = true;
+            *itm = (*itm)->down;
         }
         else {
-            qWarning()<<"Unknow type"<<p->type();
+            qWarning()<<"Unknow path type"<<p->type();
         }
 
 
         if ( (*itm)->next==nullptr ) break;
         *itm = (*itm)->next;
     }
-
 
     if ( isClosed ) res.append("Z");
 
