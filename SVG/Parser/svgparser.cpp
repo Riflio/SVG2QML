@@ -20,7 +20,7 @@ CPrimitive * SVGParser::getRootItem()
 */
 SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
 {
-    if ( !device->open(QIODevice::ReadOnly|QIODevice::Text) ) {
+    if ( !device->isOpen() && !device->open(QIODevice::ReadOnly|QIODevice::Text) ) {
         qWarning()<<"Device not opened!";
         return PS_NOFILE;
     }

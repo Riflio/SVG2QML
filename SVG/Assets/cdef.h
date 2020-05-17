@@ -3,6 +3,9 @@
 
 #include <QObject>
 
+/**
+* @brief Базовый клас для шаблонных элементов
+*/
 class CDef : public QObject
 {
     Q_OBJECT

@@ -13,6 +13,29 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        Algebra/cintersection.cpp \
+        Algebra/cmatrix.cpp \
+        Algebra/cpoint.cpp \
+        Algebra/cpolynomial.cpp \
+        Algebra/csegment.cpp \
+        Algebra/cvector2d.cpp \
+        Algebra/equal.cpp \
+        CSS/block.cpp \
+        CSS/cssparser.cpp \
+        CSS/style.cpp \
+        SVG/Assets/cboundingbox.cpp \
+        SVG/Assets/cdef.cpp \
+        SVG/Assets/cpoints.cpp \
+        SVG/Assets/cprimitive.cpp \
+        SVG/Classes/cbezier.cpp \
+        SVG/Classes/cgroup.cpp \
+        SVG/Classes/cimage.cpp \
+        SVG/Classes/cline.cpp \
+        SVG/Classes/cpath.cpp \
+        SVG/Classes/cpolygon.cpp \
+        SVG/Generator/svggenerator.cpp \
+        SVG/Parser/svgparser.cpp \
+        appcore.cpp \
         main.cpp
 
 RESOURCES += qml.qrc
@@ -27,3 +50,29 @@ QML_DESIGNER_IMPORT_PATH =
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+HEADERS += \
+    Algebra/cintersection.h \
+    Algebra/cmatrix.h \
+    Algebra/cpoint.h \
+    Algebra/cpolynomial.h \
+    Algebra/csegment.h \
+    Algebra/cvector2d.h \
+    Algebra/equal.h \
+    CSS/block.h \
+    CSS/cssparser.h \
+    CSS/style.h \
+    SVG/Assets/cboundingbox.h \
+    SVG/Assets/cdef.h \
+    SVG/Assets/cnode.h \
+    SVG/Assets/cpoints.h \
+    SVG/Assets/cprimitive.h \
+    SVG/Classes/cbezier.h \
+    SVG/Classes/cgroup.h \
+    SVG/Classes/cimage.h \
+    SVG/Classes/cline.h \
+    SVG/Classes/cpath.h \
+    SVG/Classes/cpolygon.h \
+    SVG/Generator/svggenerator.h \
+    SVG/Parser/svgparser.h \
+    appcore.h
