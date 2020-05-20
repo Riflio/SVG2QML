@@ -22,11 +22,14 @@ SOURCES += \
         Algebra/equal.cpp \
         CSS/block.cpp \
         CSS/cssparser.cpp \
+        CSS/measureunit.cpp \
         CSS/style.cpp \
         SVG/Assets/cboundingbox.cpp \
         SVG/Assets/cdef.cpp \
+        SVG/Assets/cdefs.cpp \
         SVG/Assets/cpoints.cpp \
         SVG/Assets/cprimitive.cpp \
+        SVG/Assets/fgradient.cpp \
         SVG/Classes/cbezier.cpp \
         SVG/Classes/cgroup.cpp \
         SVG/Classes/cimage.cpp \
@@ -35,6 +38,7 @@ SOURCES += \
         SVG/Classes/cpolygon.cpp \
         SVG/Classes/fclippath.cpp \
         SVG/Classes/flineargradient.cpp \
+        SVG/Classes/fradialgradient.cpp \
         SVG/Generator/svggenerator.cpp \
         SVG/Parser/svgparser.cpp \
         appcore.cpp \
@@ -64,12 +68,15 @@ HEADERS += \
     Algebra/equal.h \
     CSS/block.h \
     CSS/cssparser.h \
+    CSS/measureunit.h \
     CSS/style.h \
     SVG/Assets/cboundingbox.h \
     SVG/Assets/cdef.h \
+    SVG/Assets/cdefs.h \
     SVG/Assets/cnode.h \
     SVG/Assets/cpoints.h \
     SVG/Assets/cprimitive.h \
+    SVG/Assets/fgradient.h \
     SVG/Classes/cbezier.h \
     SVG/Classes/cgroup.h \
     SVG/Classes/cimage.h \
@@ -78,6 +85,7 @@ HEADERS += \
     SVG/Classes/cpolygon.h \
     SVG/Classes/fclippath.h \
     SVG/Classes/flineargradient.h \
+    SVG/Classes/fradialgradient.h \
     SVG/Generator/svggenerator.h \
     SVG/Parser/svgparser.h \
     appcore.h \
