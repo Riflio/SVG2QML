@@ -17,6 +17,9 @@
 #include "SVG/Classes/cgroup.h"
 #include "SVG/Classes/cimage.h"
 
+#include "SVG/Classes/fclippath.h"
+#include "SVG/Classes/flineargradient.h"
+
 class SVGParser : public QObject
 {
     Q_OBJECT
@@ -48,15 +51,19 @@ private:
 
     CSS::CssParser * _cssParser;
 
-    bool parseGroup(CPrimitive **level, QXmlStreamReader * xml);
-    bool parsePath(CPrimitive * level, QXmlStreamReader * xml);
-    bool parseRect(CPrimitive * level, QXmlStreamReader * xml);
-    bool parseLine(CPrimitive * level, QXmlStreamReader * xml);
-    bool parseImage(CPrimitive * level, QXmlStreamReader * xml);
+    bool parseGroup(CNodeInterface **level, QXmlStreamReader * xml);
+    bool parsePath(CNodeInterface * level, QXmlStreamReader * xml);
+    bool parseRect(CNodeInterface * level, QXmlStreamReader * xml);
+    bool parseLine(CNodeInterface * level, QXmlStreamReader * xml);
+    bool parseImage(CNodeInterface * level, QXmlStreamReader * xml);
     bool parseCss(QString styles);
 
     CMatrix parseTransform(QString transform);
     CSS::Style parseStyle(QXmlStreamReader * xml);
+
+    bool parseLinearGradient(CNodeInterface ** level, QXmlStreamReader * xml);
+
+    QMap<QString, CDef*> _defs;
 
 
 };
