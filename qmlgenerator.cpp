@@ -27,7 +27,6 @@ SVGGenerator::GenerateStatus QMLGenerator::generateQML(QIODevice *device, CPrimi
 
         if ( p==nullptr ) break;
 
-        qDebug()<<"--PROCESS"<<p->type()<<p->ID();
         if ( p->type()==CPrimitive::PT_PATH ) {
 
             qml<<tab(lvl)<<"Shape {"<<"\n";

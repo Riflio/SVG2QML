@@ -30,7 +30,12 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
     _cssParser = new CSS::CssParser(this); //-- Парсер стилей
 
     _rootItem = new CGroup();
-    CPrimitive * currentLevel = _rootItem;
+
+    CNodeInterface * currentLevel = _rootItem;
+    CNodeInterface * prevLevel = nullptr; //-- Запоминаем предыдущий
+
+    int defsLvl = 0; //-- Defs section lvl
+    QStringList defsTokens = {"g", "path", "rect", "line", "image", "linearGradient", "clipPath"};
 
     _xml = new QXmlStreamReader(device);
 
@@ -42,10 +47,28 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
         QXmlStreamReader::TokenType token = _xml->readNext();
         if ( token==QXmlStreamReader::StartDocument ) continue;
         if ( token==QXmlStreamReader::StartElement ) {
+
+            if  ( defsLvl>0 ) {
+                if ( defsTokens.indexOf(_xml->name().toString())==-1 ) { qWarning()<<"Unsupported defs type"<<_xml->name(); continue; }
+
+                if ( defsLvl==1 ) { //-- Каждого прямого наследника из defs считаем как отддельный
+                    if ( _xml->name()=="clipPath" ) {
+                         FClipPath * clipPath = new FClipPath();
+                        _defs[_xml->attributes().value("id").toString()] = clipPath;
+                        currentLevel = clipPath;
+                    } else
+                    if ( _xml->name()=="linearGradient" ) {
+                        parseLinearGradient(&currentLevel, _xml);
+                    }
+                }
+
+                defsLvl++;
+            }
+
             if ( _xml->name()=="svg" ) { //-- svg сам по себе как группа, парсим
                 parseGroup(&currentLevel, _xml);
             } else
-            if ( _xml->name()=="g" ) {
+            if ( _xml->name()=="g" ) {                
                 parseGroup(&currentLevel, _xml);
             } else
             if ( _xml->name()=="path" ) {
@@ -63,14 +86,28 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
             if ( _xml->name()=="style" ) {
                 _xml->readNext();
                 parseCss(_xml->text().toString());
+            } else
+            if ( _xml->name()=="defs" ) {
+                prevLevel = currentLevel;
+                defsLvl = 1;
             }
         } else
         if ( token == QXmlStreamReader::EndElement ) {
-            if ( _xml->name()=="svg" ) {
 
+            if ( defsLvl>0 && defsTokens.indexOf(_xml->name().toString())>-1 ) {
+                defsLvl--;
+            }
+
+            if ( _xml->name()=="svg" ) {
+                break;
             } else
             if ( _xml->name()=="g" ) {
                 currentLevel = static_cast<CPrimitive*>(CNodeInterface::levelUp(currentLevel));
+            } else
+            if ( _xml->name()=="defs" ) {
+                defsLvl = 0;
+                currentLevel = prevLevel;
+                prevLevel = nullptr;
             }
         }
     }
@@ -83,6 +120,7 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
 
 /**
 * @brief Парсим трансформации и отдаём в виде матрицы
+* @param transform
 * @return
 */
 CMatrix SVGParser::parseTransform(QString transform)
@@ -128,20 +166,24 @@ CMatrix SVGParser::parseTransform(QString transform)
 * @param xml
 * @return
 */
-bool SVGParser::parseGroup(CPrimitive **level, QXmlStreamReader * xml)
+bool SVGParser::parseGroup(CNodeInterface **level, QXmlStreamReader * xml)
 {
-
     CGroup * g = new CGroup();
     if ( xml->attributes().hasAttribute("id")) g->setID(xml->attributes().value("id").toString());
-    *level = static_cast<CPrimitive*>(CNodeInterface::levelDown(*level, g));
+    *level = CNodeInterface::levelDown(*level, g);
 
     _globalMatrix = parseTransform(xml->attributes().value("transform").toString()); //TODO: Домножать новую, что бы не затирать прежнюю?
-
 
     return true;
 }
 
-bool SVGParser::parsePath(CPrimitive * level, QXmlStreamReader * xml)
+/**
+* @brief Парсим путь
+* @param level
+* @param xml
+* @return
+*/
+bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
 {
     CPath * path = new CPath();
     CNodeInterface::addNext(level, path);
@@ -250,7 +292,7 @@ bool SVGParser::parsePath(CPrimitive * level, QXmlStreamReader * xml)
         } else
         if ( (command=="S") || (command=="s") ) { //-- Кривая безье кубическая с началом у конца предыдущей
             if ( params.count()%4!=0 ) throw 45; //-- Должно быть пропорционально 4
-            if (openPathCoords.isZero()) openPathCoords = lastPoint;
+            if ( openPathCoords.isZero() ) openPathCoords = lastPoint;
 
             for (int pi=0; pi<params.count(); pi+=4) {
                 CPoint p1 = prevPoints[prevPoints.count()-1];
@@ -271,12 +313,13 @@ bool SVGParser::parsePath(CPrimitive * level, QXmlStreamReader * xml)
 
                 CBezier * bezier = new CBezier(p1, p2, p3, p4);
                 bezier->setStyles(style);
+
                 CNodeInterface::addNext(path, bezier);
                 _globalCoords = p4;
             }
         } else
         if ( (command=="L") || (command=="l") ) { //-- Линия
-            if (params.count()%2!=0) throw 45; //-- Должно быть пропорционально 2
+            if ( params.count()%2!=0 ) throw 45; //-- Должно быть пропорционально 2
 
             for (int pi=0; pi<params.count(); pi+=2) {
                 CPoint p(params[pi], params[pi+1]);
@@ -383,7 +426,13 @@ bool SVGParser::parsePath(CPrimitive * level, QXmlStreamReader * xml)
     return true;
 }
 
-bool SVGParser::parseRect(CPrimitive *level, QXmlStreamReader *xml)
+/**
+* @brief Парсим прямоугольник
+* @param level
+* @param xml
+* @return
+*/
+bool SVGParser::parseRect(CNodeInterface *level, QXmlStreamReader *xml)
 {
     CPath * rect = new CPath();
     if ( xml->attributes().hasAttribute("id")) rect->setID(xml->attributes().value("id").toString());
@@ -420,9 +469,7 @@ bool SVGParser::parseRect(CPrimitive *level, QXmlStreamReader *xml)
 
 /**
 * @brief Собираем все в кучу стили для конкретного итема (локально заданные и глобальные)
-* @param styles
-* @param nameClass
-* @param nameID
+* @param xml
 * @return
 */
 CSS::Style SVGParser::parseStyle(QXmlStreamReader * xml)
@@ -433,7 +480,7 @@ CSS::Style SVGParser::parseStyle(QXmlStreamReader * xml)
 
     CSS::Block block(styles); //-- Распарсим локально заданные элементы стиля
 
-    if (!block.parse()) {
+    if ( !block.parse() ) {
         qWarning()<<"Problem parse css block";
     }
 
@@ -441,16 +488,36 @@ CSS::Style SVGParser::parseStyle(QXmlStreamReader * xml)
     QString stroke = xml->attributes().value("stroke").toString();
     QString fill = xml->attributes().value("fill").toString();
 
-    if (stroke!="none" && stroke!="") block.set("stroke", stroke);
-    if (fill!="none" && fill!="") block.set("fill", fill);
+    if ( stroke!="none" && stroke!="" ) block.set("stroke", stroke);
+    if ( fill!="none" && fill!="" ) block.set("fill", fill);
 
     CSS::Style style = _cssParser->applyStyles(QString(".%1").arg(nameClass), block); //-- Получим все стили для этого элемента, накладывая поверх локально заданные
 
     return style;
 }
 
+/**
+* @brief Парсим линейный градиент
+* @param level
+* @param xml
+* @return
+*/
+bool SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamReader *xml)
+{
+    FLinearGradient * linearGradient = new FLinearGradient();
+    _defs[_xml->attributes().value("id").toString()] = linearGradient;
+    *level = linearGradient;
 
-bool SVGParser::parseLine(CPrimitive * level, QXmlStreamReader * xml)
+    return true;
+}
+
+/**
+* @brief Парсим линию
+* @param level
+* @param xml
+* @return
+*/
+bool SVGParser::parseLine(CNodeInterface * level, QXmlStreamReader * xml)
 {    
 
     QString x1 = xml->attributes().value("x1").toString();
@@ -463,7 +530,7 @@ bool SVGParser::parseLine(CPrimitive * level, QXmlStreamReader * xml)
 
     CLine * line = new CLine(p1, p2);
     line->setStyles(parseStyle(xml));
-    if ( xml->attributes().hasAttribute("id")) line->setID(xml->attributes().value("id").toString());
+    if ( xml->attributes().hasAttribute("id") ) line->setID(xml->attributes().value("id").toString());
 
     CNodeInterface::addNext(level, line);
 
@@ -473,13 +540,10 @@ bool SVGParser::parseLine(CPrimitive * level, QXmlStreamReader * xml)
 /**
 * @brief Парсим картинку
 * @param level
-* @param width
-* @param height
-* @param data
-* @param transforms
+* @param xml
 * @return
 */
-bool SVGParser::parseImage(CPrimitive *level, QXmlStreamReader * xml)
+bool SVGParser::parseImage(CNodeInterface *level, QXmlStreamReader * xml)
 {
     QString width = xml->attributes().value("width").toString();
     QString height = xml->attributes().value("height").toString();
@@ -490,14 +554,14 @@ bool SVGParser::parseImage(CPrimitive *level, QXmlStreamReader * xml)
 
     transformsMatrix.multiplication(_globalMatrix);
 
-    CPoint p1(0,0,0.0001);
+    CPoint p1(0, 0, 0.0001);
     p1.transform(transformsMatrix); //-- Левый верхний угол картинки
 
     qInfo()<<"Parse image"<<width<<height;
 
     QRegExp rxType("data:(.+);(.+),");
 
-    if (rxType.indexIn(data) == -1) {//-- Нипонятно что это есть
+    if ( rxType.indexIn(data)==-1 ) {//-- Нипонятно что это есть
         qWarning()<<"Unknow image type!";
         return false;
     }

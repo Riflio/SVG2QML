@@ -58,11 +58,8 @@ SVGGenerator::GenerateStatus SVGGenerator::generate(QIODevice *device, CPrimitiv
 
     } while( itm!=nullptr );
 
-
-
     _xml->writeEndElement();
     _xml->writeEndDocument();
-
 
     return GS_OK;
 }

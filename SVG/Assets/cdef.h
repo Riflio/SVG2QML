@@ -1,20 +1,22 @@
 #ifndef CDEF_H
 #define CDEF_H
 
-#include <QObject>
+#include "cnode.h"
 
 /**
 * @brief Базовый клас для шаблонных элементов
 */
-class CDef : public QObject
+class CDef : public CNodeInterface
 {
-    Q_OBJECT
 public:
-    explicit CDef(QObject *parent = nullptr);
+    explicit CDef();
 
-signals:
+    enum TDefType {
+        DF_LINEARGRADIENT,
+        DF_CLIPPATH,
+        DF_CPRIMITIVE
+    };
 
-public slots:
 };
 
 #endif // CDEF_H
