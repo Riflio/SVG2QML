@@ -5,6 +5,10 @@
 #include <QString>
 #include <QHash>
 #include <QColor>
+#include <QUrl>
+
+#include "measureunit.h"
+
 /**
 * @brief Стили, которые есть в боке (Block)
 */
@@ -16,7 +20,8 @@ public:
     Style();
 
     void set(QString styleName, QString value);
-    QVariant get(QString styleName);
+    QVariant get(QString styleName) const;
+    bool has(const QString &key) const;
 
     bool unite(const Style & other);
 

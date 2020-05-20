@@ -1,4 +1,5 @@
 #include "style.h"
+
 #include <QRegExp>
 #include <QDebug>
 
@@ -9,24 +10,35 @@ Style::Style()
 
 }
 
-
 void Style::set(QString styleName, QString value)
 {
     //-- Известные для Qt типы сразу парсим в нативные значения
     QRegExp rxColorPercent("rgb\\(([0-9\\.]+)(%?),([0-9\\.]+)(%?),([0-9\\.]+)(%?)\\)"); //-- Регулярка для цвета в формате rgb(a,b,c) или rgb(a%,b%,c%)
     QRegExp rxColorHex("(#[0-9a-fA-F]{3,6})"); //-- Регулярка для цвета в формате hex
-
+    QRegExp rxURL("url\\((.+)\\)"); //-- Для url()
+    QRegExp rxMeasureUnit("([0-9]+(\\.[0-9]+)?)(px|%)?"); //-- Число с единицами измерения
     QVariant vr;
 
-    if (rxColorPercent.indexIn(value) > -1) { //-- Проверяем, не цвет ли это в rgb
-        vr = QVariant(QColor(
+    if ( rxColorPercent.indexIn(value)>-1 ) { //-- Проверяем, не цвет ли это в rgb
+        vr = QVariant::fromValue(QColor(
             (rxColorPercent.cap(2)=="%")? rxColorPercent.cap(1).toDouble()*2.55 : rxColorPercent.cap(1).toInt(), //-- Если есть проценты, то переводим с лимитом в 255
             (rxColorPercent.cap(4)=="%")? rxColorPercent.cap(3).toDouble()*2.55 : rxColorPercent.cap(3).toInt(),
             (rxColorPercent.cap(6)=="%")? rxColorPercent.cap(5).toDouble()*2.55 : rxColorPercent.cap(5).toInt()
         ));
     } else
-    if (rxColorHex.indexIn(value) > -1) { //-- Или hex
-        vr = QVariant(QColor(rxColorHex.cap(1)));
+    if ( rxColorHex.indexIn(value)>-1 ) { //-- Или hex
+        vr = QVariant::fromValue(QColor(rxColorHex.cap(1)));
+    } else
+    if ( rxURL.indexIn(value)>-1 ) { //-- URL
+        vr = QVariant::fromValue(QUrl(rxURL.cap(1)));
+    } else
+    if ( rxMeasureUnit.indexIn(value)>-1 ) { //-- Число с единицами измерения
+        MeasureUnit me;
+        me.setVal(rxMeasureUnit.cap(1).toDouble());
+        if ( rxMeasureUnit.cap(3)=="px" ) { me.setType(MeasureUnit::MU_PX); } else
+        if ( rxMeasureUnit.cap(3)=="%" ) { me.setType(MeasureUnit::MU_PERCENT); }
+        else { me.setType(MeasureUnit::MU_PT); }
+        vr = QVariant::fromValue(me);
     } else
     { //-- Ничего не подходит, ставим как есть
         vr = value;
@@ -35,9 +47,14 @@ void Style::set(QString styleName, QString value)
     _styles.insert(styleName, vr);
 }
 
-QVariant Style::get(QString styleName)
+QVariant Style::get(QString styleName) const
 {
     return _styles.value(styleName, QVariant());
+}
+
+bool Style::has(const QString &key) const
+{
+    return _styles.contains(key);
 }
 
 /**
