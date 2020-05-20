@@ -19,6 +19,9 @@
 
 #include "SVG/Classes/fclippath.h"
 #include "SVG/Classes/flineargradient.h"
+#include "SVG/Classes/fradialgradient.h"
+
+#include "SVG/Assets/cdefs.h"
 
 class SVGParser : public QObject
 {
@@ -37,6 +40,8 @@ public:
     ParseStatus parse(QIODevice *device);
 
     CPrimitive * rootItem() const;
+
+    CDefs defs() const;
 
 signals:
 
@@ -61,9 +66,13 @@ private:
     CMatrix parseTransform(QString transform);
     CSS::Style parseStyle(QXmlStreamReader * xml);
 
-    bool parseLinearGradient(CNodeInterface ** level, QXmlStreamReader * xml);
+    bool parseClipPath(CNodeInterface ** level, QXmlStreamReader * xml);
 
-    QMap<QString, CDef*> _defs;
+    bool parseLinearGradient(CNodeInterface ** level, QXmlStreamReader * xml);
+    bool parseRadialGradient(CNodeInterface ** level, QXmlStreamReader * xml);
+    bool parseGradientStops(FGradient * gradient, QXmlStreamReader * xml);
+
+    CDefs _defs;
 
 
 };

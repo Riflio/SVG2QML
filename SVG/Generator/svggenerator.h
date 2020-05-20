@@ -17,6 +17,8 @@
 #include "SVG/Classes/cgroup.h"
 #include "SVG/Classes/cimage.h"
 
+#include "SVG/Assets/cdefs.h"
+
 
 class SVGGenerator : public QObject
 {

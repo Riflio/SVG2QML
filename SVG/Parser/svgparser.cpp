@@ -13,6 +13,11 @@ CPrimitive * SVGParser::rootItem() const
     return _rootItem;
 }
 
+CDefs SVGParser::defs() const
+{
+    return _defs;
+}
+
 /**
 * @brief Разбираем переданный файл
 * @param file
@@ -35,30 +40,31 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
     CNodeInterface * prevLevel = nullptr; //-- Запоминаем предыдущий
 
     int defsLvl = 0; //-- Defs section lvl
-    QStringList defsTokens = {"g", "path", "rect", "line", "image", "linearGradient", "clipPath"};
+    QStringList defsTokens = {"g", "path", "rect", "line", "image", "linearGradient", "radialGradient", "clipPath"};
 
     _xml = new QXmlStreamReader(device);
 
     while ( !_xml->atEnd() ) {
-        if ( _xml->hasError() ) {
-            device->close();
-            return PS_SYNTAXERROR;
-        }
-        QXmlStreamReader::TokenType token = _xml->readNext();
-        if ( token==QXmlStreamReader::StartDocument ) continue;
-        if ( token==QXmlStreamReader::StartElement ) {
+        if ( _xml->hasError() ) { device->close(); return PS_SYNTAXERROR; }
+
+        _xml->readNext();
+        if ( _xml->tokenType()==QXmlStreamReader::StartDocument ) continue;
+
+        //-- Detect start elements
+        if ( _xml->tokenType()==QXmlStreamReader::StartElement ) {
 
             if  ( defsLvl>0 ) {
                 if ( defsTokens.indexOf(_xml->name().toString())==-1 ) { qWarning()<<"Unsupported defs type"<<_xml->name(); continue; }
 
                 if ( defsLvl==1 ) { //-- Каждого прямого наследника из defs считаем как отддельный
                     if ( _xml->name()=="clipPath" ) {
-                         FClipPath * clipPath = new FClipPath();
-                        _defs[_xml->attributes().value("id").toString()] = clipPath;
-                        currentLevel = clipPath;
+                        parseClipPath(&currentLevel, _xml);
                     } else
                     if ( _xml->name()=="linearGradient" ) {
                         parseLinearGradient(&currentLevel, _xml);
+                    } else
+                    if ( _xml->name()=="radialGradient" ) {
+                        parseRadialGradient(&currentLevel, _xml);
                     }
                 }
 
@@ -91,8 +97,10 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
                 prevLevel = currentLevel;
                 defsLvl = 1;
             }
-        } else
-        if ( token == QXmlStreamReader::EndElement ) {
+        }
+
+        //-- Detect ends elements
+        if ( _xml->tokenType() == QXmlStreamReader::EndElement ) {
 
             if ( defsLvl>0 && defsTokens.indexOf(_xml->name().toString())>-1 ) {
                 defsLvl--;
@@ -497,6 +505,23 @@ CSS::Style SVGParser::parseStyle(QXmlStreamReader * xml)
 }
 
 /**
+* @brief Парсим контур обрезки
+* @param level
+* @param xml
+* @return
+*/
+bool SVGParser::parseClipPath(CNodeInterface **level, QXmlStreamReader *xml)
+{
+    FClipPath * clipPath = new FClipPath();
+   _defs[xml->attributes().value("id").toString()] = clipPath;
+   *level = clipPath;
+
+   //-- Дальше парсится как обычно, но добавляется тупо к нам, т.к. в clipPath могут быть и примитивы и хз что ещё.
+
+   return true;
+}
+
+/**
 * @brief Парсим линейный градиент
 * @param level
 * @param xml
@@ -507,6 +532,68 @@ bool SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamReader *xm
     FLinearGradient * linearGradient = new FLinearGradient();
     _defs[_xml->attributes().value("id").toString()] = linearGradient;
     *level = linearGradient;
+
+    if ( xml->attributes().hasAttribute("x1") ) { linearGradient->setStartPoint(xml->attributes().value("x1").toFloat(), linearGradient->startPoint().y()); }
+    if ( xml->attributes().hasAttribute("y1") ) { linearGradient->setStartPoint(linearGradient->startPoint().x(), xml->attributes().value("y1").toFloat()); }
+    if ( xml->attributes().hasAttribute("x2") ) { linearGradient->setEndPoint(xml->attributes().value("x2").toFloat(), linearGradient->endPoint().y()); }
+    if ( xml->attributes().hasAttribute("y2") ) { linearGradient->setEndPoint(linearGradient->endPoint().x(), xml->attributes().value("y2").toFloat()); }
+
+    bool gs = parseGradientStops(linearGradient, xml);
+
+    return gs;
+}
+
+/**
+* @brief Парсим радиальный градиент
+* @param level
+* @param xml
+* @return
+*/
+bool SVGParser::parseRadialGradient(CNodeInterface **level, QXmlStreamReader *xml)
+{
+    FRadialGradient * radialGradient = new FRadialGradient();
+    _defs[_xml->attributes().value("id").toString()] = radialGradient;
+    *level = radialGradient;
+
+    if ( xml->attributes().hasAttribute("cx") ) { radialGradient->setCenterPoint(xml->attributes().value("cx").toFloat(), radialGradient->centerPoint().y()); }
+    if ( xml->attributes().hasAttribute("cy") ) { radialGradient->setCenterPoint(radialGradient->centerPoint().x(), xml->attributes().value("cy").toFloat()); }
+    if ( xml->attributes().hasAttribute("r") ) { radialGradient->setRadius(xml->attributes().value("r").toFloat()); }
+
+    bool gs = parseGradientStops(radialGradient, xml);
+
+    return gs;
+}
+
+/**
+* @brief Парсим stop ы у градиента
+* @param gradient
+* @param xml
+* @return
+*/
+bool SVGParser::parseGradientStops(FGradient *gradient, QXmlStreamReader *xml)
+{
+    QString gradientTagName = xml->name().toString();
+
+    while ( !xml->atEnd() ) {
+        if ( xml->hasError() ) { return false; }
+
+        xml->readNext();
+        if ( xml->tokenType()==QXmlStreamReader::StartElement ) {
+
+            if ( xml->name()=="stop" ) {
+                FGradient::TGradientStop gs;
+                gs.position = xml->attributes().value("offset").toFloat();
+                gradient->addStop(gs);
+            }
+
+        }
+
+        if ( xml->tokenType()==QXmlStreamReader::EndElement ) {
+            if ( xml->name()==gradientTagName ) {
+                break;
+            }
+        }
+    }
 
     return true;
 }

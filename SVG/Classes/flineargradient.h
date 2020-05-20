@@ -1,17 +1,24 @@
 #ifndef FLINEARGRADIENT_H
 #define FLINEARGRADIENT_H
 
-#include "../Assets/cdef.h"
-#include "../Assets/cprimitive.h"
+#include <QPointF>
+#include "../Assets/fgradient.h"
 
-class FLinearGradient : public CDef
+class FLinearGradient : public FGradient
 {
 public:
-    explicit FLinearGradient();
+    FLinearGradient();
+    FLinearGradient(const FLinearGradient &other);
 
+    void setStartPoint(float x, float y);
+    void setEndPoint(float x, float y);
+
+    QPointF startPoint() const;
+    QPointF endPoint() const;
 
 private:
-    //QList<
+    QPointF _startPoint;
+    QPointF _endPoint;
 
 };
 
