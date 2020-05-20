@@ -10,13 +10,19 @@ public:
     explicit QMLGenerator(QObject *parent = nullptr);
 
 
-    GenerateStatus generateQML(QIODevice *device, CPrimitive * rootItm);
+    GenerateStatus generateQML(QIODevice *device, CPrimitive * rootItm, const CDefs &defs);
 
 signals:
 
 private:
-    QString tab(int c);
+    CPrimitive * _rootItm;
+    CDefs _defs;
 
+    QString tab(int c);
+    QString sanitizeID(QString id);
+
+    void makeFill(CPrimitive * itm, int &lvl, QTextStream &qml);
+    void makeStroke(CPrimitive * itm, int &lvl, QTextStream &qml);
 };
 
 #endif // QMLGENERATOR_H
