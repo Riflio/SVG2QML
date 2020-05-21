@@ -55,8 +55,13 @@ QString QMLGenerator::tab(int c)
 */
 QString QMLGenerator::sanitizeID(QString id)
 {
-    //TODO: First letter to lower and other langs symbols
+    if ( id.isEmpty() ) { return id; }
+
     id = id.replace('-', '_').replace(' ', '_');
+    id.replace(0, 1, id.left(1).toLower());
+
+    QRegExp rx("([a-zA-Z0-9_])+");
+    if ( !rx.exactMatch(id) ) return "";
 
     return id;
 }
@@ -185,7 +190,7 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
 
         if ( p->type()==CPrimitive::PT_PATH ) {
             qml<<tab((firstInline)?0:lvl)<<"Shape {"<<"\n";
-                qml<<tab(++lvl)<<QString("id: %1").arg(sanitizeID(p->ID()))<<"\n";
+                makeID(p, ++lvl, qml);
                 qml<<tab(lvl)<<"width: "<<rootID<<".width"<<"\n";
                 qml<<tab(lvl)<<"height: "<<rootID<<".height"<<"\n";
 
@@ -226,10 +231,8 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
 
         if ( p->type()==CPrimitive::PT_GROUP ) {
             qml<<tab(lvl++)<<"Item {"<<"\n";
-
-            qml<<tab(lvl)<<QString("id: %1").arg(sanitizeID(p->ID()))<<"\n";
+            makeID(p, lvl, qml);
             qml<<tab(lvl)<<"anchors.fill: parent"<<"\n";
-
         }
 
         if ( itm->down!=nullptr ) {
@@ -238,13 +241,11 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
             itm = itm->next;
         } else if ( itm->up!=nullptr ) {
             while(true) {
-                if ( itm->up==nullptr ) { itm = nullptr; break; }
-
                 if ( (static_cast<CPrimitive*>(itm))->type()==CPrimitive::PT_GROUP) {
-                    lvl--;
-                    qml<<tab(lvl)<<"}"<<"\n";
+                    qml<<tab(--lvl)<<"}"<<"\n";
                 }
 
+                if ( itm->up==nullptr ) { itm = nullptr; break; }
                 itm = itm->up;
                 if ( itm->next!=nullptr ) { itm = itm->next; break; }
             }
@@ -254,6 +255,20 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
 
     } while( itm!=nullptr );
 
+}
+
+/**
+* @brief Выводим id шник
+* @param itm
+* @param lvl
+* @param qml
+*/
+void QMLGenerator::makeID(CPrimitive *itm, int &lvl, QTextStream &qml)
+{
+    QString id = sanitizeID(itm->ID());
+    if ( id.isEmpty() ) return;
+
+    qml<<tab(lvl)<<QString("id: %1").arg(id)<<"\n";
 }
 
 

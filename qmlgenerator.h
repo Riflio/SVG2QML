@@ -27,6 +27,7 @@ private:
 
     void makeElement(CPrimitive * el, int &lvl, QTextStream &qml, const QString &rootID, bool firstInline=false);
 
+    void makeID(CPrimitive * itm, int &lvl, QTextStream &qml);
 };
 
 #endif // QMLGENERATOR_H
