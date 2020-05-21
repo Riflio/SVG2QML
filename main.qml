@@ -5,7 +5,7 @@ Window {
     visible: true
     width: 640
     height: 480
-    title: qsTr("Hello World")
+    title: qsTr("SVG to QML converter. By pavelk.ru. V1.0.")
 
 
 
