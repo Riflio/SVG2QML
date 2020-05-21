@@ -32,35 +32,35 @@ SVGGenerator::GenerateStatus QMLGenerator::generateQML(QIODevice *device, CPrimi
 
     CNodeInterface * itm = rootItm->down;
     do {
-        CPrimitive * p = static_cast<CPrimitive*>(itm);
+        CPrimitive * p = dynamic_cast<CPrimitive*>(itm);
 
         if ( p==nullptr ) break;
 
         if ( p->type()==CPrimitive::PT_PATH ) {
 
-            qml<<tab(lvl)<<"Shape {"<<"\n";
-                qml<<tab(lvl+1)<<QString("id: %1").arg(sanitizeID(p->ID()))<<"\n";
-                qml<<tab(lvl+1)<<"anchors.fill: parent"<<"\n";
+            qml<<tab(lvl++)<<"Shape {"<<"\n";
+                qml<<tab(lvl)<<QString("id: %1").arg(sanitizeID(p->ID()))<<"\n";
+                qml<<tab(lvl)<<"anchors.fill: parent"<<"\n";
 
-                //-- Path
-                qml<<tab(lvl+1)<<"ShapePath {"<<"\n";
-                    qml<<tab(lvl+2)<<"scale: "<<rootID<<".scaleShape"<<"\n";
+                //-- Path                
+                qml<<tab(lvl++)<<"ShapePath {"<<"\n";
+                    qml<<tab(lvl)<<"scale: "<<rootID<<".scaleShape"<<"\n";
 
-                    qml<<tab(lvl+2)<<"PathSvg {"<<"\n";
-                        qml<<tab(lvl+3)<<QString("path: \"%1\"").arg(generatePath(&itm))<<"\n";
-                    qml<<tab(lvl+2)<<"}"<<"\n";
+                    qml<<tab(lvl)<<"PathSvg {"<<"\n";
+                        qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(generatePath(&itm))<<"\n";
+                    qml<<tab(lvl)<<"}"<<"\n";
 
                     //-- Styles
                     makeFill(p, lvl, qml);
                     makeStroke(p, lvl, qml);
 
-                qml<<tab(lvl+1)<<"}"<<"\n";
-            qml<<tab(lvl)<<"}"<<"\n";
+                qml<<tab(--lvl)<<"}"<<"\n";
+            qml<<tab(--lvl)<<"}"<<"\n";
         }
 
         if ( p->type()==CPrimitive::PT_GROUP ) {
-            qml<<tab(lvl)<<"Item {"<<"\n";
-            lvl++;
+            qml<<tab(lvl++)<<"Item {"<<"\n";
+
             qml<<tab(lvl)<<QString("id: %1").arg(sanitizeID(p->ID()))<<"\n";
             qml<<tab(lvl)<<"anchors.fill: parent"<<"\n";
 
@@ -126,18 +126,32 @@ QString QMLGenerator::sanitizeID(QString id)
 void QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml)
 {
     if ( !itm->styles().has("fill") ) {
-        qml<<tab(lvl+2)<<"fillColor: \"transparent\""<<"\n";
+        qml<<tab(lvl)<<"fillColor: \"transparent\""<<"\n";
         return;
     }
 
     QVariant fill = itm->styles().get("fill");
 
     if ( fill.type()==QVariant::Color ) {
-        qml<<tab(lvl+2)<<"fillColor: \""<<fill.toString()<<"\""<<"\n";
+        qml<<tab(lvl)<<"fillColor: \""<<fill.toString()<<"\""<<"\n";
     } else
     if ( fill.type()==QVariant::Url ) {
-        if ( CDefs::isCDefLink(fill.toUrl()) ) {
-            qDebug()<<"FILL URL CDEFS"<<fill.toString()<<_defs.get(fill.toUrl());
+        if ( CDefs::isCDefLink(fill.toUrl()) ) {            
+            CDef * def = _defs.get(fill.toUrl());
+
+            if ( def==nullptr ) {
+                qWarning()<<"Unable find def"<<fill.toUrl();
+                return;
+            }
+
+            if ( def->defType()==CDef::DF_LINEARGRADIENT ) {
+                FLinearGradient * gr = dynamic_cast<FLinearGradient*>(def);
+                qml<<tab(lvl++)<<"fillGradient: "<<"LinearGradient {"<<"\n";
+                    qml<<tab(lvl)<<"x1:"<<gr->startPoint().x()<<"; "<<"y1:"<<gr->startPoint().y()<<"; "<<"x2:"<<gr->endPoint().x()<<"; "<<"y2:"<<gr->endPoint().y()<<";"<<"\n";
+                    makeGradientStops(gr, lvl, qml);
+                qml<<tab(--lvl)<<"}"<<"\n";
+            }
+
         } else {
             qDebug()<<"Unsupported fill value url"<<fill.toString();
         }
@@ -163,10 +177,10 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
     QVariant stroke = itm->styles().get("stroke");
 
     if ( stroke.type()==QVariant::Color ) {
-        qml<<tab(lvl+2)<<"strokeColor: \""<<stroke.toString()<<"\""<<"\n";
+        qml<<tab(lvl)<<"strokeColor: \""<<stroke.toString()<<"\""<<"\n";
     } else
     if ( stroke.toString()=="none" ) {
-        qml<<tab(lvl+2)<<"strokeColor: \"transparent\""<<"\n";
+        qml<<tab(lvl)<<"strokeColor: \"transparent\""<<"\n";
     } else {
         qWarning()<<"Unsupported stroke color value: "<<stroke.toString();
     }
@@ -178,7 +192,7 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
             CSS::MeasureUnit mu = strokeWidth.value<CSS::MeasureUnit>();
 
             if ( mu.type()==CSS::MeasureUnit::MU_PX ||  mu.type()==CSS::MeasureUnit::MU_PT) {
-                qml<<tab(lvl+2)<<"strokeWidth: "<<mu.asPx()<<"\n";
+                qml<<tab(lvl)<<"strokeWidth: "<<mu.asPx()<<"\n";
             } else {
                 qWarning()<<"Unsupported measure unit for stroke-width:"<<mu;
             }
@@ -186,6 +200,19 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
         } else {
             qWarning()<<"Unsupported stroke-width value"<<strokeWidth.toString();
         }
+    }
+}
+
+/**
+* @brief Выводим стопы градиента
+* @param gr
+* @param lvl
+* @param qml
+*/
+void QMLGenerator::makeGradientStops(FGradient *gr, int &lvl, QTextStream &qml)
+{
+    foreach(FGradient::TGradientStop gs, gr->stops()) {
+        qml<<tab(lvl)<<"GradientStop { position: "<<gs.position<<"; color: \""<<gs.color.name(QColor::HexArgb)<<"\"; } "<<"\n";
     }
 }
 

@@ -31,6 +31,7 @@ SOURCES += \
         SVG/Assets/cprimitive.cpp \
         SVG/Assets/fgradient.cpp \
         SVG/Classes/cbezier.cpp \
+        SVG/Classes/cdoc.cpp \
         SVG/Classes/cgroup.cpp \
         SVG/Classes/cimage.cpp \
         SVG/Classes/cline.cpp \
@@ -78,6 +79,7 @@ HEADERS += \
     SVG/Assets/cprimitive.h \
     SVG/Assets/fgradient.h \
     SVG/Classes/cbezier.h \
+    SVG/Classes/cdoc.h \
     SVG/Classes/cgroup.h \
     SVG/Classes/cimage.h \
     SVG/Classes/cline.h \

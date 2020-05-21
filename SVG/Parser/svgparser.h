@@ -11,6 +11,7 @@
 #include "Algebra/cmatrix.h"
 #include "Algebra/cpoint.h"
 
+#include "SVG/Classes/cdoc.h"
 #include "SVG/Classes/cbezier.h"
 #include "SVG/Classes/cline.h"
 #include "SVG/Classes/cpath.h"
@@ -48,7 +49,7 @@ signals:
 public slots:
 
 private:
-    CPrimitive * _rootItem;
+    CDoc * _rootItem;
     QXmlStreamReader * _xml;
 
     CPoint _globalCoords; //-- глобальные координаты
@@ -73,6 +74,8 @@ private:
     bool parseGradientStops(FGradient * gradient, QXmlStreamReader * xml);
 
     CDefs _defs;
+
+    CDef * hasLink(QXmlStreamReader * xml);
 
 
 };

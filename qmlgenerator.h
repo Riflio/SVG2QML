@@ -23,6 +23,8 @@ private:
 
     void makeFill(CPrimitive * itm, int &lvl, QTextStream &qml);
     void makeStroke(CPrimitive * itm, int &lvl, QTextStream &qml);
+    void makeGradientStops(FGradient * gr, int &lvl, QTextStream &qml);
+
 };
 
 #endif // QMLGENERATOR_H

@@ -34,7 +34,7 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
 
     _cssParser = new CSS::CssParser(this); //-- Парсер стилей
 
-    _rootItem = new CGroup();
+    _rootItem = new CDoc();
 
     CNodeInterface * currentLevel = _rootItem;
     CNodeInterface * prevLevel = nullptr; //-- Запоминаем предыдущий
@@ -53,23 +53,30 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
         //-- Detect start elements
         if ( _xml->tokenType()==QXmlStreamReader::StartElement ) {
 
+            bool defsParsed = false;
             if  ( defsLvl>0 ) {
                 if ( defsTokens.indexOf(_xml->name().toString())==-1 ) { qWarning()<<"Unsupported defs type"<<_xml->name(); continue; }
 
                 if ( defsLvl==1 ) { //-- Каждого прямого наследника из defs считаем как отддельный
+                    defsParsed = true;
+
                     if ( _xml->name()=="clipPath" ) {
                         parseClipPath(&currentLevel, _xml);
                     } else
                     if ( _xml->name()=="linearGradient" ) {
-                        parseLinearGradient(&currentLevel, _xml);
+                        parseLinearGradient(&currentLevel, _xml);                        
                     } else
                     if ( _xml->name()=="radialGradient" ) {
-                        parseRadialGradient(&currentLevel, _xml);
+                        parseRadialGradient(&currentLevel, _xml);                        
+                    } else {
+                        qWarning()<<"Unsupported defs element"<<_xml->name();
+                        defsParsed = false;
                     }
                 }
 
                 defsLvl++;
             }
+
 
             if ( _xml->name()=="svg" ) { //-- svg сам по себе как группа, парсим
                 parseGroup(&currentLevel, _xml);
@@ -96,6 +103,12 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
             if ( _xml->name()=="defs" ) {
                 prevLevel = currentLevel;
                 defsLvl = 1;
+            } else
+            if ( _xml->name()=="title" ) {
+                _rootItem->setTitle(_xml->readElementText());
+            } else
+            if ( !defsParsed ) {
+                qWarning()<<"Unsupported element"<<_xml->name();
             }
         }
 
@@ -121,7 +134,7 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
     }
 
     //-- Переходим на самый-самый верх т.к. _rootItem будет в конце указывать на первый элемент
-    if ( _rootItem->up!=nullptr ) _rootItem=static_cast<CPrimitive*>(_rootItem->up);
+    if ( _rootItem->up!=nullptr ) _rootItem=static_cast<CDoc*>(_rootItem->up);
 
     return PS_OK;
 }
@@ -492,12 +505,14 @@ CSS::Style SVGParser::parseStyle(QXmlStreamReader * xml)
         qWarning()<<"Problem parse css block";
     }
 
-    //-- У элемента так же могут быть заданы конкретные стили как параметры
-    QString stroke = xml->attributes().value("stroke").toString();
-    QString fill = xml->attributes().value("fill").toString();
-
-    if ( stroke!="none" && stroke!="" ) block.set("stroke", stroke);
-    if ( fill!="none" && fill!="" ) block.set("fill", fill);
+    //-- У элемента так же могут быть заданы стили как атрибуты элемента - занесём их в стили
+    QStringList cssTokens = {"stroke", "stroke-width", "fill", "stop-color", "stop-opacity"};
+    foreach(QString cssToken, cssTokens) {
+        if ( xml->attributes().hasAttribute(cssToken) ) {
+            QString val = xml->attributes().value(cssToken).toString();
+            if ( !val.isEmpty() && val!="none" ) { block.set(cssToken, val); }
+        }
+    }
 
     CSS::Style style = _cssParser->applyStyles(QString(".%1").arg(nameClass), block); //-- Получим все стили для этого элемента, накладывая поверх локально заданные
 
@@ -529,14 +544,16 @@ bool SVGParser::parseClipPath(CNodeInterface **level, QXmlStreamReader *xml)
 */
 bool SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamReader *xml)
 {
-    FLinearGradient * linearGradient = new FLinearGradient();
+    CDef * def = hasLink(xml);
+    FLinearGradient * linearGradient = (def!=nullptr)? new FLinearGradient(*(dynamic_cast<FLinearGradient*>(def))) : new FLinearGradient();
+
     _defs[_xml->attributes().value("id").toString()] = linearGradient;
     *level = linearGradient;
 
-    if ( xml->attributes().hasAttribute("x1") ) { linearGradient->setStartPoint(xml->attributes().value("x1").toFloat(), linearGradient->startPoint().y()); }
-    if ( xml->attributes().hasAttribute("y1") ) { linearGradient->setStartPoint(linearGradient->startPoint().x(), xml->attributes().value("y1").toFloat()); }
-    if ( xml->attributes().hasAttribute("x2") ) { linearGradient->setEndPoint(xml->attributes().value("x2").toFloat(), linearGradient->endPoint().y()); }
-    if ( xml->attributes().hasAttribute("y2") ) { linearGradient->setEndPoint(linearGradient->endPoint().x(), xml->attributes().value("y2").toFloat()); }
+    if ( xml->attributes().hasAttribute("x1") ) { linearGradient->setX1(CSS::MeasureUnit(xml->attributes().value("x1").toFloat()).asPx()); }
+    if ( xml->attributes().hasAttribute("y1") ) { linearGradient->setY1(CSS::MeasureUnit(xml->attributes().value("y1").toFloat()).asPx()); }
+    if ( xml->attributes().hasAttribute("x2") ) { linearGradient->setX2(CSS::MeasureUnit(xml->attributes().value("x2").toFloat()).asPx()); }
+    if ( xml->attributes().hasAttribute("y2") ) { linearGradient->setY2(CSS::MeasureUnit(xml->attributes().value("y2").toFloat()).asPx()); }
 
     bool gs = parseGradientStops(linearGradient, xml);
 
@@ -551,13 +568,15 @@ bool SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamReader *xm
 */
 bool SVGParser::parseRadialGradient(CNodeInterface **level, QXmlStreamReader *xml)
 {
-    FRadialGradient * radialGradient = new FRadialGradient();
+    CDef * def = hasLink(xml);
+    FRadialGradient * radialGradient = (def!=nullptr)? new FRadialGradient(*(dynamic_cast<FRadialGradient*>(def))) : new FRadialGradient();
+
     _defs[_xml->attributes().value("id").toString()] = radialGradient;
     *level = radialGradient;
 
-    if ( xml->attributes().hasAttribute("cx") ) { radialGradient->setCenterPoint(xml->attributes().value("cx").toFloat(), radialGradient->centerPoint().y()); }
-    if ( xml->attributes().hasAttribute("cy") ) { radialGradient->setCenterPoint(radialGradient->centerPoint().x(), xml->attributes().value("cy").toFloat()); }
-    if ( xml->attributes().hasAttribute("r") ) { radialGradient->setRadius(xml->attributes().value("r").toFloat()); }
+    if ( xml->attributes().hasAttribute("cx") ) { radialGradient->setCX(CSS::MeasureUnit(xml->attributes().value("cx").toFloat()).asPx()); }
+    if ( xml->attributes().hasAttribute("cy") ) { radialGradient->setCY(CSS::MeasureUnit(xml->attributes().value("cy").toFloat()).asPx()); }
+    if ( xml->attributes().hasAttribute("r") ) { radialGradient->setRadius(CSS::MeasureUnit(xml->attributes().value("r").toFloat()).asPx()); }
 
     bool gs = parseGradientStops(radialGradient, xml);
 
@@ -576,13 +595,24 @@ bool SVGParser::parseGradientStops(FGradient *gradient, QXmlStreamReader *xml)
 
     while ( !xml->atEnd() ) {
         if ( xml->hasError() ) { return false; }
-
         xml->readNext();
+
         if ( xml->tokenType()==QXmlStreamReader::StartElement ) {
 
             if ( xml->name()=="stop" ) {
                 FGradient::TGradientStop gs;
+
+                CSS::Style style = parseStyle(xml);
+
                 gs.position = xml->attributes().value("offset").toFloat();
+
+                if ( style.has("stop-color") ) {
+                    gs.color = style.get("stop-color").value<QColor>();
+                }
+                if ( style.has("stop-opacity") ) {
+                    gs.color.setAlphaF(style.get("stop-opacity").value<CSS::MeasureUnit>().val());
+                }
+
                 gradient->addStop(gs);
             }
 
@@ -596,6 +626,22 @@ bool SVGParser::parseGradientStops(FGradient *gradient, QXmlStreamReader *xml)
     }
 
     return true;
+}
+
+/**
+* @brief Отвечаем, имеет ли элемент ссылку на CDef и отдаём, если да
+* @param xml
+* @return
+*/
+CDef *SVGParser::hasLink(QXmlStreamReader *xml)
+{
+    if ( !xml->attributes().hasAttribute("xlink:href") ) return nullptr;
+    QString link = xml->attributes().value("xlink:href").toString();
+    if ( link.isEmpty() ) return nullptr;
+
+    CDef * def = _defs.get(QUrl(link));
+
+    return def;
 }
 
 /**
