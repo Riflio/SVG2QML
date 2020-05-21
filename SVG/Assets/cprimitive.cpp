@@ -238,6 +238,16 @@ void CPrimitive::setID(QString id)
     _id = id;
 }
 
+QString CPrimitive::classSVG() const
+{
+    return _class;
+}
+
+void CPrimitive::setClassSVG(QString classSVG)
+{
+    _class = classSVG;
+}
+
 CPoint &CPrimitive::operator[](int i)
 {
     return _points[i];

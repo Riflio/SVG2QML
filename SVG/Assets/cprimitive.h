@@ -65,6 +65,9 @@ public:
     QString ID() const;
     void setID(QString id);
 
+    QString classSVG() const;
+    void setClassSVG(QString classSVG);
+
     friend QDataStream& operator <<(QDataStream &dataStream, const CPrimitive &p) { Q_UNUSED(p); return dataStream; }
 
     CPoint &operator[](int i);
@@ -86,7 +89,8 @@ protected:
     CPoints _points;
     CSS::Style _styles; //-- Собранные стили этого элемента
     mutable CBoundingBox _bbox; //-- Ограничительная рамка
-    QString _id; //-- Просто айдишник
+    QString _id; //-- Айдишник из SVG
+    QString _class; //-- Класс из SVG
 
     void drawPath(const QPainterPath &path, QPainter *painter);
 
