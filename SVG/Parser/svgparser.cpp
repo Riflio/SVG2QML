@@ -224,7 +224,7 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
     QString allowedCommands = "mcslvhvazMCSLVHAZ";
 
     QRegExp rxCommands(QString("([%1])([^%1]*)").arg(allowedCommands)); //-- Ищем команды и берём их параметры
-    QRegExp rxCommandParams("([-+]?(\\d{1,10}|\\.\\d{1,10})(\\.\\d{1,10})?(e[+-]\\d{1,10})?)"); //-- Разбираем параметры на отдельные
+    QRegExp rxCommandParams("([-+]?(\\d{1,10}|\\.)(\\.)?(\\d{1,10})?(e[+-]\\d{1,10})?)"); //-- Разбираем параметры на отдельные
 
     QList<CPoint> prevPoints; //-- Запоминаем список точек от предыдущей команды, т.к. они могут потребоваться для текущей
     QList<double> params; //-- Список параметров у текущей команды
