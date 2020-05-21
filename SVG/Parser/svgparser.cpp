@@ -40,7 +40,7 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
     CNodeInterface * prevLevel = nullptr; //-- Запоминаем предыдущий
 
     int defsLvl = 0; //-- Defs section lvl
-    QStringList defsTokens = {"g", "path", "rect", "line", "image", "linearGradient", "radialGradient", "clipPath"};
+    QStringList defsTokens = {"g", "path", "rect", "line", "image", "linearGradient", "radialGradient", "clipPath", "style"};
 
     _xml = new QXmlStreamReader(device);
 
@@ -68,6 +68,9 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
                     } else
                     if ( _xml->name()=="radialGradient" ) {
                         parseRadialGradient(&currentLevel, _xml);                        
+                    } else
+                    if ( _xml->name()=="style" ) {
+                       //-- ниже распарсим
                     } else {
                         qWarning()<<"Unsupported defs element"<<_xml->name();
                         defsParsed = false;
@@ -76,7 +79,6 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
 
                 defsLvl++;
             }
-
 
             if ( _xml->name()=="svg" ) { //-- svg сам по себе как группа, парсим
                 parseGroup(&currentLevel, _xml);
@@ -97,8 +99,7 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
                 parseImage(currentLevel, _xml);
             } else
             if ( _xml->name()=="style" ) {
-                _xml->readNext();
-                parseCss(_xml->text().toString());
+                parseCss(currentLevel, _xml);
             } else
             if ( _xml->name()=="defs" ) {
                 prevLevel = currentLevel;
@@ -190,7 +191,10 @@ CMatrix SVGParser::parseTransform(QString transform)
 bool SVGParser::parseGroup(CNodeInterface **level, QXmlStreamReader * xml)
 {
     CGroup * g = new CGroup();
+
     if ( xml->attributes().hasAttribute("id")) g->setID(xml->attributes().value("id").toString());
+    if ( xml->attributes().hasAttribute("class")) g->setClassSVG(xml->attributes().value("class").toString());
+
     *level = CNodeInterface::levelDown(*level, g);
 
     _globalMatrix = parseTransform(xml->attributes().value("transform").toString()); //TODO: Домножать новую, что бы не затирать прежнюю?
@@ -217,7 +221,7 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
     CSS::Style style = parseStyle(xml);
     path->setStyles(style);
 
-    if ( xml->attributes().hasAttribute("id")) path->setID(xml->attributes().value("id").toString());
+    parseBaseAttributes(path, xml);
 
     CPoint openPathCoords(0,0); //-- Запоминаем в каких координатах открыли путь, что бы потом можно было закрыть
 
@@ -675,14 +679,24 @@ CDef *SVGParser::hasLink(QXmlStreamReader *xml)
 }
 
 /**
+* @brief Разбираем базовые атрибуты элемента
+* @param itm
+* @param xml
+*/
+void SVGParser::parseBaseAttributes(CPrimitive *itm, QXmlStreamReader *xml)
+{
+    if ( xml->attributes().hasAttribute("id") ) itm->setID(xml->attributes().value("id").toString());
+    if ( xml->attributes().hasAttribute("class")) itm->setClassSVG(xml->attributes().value("class").toString());
+}
+
+/**
 * @brief Парсим линию
 * @param level
 * @param xml
 * @return
 */
 bool SVGParser::parseLine(CNodeInterface * level, QXmlStreamReader * xml)
-{    
-
+{
     QString x1 = xml->attributes().value("x1").toString();
     QString y1 = xml->attributes().value("y1").toString();
     QString x2 = xml->attributes().value("x2").toString();
@@ -693,7 +707,8 @@ bool SVGParser::parseLine(CNodeInterface * level, QXmlStreamReader * xml)
 
     CLine * line = new CLine(p1, p2);
     line->setStyles(parseStyle(xml));
-    if ( xml->attributes().hasAttribute("id") ) line->setID(xml->attributes().value("id").toString());
+
+    parseBaseAttributes(line, xml);
 
     CNodeInterface::addNext(level, line);
 
@@ -708,6 +723,7 @@ bool SVGParser::parseLine(CNodeInterface * level, QXmlStreamReader * xml)
 */
 bool SVGParser::parseImage(CNodeInterface *level, QXmlStreamReader * xml)
 {
+    //TODO: Доделать
     QString width = xml->attributes().value("width").toString();
     QString height = xml->attributes().value("height").toString();
     QString data = xml->attributes().value("xlink:href").toString();
@@ -745,9 +761,10 @@ bool SVGParser::parseImage(CNodeInterface *level, QXmlStreamReader * xml)
 * @param styles
 * @return
 */
-bool SVGParser::parseCss(QString styles)
+bool SVGParser::parseCss(CNodeInterface * level, QXmlStreamReader * xml)
 {
-    return _cssParser->parse(styles);
+    Q_UNUSED(level);
+    return _cssParser->parse(xml->readElementText());
 }
 
 

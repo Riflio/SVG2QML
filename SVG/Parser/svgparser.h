@@ -63,7 +63,7 @@ private:
     bool parseRect(CNodeInterface * level, QXmlStreamReader * xml);
     bool parseLine(CNodeInterface * level, QXmlStreamReader * xml);
     bool parseImage(CNodeInterface * level, QXmlStreamReader * xml);
-    bool parseCss(QString styles);
+    bool parseCss(CNodeInterface * level, QXmlStreamReader * xml);
 
 
     CMatrix parseTransform(QString transform);
@@ -79,6 +79,7 @@ private:
 
     CDef * hasLink(QXmlStreamReader * xml);
 
+    void parseBaseAttributes(CPrimitive * itm, QXmlStreamReader * xml);
 
 };
 
