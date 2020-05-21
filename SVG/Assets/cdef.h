@@ -12,10 +12,15 @@ public:
     explicit CDef();
 
     enum TDefType {
+        DF_NONE,
         DF_LINEARGRADIENT,
+        DF_RADIALGRADIENT,
         DF_CLIPPATH,
         DF_CPRIMITIVE
     };
+
+    virtual TDefType defType() const { return DF_NONE;  }
+
 
 };
 

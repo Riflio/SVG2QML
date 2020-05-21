@@ -14,6 +14,7 @@ public:
 
     CPrimitive * target;
 
+    virtual TDefType defType() const { return DF_CLIPPATH;  }
 
 };
 

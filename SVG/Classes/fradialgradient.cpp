@@ -11,6 +11,16 @@ FRadialGradient::FRadialGradient(const FRadialGradient &other): FGradient(other)
     _radius = other._radius;
 }
 
+void FRadialGradient::setCX(float x)
+{
+    _centerPoint.setX(x);
+}
+
+void FRadialGradient::setCY(float y)
+{
+    _centerPoint.setY(y);
+}
+
 void FRadialGradient::setCenterPoint(float x, float y)
 {
     _centerPoint.setX(x);

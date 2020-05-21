@@ -11,6 +11,26 @@ FLinearGradient::FLinearGradient(const FLinearGradient &other): FGradient(other)
     _endPoint = other._endPoint;
 }
 
+void FLinearGradient::setX1(float x)
+{
+    _startPoint.setX(x);
+}
+
+void FLinearGradient::setY1(float y)
+{
+    _startPoint.setY(y);
+}
+
+void FLinearGradient::setX2(float x)
+{
+    _endPoint.setX(x);
+}
+
+void FLinearGradient::setY2(float y)
+{
+    _endPoint.setY(y);
+}
+
 void FLinearGradient::setStartPoint(float x, float y)
 {
     _startPoint.setX(x);
