@@ -29,6 +29,8 @@ public:
 
     QString toString() const;
 
+    static QColor parseColor(QString color);
+
 protected:
     typedef QHash<QString, QVariant> TStyles;
     TStyles _styles;
