@@ -16,6 +16,7 @@
 #include "SVG/Classes/cpath.h"
 #include "SVG/Classes/cgroup.h"
 #include "SVG/Classes/cimage.h"
+#include "SVG/Classes/carc.h"
 
 #include "SVG/Classes/flineargradient.h"
 #include "SVG/Classes/fradialgradient.h"

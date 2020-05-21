@@ -17,6 +17,7 @@
 #include "SVG/Classes/cpath.h"
 #include "SVG/Classes/cgroup.h"
 #include "SVG/Classes/cimage.h"
+#include "SVG/Classes/carc.h"
 
 #include "SVG/Classes/fclippath.h"
 #include "SVG/Classes/flineargradient.h"
@@ -63,6 +64,7 @@ private:
     bool parseLine(CNodeInterface * level, QXmlStreamReader * xml);
     bool parseImage(CNodeInterface * level, QXmlStreamReader * xml);
     bool parseCss(QString styles);
+
 
     CMatrix parseTransform(QString transform);
     CSS::Style parseStyle(QXmlStreamReader * xml);

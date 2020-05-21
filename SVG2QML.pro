@@ -30,6 +30,7 @@ SOURCES += \
         SVG/Assets/cpoints.cpp \
         SVG/Assets/cprimitive.cpp \
         SVG/Assets/fgradient.cpp \
+        SVG/Classes/carc.cpp \
         SVG/Classes/cbezier.cpp \
         SVG/Classes/cdoc.cpp \
         SVG/Classes/cgroup.cpp \
@@ -78,6 +79,7 @@ HEADERS += \
     SVG/Assets/cpoints.h \
     SVG/Assets/cprimitive.h \
     SVG/Assets/fgradient.h \
+    SVG/Classes/carc.h \
     SVG/Classes/cbezier.h \
     SVG/Classes/cdoc.h \
     SVG/Classes/cgroup.h \

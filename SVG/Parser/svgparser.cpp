@@ -258,7 +258,7 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
 
         //-- Ну и погнали парсить сами команды
         if ( (command=="M")||(command=="m") ) { //-- Перенос пера абсолютный/относительный
-            if ( params.count()%2!=0 ) throw 45; //-- Должно быть пропорционально 2
+            if ( params.count()%2!=0 ) throw 45; //-- Должно быть кратно 2
             for (int pi=0;  pi<params.count(); pi+=2) {
                 CPoint p1(params[pi], params[pi+1]);
 
@@ -283,7 +283,7 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
             }
         } else
         if ( (command=="C") || (command=="c") ) { //-- Кривая безье кубическая
-            if (params.count()%6!=0) throw 45; //-- Должно быть пропорционально 6
+            if (params.count()%6!=0) throw 45; //-- Должно быть кратно 6
 
             if (openPathCoords.isZero()) openPathCoords = lastPoint;
             for (int pi=0;  pi<params.count(); pi+=6) {
@@ -312,7 +312,7 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
 
         } else
         if ( (command=="S") || (command=="s") ) { //-- Кривая безье кубическая с началом у конца предыдущей
-            if ( params.count()%4!=0 ) throw 45; //-- Должно быть пропорционально 4
+            if ( params.count()%4!=0 ) throw 45; //-- Должно быть кратно 4
             if ( openPathCoords.isZero() ) openPathCoords = lastPoint;
 
             for (int pi=0; pi<params.count(); pi+=4) {
@@ -340,7 +340,7 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
             }
         } else
         if ( (command=="L") || (command=="l") ) { //-- Линия
-            if ( params.count()%2!=0 ) throw 45; //-- Должно быть пропорционально 2
+            if ( params.count()%2!=0 ) throw 45; //-- Должно быть кратно 2
 
             for (int pi=0; pi<params.count(); pi+=2) {
                 CPoint p(params[pi], params[pi+1]);
@@ -363,7 +363,7 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
             }
         } else
         if ( (command=="H") || (command=="h") ) { //-- Горизонтальная линия
-            if ( params.count()==0 ) throw 45; //-- Хотя бы один параметр да должен быть
+            if ( params.count()==0 ) throw 45; //-- Хотя бы один параметр должен быть
             for (int pi=0; pi<params.count(); ++pi) {
                 CPoint p(params[pi], lastPoint.y());
                 if (command=="h") {
@@ -384,7 +384,7 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
             }
         } else
         if ( (command=="V") || (command=="v") ) { //-- Вертикальная линия
-            if ( params.count()==0 ) throw 45; //-- Хотя бы один параметр да должен быть
+            if ( params.count()==0 ) throw 45; //-- Хотя бы один параметр должен быть
             for (int pi=0; pi<params.count(); ++pi) {
                 CPoint p(lastPoint.x(), params[pi]);
                 if ( command=="v" ) {
@@ -404,8 +404,36 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
                 _globalCoords = p;
             }
         } else
-        if ( (command=="A") || (command=="a") ) {  //TODO: Распарсить дуга круга/элипса!
-            throw 55;
+        if ( (command=="A") || (command=="a") ) {
+            if ( params.count()%7!=0 ) throw 45; //-- Должно быть кратно 7 параметрам
+            if ( openPathCoords.isZero() ) openPathCoords = lastPoint;
+
+            for (int pi=0; pi<params.count(); pi+=7) {
+
+                CPoint pStart(_globalCoords);
+                double rx = params[0+pi];
+                double ry = params[1+pi];
+                double rotation = params[2+pi];
+                bool largeArc = params[3+pi];
+                bool sweep = params[4+pi];
+                CPoint pEnd(params[5+pi], params[6+pi]);
+
+                if ( command=="a" ) {
+                    pEnd.add(lastPoint);
+                }
+                lastPoint = pEnd;
+
+                pStart.transform(matrix);
+                pEnd.transform(matrix);
+
+                prevPoints.clear();
+                prevPoints<<pStart<<pEnd;
+
+                CArc * arc = new CArc(pStart, rx, ry, rotation, largeArc, sweep, pEnd);
+                arc->setStyles(style);
+                CNodeInterface::addNext(path, arc);
+                _globalCoords = pEnd;
+            }
 
         } else
         if ( (command=="Z") || (command=="z") ) { //-- Закрываем путь
@@ -712,6 +740,11 @@ bool SVGParser::parseImage(CNodeInterface *level, QXmlStreamReader * xml)
     return true;
 }
 
+/**
+* @brief Парсим стили
+* @param styles
+* @return
+*/
 bool SVGParser::parseCss(QString styles)
 {
     return _cssParser->parse(styles);

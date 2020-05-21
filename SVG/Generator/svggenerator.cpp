@@ -100,6 +100,16 @@ QString SVGGenerator::generatePath(CNodeInterface **itm)
             res.append("L");
             res.append(l->points().p2().toString());
         } else
+        if ( p->type()==CPrimitive::PT_ARC ) {
+            CArc * a = static_cast<CArc*>(p);
+            res.append("A");
+            res.append(QString::number(a->rx()));
+            res.append(QString::number(a->ry()));
+            res.append(QString::number(a->rotation()));
+            res.append((a->largeArcFlag())? "1" : "0");
+            res.append((a->sweepFlag())? "1" : "0");
+            res.append(a->points().p2().toString());
+        } else
         if ( p->type()==CPrimitive::PT_PATH ) { //-- Составной путь. Завершаем и начинаем новый
             if ( isClosed ) { res.append("Z"); }
             isClosed = (static_cast<CPath*>(*itm))->isClosed();
