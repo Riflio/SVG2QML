@@ -32,6 +32,7 @@ SOURCES += \
         SVG/Assets/fgradient.cpp \
         SVG/Classes/carc.cpp \
         SVG/Classes/cbezier.cpp \
+        SVG/Classes/ccircle.cpp \
         SVG/Classes/cdoc.cpp \
         SVG/Classes/cgroup.cpp \
         SVG/Classes/cimage.cpp \
@@ -81,6 +82,7 @@ HEADERS += \
     SVG/Assets/fgradient.h \
     SVG/Classes/carc.h \
     SVG/Classes/cbezier.h \
+    SVG/Classes/ccircle.h \
     SVG/Classes/cdoc.h \
     SVG/Classes/cgroup.h \
     SVG/Classes/cimage.h \

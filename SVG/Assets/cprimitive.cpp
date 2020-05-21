@@ -17,6 +17,15 @@ CPrimitive::CPrimitive(PrimitiveType type)
     needUpdate();
 }
 
+
+CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1)
+    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false),_type(type), _id("")
+{
+    _points.add(p1);
+    needUpdate();
+}
+
+
 CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2)
     : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false),_type(type), _id("")
 {

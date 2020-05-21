@@ -108,6 +108,9 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
             if ( _xml->name()=="title" ) {
                 _rootItem->setTitle(_xml->readElementText());
             } else
+            if ( _xml->name()=="circle" ) {
+                parseCircle(currentLevel, _xml);
+            } else
             if ( !defsParsed ) {
                 qWarning()<<"Unsupported element"<<_xml->name();
             }
@@ -765,6 +768,31 @@ bool SVGParser::parseCss(CNodeInterface * level, QXmlStreamReader * xml)
 {
     Q_UNUSED(level);
     return _cssParser->parse(xml->readElementText());
+}
+
+/**
+* @brief Парсим окружность
+* @param level
+* @param xml
+* @return
+*/
+bool SVGParser::parseCircle(CNodeInterface *level, QXmlStreamReader *xml)
+{
+    QString cx = xml->attributes().value("cx").toString();
+    QString cy = xml->attributes().value("cy").toString();
+    QString r = xml->attributes().value("r").toString();
+
+    CPoint center(cx.toDouble(), cy.toDouble());
+
+    CCircle * circle = new CCircle();
+    circle->setStyles(parseStyle(xml));
+
+    parseBaseAttributes(circle, xml);
+
+    CNodeInterface::addNext(level, circle);
+
+    return true;
+
 }
 
 
