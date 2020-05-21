@@ -1,4 +1,5 @@
 #include "carc.h"
+#include "math.h"
 #include "Algebra/equal.h"
 #include "Algebra/cvector2d.h"
 
@@ -136,7 +137,7 @@ CArc::TArcCenter CArc::getArcCenter(CPoint s, CPoint e, double rx, double ry, bo
     return {CPoint(centerX, centerY), ang1, ang2};
 }
 
-QList<CPoint> CArc::approxUnitArc(double ang1, double ang2)
+QList<CPoint> CArc::approxUnitArc(double ang1, double ang2) const
 {
     double a = 4 / 3 * tan(ang2 / 4);
     double x1 = cos(ang1);
@@ -153,7 +154,7 @@ QList<CPoint> CArc::approxUnitArc(double ang1, double ang2)
     return l;
 }
 
-CPoint CArc::mapToEllipse(CPoint p, double rx, double ry, double cosphi, double sinphi, CPoint cp)
+CPoint CArc::mapToEllipse(CPoint p, double rx, double ry, double cosphi, double sinphi, CPoint cp) const
 {
     double x = p.x()*rx;
     double y = p.y()*ry;

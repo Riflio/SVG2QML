@@ -5,7 +5,6 @@
 
 #include "cbezier.h"
 #include "cpath.h"
-#include "math.h"
 
 class CArc: public CPrimitive
 {
@@ -37,8 +36,8 @@ private:
     };
 
     TArcCenter getArcCenter(CPoint s, CPoint e, double rx, double ry, bool largeArc, bool sweep, double sinphi, double cosphi, double pxp, double pyp) const;
-    QList<CPoint> approxUnitArc(double ang1, double ang2);
-    CPoint mapToEllipse(CPoint p, double rx, double ry, double cosphi, double sinphi, CPoint cp);
+    QList<CPoint> approxUnitArc(double ang1, double ang2) const;
+    CPoint mapToEllipse(CPoint p, double rx, double ry, double cosphi, double sinphi, CPoint cp) const;
 };
 
 #endif // CARC_H
