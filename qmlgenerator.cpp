@@ -94,10 +94,19 @@ void QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml)
                     qml<<tab(lvl)<<"x1:"<<gr->startPoint().x()<<"; "<<"y1:"<<gr->startPoint().y()<<"; "<<"x2:"<<gr->endPoint().x()<<"; "<<"y2:"<<gr->endPoint().y()<<";"<<"\n";
                     makeGradientStops(gr, lvl, qml);
                 qml<<tab(--lvl)<<"}"<<"\n";
+            } else
+            if ( def->defType()==CDef::DF_RADIALGRADIENT ) {
+                FRadialGradient * gr = dynamic_cast<FRadialGradient*>(def);
+                qml<<tab(lvl++)<<"fillGradient: "<<"RadialGradient {"<<"\n";
+                    makeGradientStops(gr, lvl, qml);
+                qml<<tab(--lvl)<<"}"<<"\n";
+            } else {
+                qWarning()<<"Unsupported fill type"<<fill.toString();
             }
 
+
         } else {
-            qDebug()<<"Unsupported fill value url"<<fill.toString();
+            qWarning()<<"Unsupported fill value url"<<fill.toString();
         }
 
 
