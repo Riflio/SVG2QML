@@ -51,7 +51,7 @@ MeasureUnit::TMeasureUnitType MeasureUnit::type() const
 int MeasureUnit::asPx() const
 {
     if ( _type==MU_PX ) return _val;
-    if ( _type==MU_PT ) return _val*2.7; //TODO: Узнать, как правильно переводить
+    if ( _type==MU_PT ) return _val*1.827; //TODO: Разобраться, как правильно переводить...
 
     qWarning()<<"Unsupported conversion MeasureUnit from"<<_type<<"to px.";
     return 0;

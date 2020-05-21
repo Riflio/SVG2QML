@@ -18,10 +18,10 @@ public:
         MU_PERCENT
     };
 
-    MeasureUnit();
-    ~MeasureUnit();
+    MeasureUnit();    
     MeasureUnit(const MeasureUnit&other);
-    MeasureUnit(double val, TMeasureUnitType type);
+    MeasureUnit(double val, TMeasureUnitType type = MU_PT);
+    ~MeasureUnit();
 
     void setVal(double val);
     void setType(TMeasureUnitType type);
