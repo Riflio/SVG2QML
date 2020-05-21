@@ -43,12 +43,10 @@ SVGGenerator::GenerateStatus SVGGenerator::generate(QIODevice *device, CPrimitiv
             itm = itm->next;
         } else if ( itm->up!=nullptr ) {
             while(true) {
-                if ( itm->up==nullptr ) { itm = nullptr; break; }
-
                 if ( (static_cast<CPrimitive*>(itm))->type()==CPrimitive::PT_GROUP) {
                     _xml->writeEndElement();
                 }
-
+                if ( itm->up==nullptr ) { itm = nullptr; break; }
                 itm = itm->up;
                 if ( itm->next!=nullptr ) { itm = itm->next; break; }
             }
