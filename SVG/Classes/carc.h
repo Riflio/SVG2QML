@@ -1,0 +1,44 @@
+#ifndef CARC_H
+#define CARC_H
+
+#include "../Assets/cprimitive.h"
+
+#include "cbezier.h"
+#include "cpath.h"
+#include "math.h"
+
+class CArc: public CPrimitive
+{
+public:
+    CArc();
+    CArc(CPoint startPoint, double rx, double ry, double rotation, bool largeArc, bool sweep, CPoint endPoint);
+
+    double rx() const;
+    double ry() const;
+    double rotation() const;
+    bool largeArcFlag() const;
+    bool sweepFlag() const;
+
+    CPath * toPath() const;
+
+    const double TAU = M_PI*2;
+
+private:
+    double _rx;
+    double _ry;
+    double _rotation;
+    bool _largeArc;
+    bool _sweep;
+
+    struct TArcCenter {
+        CPoint p;
+        double ang1;
+        double ang2;
+    };
+
+    TArcCenter getArcCenter(CPoint s, CPoint e, double rx, double ry, bool largeArc, bool sweep, double sinphi, double cosphi, double pxp, double pyp) const;
+    QList<CPoint> approxUnitArc(double ang1, double ang2);
+    CPoint mapToEllipse(CPoint p, double rx, double ry, double cosphi, double sinphi, CPoint cp);
+};
+
+#endif // CARC_H
