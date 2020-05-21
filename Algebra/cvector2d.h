@@ -18,9 +18,10 @@ public:
     double y() const;
     CPoint point() const;
 
-    double length();
-    double dot(const CVector2D & that);
-    double cross(const CVector2D & that);
+    double length() const;
+    double dot(const CVector2D & that) const;
+    double cross(const CVector2D & that) const;
+    double angle(const CVector2D & that) const;
 
     CVector2D clon();
     CVector2D & divide(double scalar);

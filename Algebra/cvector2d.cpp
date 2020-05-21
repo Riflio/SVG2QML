@@ -28,7 +28,7 @@ double CVector2D::y() const
     return _p.y();
 }
 
-CPoint  CVector2D::point() const
+CPoint CVector2D::point() const
 {
     return _p;
 }
@@ -38,19 +38,34 @@ CVector2D  CVector2D::clon()
     return CVector2D(_p);
 }
 
-double CVector2D::length()
+double CVector2D::length() const
 {
     return sqrt(_p.x()*_p.x()+_p.y()*_p.y());
 }
 
-double CVector2D::dot(const CVector2D & that)
+double CVector2D::dot(const CVector2D & that) const
 {
     return _p.x()*that._p.x()+_p.y()*that._p.y();
 }
 
-double CVector2D::cross(const CVector2D & that)
+double CVector2D::cross(const CVector2D & that) const
 {
     return _p.x()*that._p.y()-_p.y()*that._p.x();
+}
+
+double CVector2D::angle(const CVector2D &that) const
+{
+    double sign = ( (x()*y() - that.x()*that.y())<0 )? -1 : 1;
+    double l1 = length();
+    double l2 = that.length();
+    double d = dot(that);
+
+    double div = d / ( l1 * l2 );
+
+    if ( div>1 ) { div = 1; }
+    if ( div<-1 ) { div = -1; }
+
+    return sign * acos(div);
 }
 
 CVector2D & CVector2D::divide(double scalar)
