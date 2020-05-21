@@ -506,7 +506,8 @@ CSS::Style SVGParser::parseStyle(QXmlStreamReader * xml)
     }
 
     //-- У элемента так же могут быть заданы стили как атрибуты элемента - занесём их в стили
-    QStringList cssTokens = {"stroke", "stroke-width", "fill", "stop-color", "stop-opacity"};
+    QStringList cssTokens = {"stroke", "stroke-width", "fill", "stop-color", "stop-opacity", "clip-path"};
+
     foreach(QString cssToken, cssTokens) {
         if ( xml->attributes().hasAttribute(cssToken) ) {
             QString val = xml->attributes().value(cssToken).toString();
@@ -529,9 +530,10 @@ bool SVGParser::parseClipPath(CNodeInterface **level, QXmlStreamReader *xml)
 {
     FClipPath * clipPath = new FClipPath();
    _defs[xml->attributes().value("id").toString()] = clipPath;
-   *level = clipPath;
 
-   //-- Дальше парсится как обычно, но добавляется тупо к нам, т.к. в clipPath могут быть и примитивы и хз что ещё.
+   *level = clipPath->clipPath;
+
+   //-- Дальше парсится как обычно, но добавляется тупо к clipPath->clipPath, т.к. в clipPath могут быть и примитивы и хз что ещё.
 
    return true;
 }

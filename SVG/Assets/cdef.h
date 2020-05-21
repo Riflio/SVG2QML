@@ -21,7 +21,6 @@ public:
 
     virtual TDefType defType() const { return DF_NONE;  }
 
-
 };
 
 #endif // CDEF_H

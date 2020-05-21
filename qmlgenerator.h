@@ -25,6 +25,8 @@ private:
     void makeStroke(CPrimitive * itm, int &lvl, QTextStream &qml);
     void makeGradientStops(FGradient * gr, int &lvl, QTextStream &qml);
 
+    void makeElement(CPrimitive * el, int &lvl, QTextStream &qml, const QString &rootID, bool firstInline=false);
+
 };
 
 #endif // QMLGENERATOR_H

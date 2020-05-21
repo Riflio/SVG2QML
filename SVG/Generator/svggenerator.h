@@ -19,6 +19,7 @@
 
 #include "SVG/Classes/flineargradient.h"
 #include "SVG/Classes/fradialgradient.h"
+#include "SVG/Classes/fclippath.h"
 
 #include "SVG/Assets/cdefs.h"
 

@@ -12,7 +12,7 @@ class FClipPath : public CDef
 public:
     explicit FClipPath();
 
-    CPrimitive * target;
+    CPrimitive * clipPath;
 
     virtual TDefType defType() const { return DF_CLIPPATH;  }
 
