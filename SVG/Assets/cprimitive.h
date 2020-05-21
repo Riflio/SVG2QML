@@ -26,7 +26,9 @@ public:
         PT_PATH,
         PT_GROUP,
         PT_IMAGE,
-        PT_POLYGON
+        PT_POLYGON,
+        PT_ARC,
+        PT_RECT
     };
 
     CPrimitive(const CPrimitive&other);
