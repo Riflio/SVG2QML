@@ -7,19 +7,21 @@ AppCore::AppCore(QObject *parent) : QObject(parent)
     _qmlGenerator = new QMLGenerator(this);
 }
 
-void AppCore::go()
+QString AppCore::generatedQMLPath() const
 {
+    return _generatedQMLPath;
+}
 
-    #ifdef Q_OS_WIN
-        QFile file("Z:/SVG2QML/tests/test1.svg");
-    #else
-        QFile file("/home/pavelk/Projects/SVG2QML/SVG2QML/tests/test1.svg");
-    #endif
+void AppCore::go(QString source, QString dest)
+{
+    QFile file(source);
 
     if ( !file.open(QIODevice::ReadOnly) ) {
         qWarning()<<"Unable open file";
         return;
     }
+
+    qInfo()<<"Begin parse SVG"<<source;
 
     SVGParser::ParseStatus st  = _parser->parse(&file);
 
@@ -28,15 +30,17 @@ void AppCore::go()
         return;
     }
 
-    qInfo()<<"PARSED!";
+    qInfo()<<"SVG Parsed!";
 
-    #ifdef Q_OS_WIN
-        QFile fileQml("Z:/SVG2QML/tests/test1_QML.txt");
-    #else
-        QFile fileQml("/home/pavelk/Projects/SVG2QML/SVG2QML/tests/test1.qml");
-    #endif
+    qInfo()<<"Begin create QML"<<dest;
 
-
+    QFile fileQml(dest);
     _qmlGenerator->generateQML(&fileQml, _parser->rootItem(), _parser->defs());
 
+    qInfo()<<"QML Created!";
+
+    _generatedQMLPath = dest;
+    emit generateQMLPathChanged();
+
 }
+

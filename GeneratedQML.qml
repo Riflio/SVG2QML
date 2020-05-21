@@ -1,7 +1,11 @@
-import QtQuick.Shapes 1.14
 import QtQuick 2.14
 
 Item {
-    id: svg2qml
+    id: generatedQML
+    property bool loaded: typeof(appCore)!=="undefined"
 
+    Loader {
+        anchors.fill: parent
+        source: (generatedQML.loaded)? "file:/"+appCore.generateQMLPath : ""
+    }
 }
