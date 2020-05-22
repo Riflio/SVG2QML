@@ -98,4 +98,5 @@ HEADERS += \
     qmlgenerator.h
 
 DISTFILES += \
+    tests/gradient_60_120.svg \
     tests/test1.svg
