@@ -11,10 +11,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc, argv);
 
+    /*
     QSurfaceFormat format;
     format.setSamples(16);
     QSurfaceFormat::setDefaultFormat(format);
-
+    */
 
     QCommandLineParser parser;
     parser.setApplicationDescription("SVG to QML converter.");
@@ -34,7 +35,7 @@ int main(int argc, char *argv[])
         dest = args[1];
     } else {
         #ifdef Q_OS_WIN
-            source = "Z:/SVG2QML/tests/joystick.svg";
+            source = "Z:/SVG2QML/tests/gradient_60_120.svg";
             dest = "Z:/SVG2QML/tests/test1_QML.qml";
         #else
             source = "/home/pavelk/Projects/SVG2QML/SVG2QML/tests/test1.svg");
