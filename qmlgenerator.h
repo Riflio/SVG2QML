@@ -21,9 +21,9 @@ private:
     QString tab(int c);
     QString sanitizeID(QString id);
 
-    void makeFill(CPrimitive * itm, int &lvl, QTextStream &qml);
-    void makeStroke(CPrimitive * itm, int &lvl, QTextStream &qml);
-    void makeGradientStops(FGradient * gr, int &lvl, QTextStream &qml);
+    void makeFill(CPrimitive * itm, int &lvl, QTextStream &qml, const QString &rootID);
+    void makeStroke(CPrimitive * itm, int &lvl, QTextStream &qml, const QString &rootID);
+    void makeGradientStops(FGradient * gr, int &lvl, QTextStream &qml, const QString &rootID);
 
     void makeElement(CPrimitive * el, int &lvl, QTextStream &qml, const QString &rootID, bool firstInline=false);
 

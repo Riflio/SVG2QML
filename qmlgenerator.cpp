@@ -28,6 +28,7 @@ SVGGenerator::GenerateStatus QMLGenerator::generateQML(QIODevice *device, CPrimi
     qml<<"Item {"<<"\n";
     qml<<tab(lvl+1)<<"id: "<<rootID<<"\n";
     qml<<tab(lvl+1)<<"property var scaleShape: "<<"Qt.size(1, 1)"<<"\n";
+    qml<<tab(lvl+1)<<"property bool thinkLines: "<<"true"<<"\n";
     lvl++;
 
     makeElement(rootItm, lvl, qml, rootID);
@@ -72,17 +73,17 @@ QString QMLGenerator::sanitizeID(QString id)
 * @param lvl
 * @param qml
 */
-void QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml)
+void QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, const QString &rootID)
 {
     if ( !itm->styles().has("fill") ) {
-        qml<<tab(lvl)<<"fillColor: \"transparent\""<<"\n";
+        qml<<tab(lvl)<<"fillColor: "<<"("<<rootID<<".thinkLines)? \"transparent\" : "<<"\"transparent\""<<"\n";
         return;
     }
 
     QVariant fill = itm->styles().get("fill");
 
     if ( fill.type()==QVariant::Color ) {
-        qml<<tab(lvl)<<"fillColor: \""<<fill.toString()<<"\""<<"\n";
+        qml<<tab(lvl)<<"fillColor: "<<"("<<rootID<<".thinkLines)? \"transparent\" : "<<"\""<<fill.toString()<<"\""<<"\n";
     } else
     if ( fill.type()==QVariant::Url ) {
         if ( CDefs::isCDefLink(fill.toUrl()) ) {            
@@ -97,13 +98,13 @@ void QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml)
                 FLinearGradient * gr = dynamic_cast<FLinearGradient*>(def);
                 qml<<tab(lvl++)<<"fillGradient: "<<"LinearGradient {"<<"\n";
                     qml<<tab(lvl)<<"x1:"<<gr->startPoint().x()<<"; "<<"y1:"<<gr->startPoint().y()<<"; "<<"x2:"<<gr->endPoint().x()<<"; "<<"y2:"<<gr->endPoint().y()<<";"<<"\n";
-                    makeGradientStops(gr, lvl, qml);
+                    makeGradientStops(gr, lvl, qml, rootID);
                 qml<<tab(--lvl)<<"}"<<"\n";
             } else
             if ( def->defType()==CDef::DF_RADIALGRADIENT ) {
                 FRadialGradient * gr = dynamic_cast<FRadialGradient*>(def);
-                qml<<tab(lvl++)<<"fillGradient: "<<"RadialGradient {"<<"\n";
-                    makeGradientStops(gr, lvl, qml);
+                qml<<tab(lvl++)<<"fillGradient: "<<" RadialGradient {"<<"\n";
+                    makeGradientStops(gr, lvl, qml, rootID);
                 qml<<tab(--lvl)<<"}"<<"\n";
             } else {
                 qWarning()<<"Unsupported fill type"<<fill.toString();
@@ -126,21 +127,20 @@ void QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml)
 * @param lvl
 * @param qml
 */
-void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
+void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml, const QString &rootID)
 {
-    if ( !itm->styles().has("stroke") ) {
-        return;
-    }
-
-    QVariant stroke = itm->styles().get("stroke");
-
-    if ( stroke.type()==QVariant::Color ) {
-        qml<<tab(lvl)<<"strokeColor: \""<<stroke.toString()<<"\""<<"\n";
-    } else
-    if ( stroke.toString()=="none" ) {
-        qml<<tab(lvl)<<"strokeColor: \"transparent\""<<"\n";
+    if ( itm->styles().has("stroke") ) {
+        QVariant stroke = itm->styles().get("stroke");
+        if ( stroke.type()==QVariant::Color ) {
+            qml<<tab(lvl)<<"strokeColor: "<<"("<<rootID<<".thinkLines)? \"black\" : "<<"\""<<stroke.toString()<<"\""<<"\n";
+        } else
+        if ( stroke.toString()=="none" ) {
+            qml<<tab(lvl)<<"strokeColor: "<<"("<<rootID<<".thinkLines)? \"black\"  : "<< "\"transparent\""<<"\n";
+        } else {
+            qWarning()<<"Unsupported stroke color value: "<<stroke.toString();
+        }
     } else {
-        qWarning()<<"Unsupported stroke color value: "<<stroke.toString();
+        qml<<tab(lvl)<<"strokeColor: "<<"("<<rootID<<".thinkLines)? \"black\" : "<<"\"transparent\""<<"\n";
     }
 
     if ( itm->styles().has("stroke-width") ) {
@@ -150,7 +150,7 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
             CSS::MeasureUnit mu = strokeWidth.value<CSS::MeasureUnit>();
 
             if ( mu.type()==CSS::MeasureUnit::MU_PX ||  mu.type()==CSS::MeasureUnit::MU_PT) {
-                qml<<tab(lvl)<<"strokeWidth: "<<mu.asPx()<<"\n";
+                qml<<tab(lvl)<<"strokeWidth: "<<"("<<rootID<<".thinkLines)? 1 : "<<mu.asPx()<<"\n";
             } else {
                 qWarning()<<"Unsupported measure unit for stroke-width:"<<mu;
             }
@@ -158,6 +158,8 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
         } else {
             qWarning()<<"Unsupported stroke-width value"<<strokeWidth.toString();
         }
+    } else {
+         qml<<tab(lvl)<<"strokeWidth: "<<"("<<rootID<<".thinkLines)? 1 : 0"<<"\n";
     }
 }
 
@@ -167,10 +169,10 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
 * @param lvl
 * @param qml
 */
-void QMLGenerator::makeGradientStops(FGradient *gr, int &lvl, QTextStream &qml)
+void QMLGenerator::makeGradientStops(FGradient *gr, int &lvl, QTextStream &qml, const QString &rootID)
 {
     foreach(FGradient::TGradientStop gs, gr->stops()) {
-        qml<<tab(lvl)<<"GradientStop { position: "<<gs.position<<"; color: \""<<gs.color.name(QColor::HexArgb)<<"\"; } "<<"\n";
+        qml<<tab(lvl)<<"GradientStop { position: "<<gs.position<<"; color: "<<"("<<rootID<<".thinkLines)? \"transparent\" : "<<"\""<<gs.color.name(QColor::HexArgb)<<"\"; } "<<"\n";
     }
 }
 
@@ -191,9 +193,11 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
             CPrimitive * level = i.level<CPrimitive*>();
 
             if ( level->type()==CPrimitive::PT_GROUP ) {
-                qml<<tab(lvl++)<<"Item {"<<"\n";
+                qml<<tab((firstInline)?0:lvl)<<"Item {"<<"\n";
+                lvl++;
                 makeID(level, lvl, qml);
-                qml<<tab(lvl)<<"anchors.fill: parent"<<"\n";
+                qml<<tab(lvl)<<"width: "<<rootID<<".width"<<"\n";
+                qml<<tab(lvl)<<"height: "<<rootID<<".height"<<"\n";
             }
         }
 
@@ -213,7 +217,7 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
                 continue;
             }
 
-            qml<<tab((firstInline)?0:lvl)<<"Shape {"<<"\n";
+            qml<<tab(lvl)<<"Shape {"<<"\n";
                 makeID(p, ++lvl, qml);
                 qml<<tab(lvl)<<"width: "<<rootID<<".width"<<"\n";
                 qml<<tab(lvl)<<"height: "<<rootID<<".height"<<"\n";
@@ -227,8 +231,8 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
                     qml<<tab(lvl)<<"}"<<"\n";
 
                     //-- Styles
-                    makeFill(p, lvl, qml);
-                    makeStroke(p, lvl, qml);
+                    makeFill(p, lvl, qml, rootID);
+                    makeStroke(p, lvl, qml, rootID);
 
                 qml<<tab(--lvl)<<"}"<<"\n";
 
