@@ -38,29 +38,33 @@ bool CCircle::toPath()
     CPath * path = new CPath();
     CPoint center = _points.p1();
 
-    CBezier * b1 = drawBezierEllipseQuarter(center, QSize(-_radius, _radius));
-    CBezier * b2 = drawBezierEllipseQuarter(center, QSize(_radius, _radius));
-    CBezier * b3 = drawBezierEllipseQuarter(center, QSize(_radius, -_radius));
-    CBezier * b4 = drawBezierEllipseQuarter(center, QSize(-_radius, -_radius));
+    CBezier * b1 = drawBezierEllipseQuarter(center, QSize(-_radius, -_radius));
+    CBezier * b2 = drawBezierEllipseQuarter(center, QSize(_radius, -_radius));
+    CBezier * b3 = drawBezierEllipseQuarter(center, QSize(_radius, _radius));
+    CBezier * b4 = drawBezierEllipseQuarter(center, QSize(-_radius, _radius));
+
+    b2->reverse();
+    b4->reverse();
 
     CNodeInterface::addNext(path, b1);
     CNodeInterface::addNext(path, b2);
     CNodeInterface::addNext(path, b3);
     CNodeInterface::addNext(path, b4);
-
     CNodeInterface::addNext(this, path);
 
+    path->setIsClosed(true);
     return true;
 }
 
 CBezier* CCircle::drawBezierEllipseQuarter(CPoint center, QSize size) const
 {
-    CBezier * b = new CBezier(
-        CPoint(center.x()-size.width(), center.y()-size.height()),
-        CPoint(center.x()-size.width(), center.y()-(0.552*size.height())),
-        CPoint(center.x()-(0.552*size.width()), center.y()-size.height()),
-        CPoint(center.x(), center.y()-size.height())
-    );
+    double c = 0.55191502449;
+    CPoint p1(center.x()-size.width(), center.y());
+    CPoint p2(center.x()-size.width(), center.y()-(c*size.height()));
+    CPoint p3(center.x()-(c*size.width()), center.y()-size.height());
+    CPoint p4(center.x(), center.y()-size.height());
+
+    CBezier * b = new CBezier(p1, p2, p3, p4);
 
     return b;
 }
