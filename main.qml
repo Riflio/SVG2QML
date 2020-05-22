@@ -7,10 +7,14 @@ Window {
     height: 480
     title: qsTr("SVG to QML converter. By pavelk.ru. V1.0.")
 
-
-
-    GeneratedQML {
+    Rectangle {
         anchors.fill: parent
+        color: "transparent"
+
+        GeneratedQML {
+            anchors.fill: parent
+        }
+
     }
 
 }
