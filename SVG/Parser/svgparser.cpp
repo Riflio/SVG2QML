@@ -614,6 +614,8 @@ bool SVGParser::parseRadialGradient(CNodeInterface **level, QXmlStreamReader *xm
     if ( xml->attributes().hasAttribute("cx") ) { radialGradient->setCX(CSS::MeasureUnit(xml->attributes().value("cx").toFloat()).asPx()); }
     if ( xml->attributes().hasAttribute("cy") ) { radialGradient->setCY(CSS::MeasureUnit(xml->attributes().value("cy").toFloat()).asPx()); }
     if ( xml->attributes().hasAttribute("r") ) { radialGradient->setRadius(CSS::MeasureUnit(xml->attributes().value("r").toFloat()).asPx()); }
+    if ( xml->attributes().hasAttribute("fx") ) { radialGradient->setFX(CSS::MeasureUnit(xml->attributes().value("fx").toFloat()).asPx()); }
+    if ( xml->attributes().hasAttribute("fy") ) { radialGradient->setFY(CSS::MeasureUnit(xml->attributes().value("fy").toFloat()).asPx()); }
 
     bool gs = parseGradientStops(radialGradient, xml);
 
@@ -777,9 +779,10 @@ bool SVGParser::parseCss(CNodeInterface * level, QXmlStreamReader * xml)
 */
 bool SVGParser::parseCircle(CNodeInterface *level, QXmlStreamReader *xml)
 {
-    double cx = xml->attributes().value("cx", "0").toDouble();
-    double cy = xml->attributes().value("cy", "0").toDouble();
-    double r = xml->attributes().value("r", "1").toDouble();
+    double cx = xml->attributes().value("cx").toDouble();
+    double cy = xml->attributes().value("cy").toDouble();
+    double r = xml->attributes().value("r").toDouble();
+
     CPoint center(cx, cy);
 
     CMatrix matrix = parseTransform(xml);

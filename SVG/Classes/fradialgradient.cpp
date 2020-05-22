@@ -21,6 +21,16 @@ void FRadialGradient::setCY(float y)
     _centerPoint.setY(y);
 }
 
+void FRadialGradient::setFX(float x)
+{
+    _offsetPoint.setX(x);
+}
+
+void FRadialGradient::setFY(float y)
+{
+    _offsetPoint.setY(y);
+}
+
 void FRadialGradient::setCenterPoint(float x, float y)
 {
     _centerPoint.setX(x);
@@ -30,6 +40,17 @@ void FRadialGradient::setCenterPoint(float x, float y)
 QPointF FRadialGradient::centerPoint() const
 {
     return _centerPoint;
+}
+
+void FRadialGradient::setOffsetPoint(float x, float y)
+{
+    _offsetPoint.setX(x);
+    _offsetPoint.setY(y);
+}
+
+QPointF FRadialGradient::offsetPoint() const
+{
+    return _offsetPoint;
 }
 
 void FRadialGradient::setRadius(float r)

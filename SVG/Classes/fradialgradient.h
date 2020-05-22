@@ -12,9 +12,14 @@ public:
 
     void setCX(float x);
     void setCY(float y);
+    void setFX(float x);
+    void setFY(float y);
 
     void setCenterPoint(float x, float y);
     QPointF centerPoint() const;
+
+    void setOffsetPoint(float x, float y);
+    QPointF offsetPoint() const;
 
     void setRadius(float r);
     float radius() const;
@@ -23,6 +28,7 @@ public:
 
 private:
     QPointF _centerPoint;
+    QPointF _offsetPoint;
     float _radius;
 
 };
