@@ -28,7 +28,7 @@ SVGGenerator::GenerateStatus QMLGenerator::generateQML(QIODevice *device, CPrimi
     qml<<"Item {"<<"\n";
     qml<<tab(lvl+1)<<"id: "<<rootID<<"\n";
     qml<<tab(lvl+1)<<"property var scaleShape: "<<"Qt.size(1, 1)"<<"\n";
-    qml<<tab(lvl+1)<<"property bool thinkLines: "<<"true"<<"\n";
+    qml<<tab(lvl+1)<<"property bool thinkLines: "<<"false"<<"\n";
     lvl++;
 
     makeElement(rootItm, lvl, qml, rootID);
@@ -97,13 +97,20 @@ void QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, const Q
             if ( def->defType()==CDef::DF_LINEARGRADIENT ) {
                 FLinearGradient * gr = dynamic_cast<FLinearGradient*>(def);
                 qml<<tab(lvl++)<<"fillGradient: "<<"LinearGradient {"<<"\n";
-                    qml<<tab(lvl)<<"x1:"<<gr->startPoint().x()<<"; "<<"y1:"<<gr->startPoint().y()<<"; "<<"x2:"<<gr->endPoint().x()<<"; "<<"y2:"<<gr->endPoint().y()<<";"<<"\n";
+                    qml<<tab(lvl)<<"x1:"<<gr->startPoint().x()<<"; "<<"y1:"<<gr->startPoint().y()<<"\n";
+                    qml<<tab(lvl)<<"x2:"<<gr->endPoint().x()<<"; "<<"y2:"<<gr->endPoint().y()<<"\n";
                     makeGradientStops(gr, lvl, qml, rootID);
                 qml<<tab(--lvl)<<"}"<<"\n";
             } else
             if ( def->defType()==CDef::DF_RADIALGRADIENT ) {
                 FRadialGradient * gr = dynamic_cast<FRadialGradient*>(def);
                 qml<<tab(lvl++)<<"fillGradient: "<<" RadialGradient {"<<"\n";
+                    qml<<tab(lvl)<<"centerX: "<<gr->centerPoint().x()<<"; "<<"centerY: "<<gr->centerPoint().y()<<";"<<"\n";
+                    qml<<tab(lvl);
+                    qml<<"focalX: "<<((gr->focalPoint().x()==0)? "centerX" : QString::number(gr->focalPoint().x()) )<<"; ";
+                    qml<<"focalY: "<<((gr->focalPoint().y()==0)? "centerY" : QString::number(gr->focalPoint().y()))<<";"<<"\n";
+                    qml<<tab(lvl)<<"centerRadius: "<<gr->radius()<<"\n";
+                    qml<<tab(lvl)<<"focalRadius: "<<gr->focalRadius()<<"\n";
                     makeGradientStops(gr, lvl, qml, rootID);
                 qml<<tab(--lvl)<<"}"<<"\n";
             } else {

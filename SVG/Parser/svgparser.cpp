@@ -587,10 +587,10 @@ bool SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamReader *xm
     _defs[_xml->attributes().value("id").toString()] = linearGradient;
     *level = linearGradient;
 
-    if ( xml->attributes().hasAttribute("x1") ) { linearGradient->setX1(CSS::MeasureUnit(xml->attributes().value("x1").toFloat()).asPx()); }
-    if ( xml->attributes().hasAttribute("y1") ) { linearGradient->setY1(CSS::MeasureUnit(xml->attributes().value("y1").toFloat()).asPx()); }
-    if ( xml->attributes().hasAttribute("x2") ) { linearGradient->setX2(CSS::MeasureUnit(xml->attributes().value("x2").toFloat()).asPx()); }
-    if ( xml->attributes().hasAttribute("y2") ) { linearGradient->setY2(CSS::MeasureUnit(xml->attributes().value("y2").toFloat()).asPx()); }
+    if ( xml->attributes().hasAttribute("x1") ) { linearGradient->setX1(CSS::MeasureUnit(xml->attributes().value("x1").toFloat()).val()); }
+    if ( xml->attributes().hasAttribute("y1") ) { linearGradient->setY1(CSS::MeasureUnit(xml->attributes().value("y1").toFloat()).val()); }
+    if ( xml->attributes().hasAttribute("x2") ) { linearGradient->setX2(CSS::MeasureUnit(xml->attributes().value("x2").toFloat()).val()); }
+    if ( xml->attributes().hasAttribute("y2") ) { linearGradient->setY2(CSS::MeasureUnit(xml->attributes().value("y2").toFloat()).val()); }
 
     bool gs = parseGradientStops(linearGradient, xml);
 
@@ -611,11 +611,12 @@ bool SVGParser::parseRadialGradient(CNodeInterface **level, QXmlStreamReader *xm
     _defs[_xml->attributes().value("id").toString()] = radialGradient;
     *level = radialGradient;
 
-    if ( xml->attributes().hasAttribute("cx") ) { radialGradient->setCX(CSS::MeasureUnit(xml->attributes().value("cx").toFloat()).asPx()); }
-    if ( xml->attributes().hasAttribute("cy") ) { radialGradient->setCY(CSS::MeasureUnit(xml->attributes().value("cy").toFloat()).asPx()); }
-    if ( xml->attributes().hasAttribute("r") ) { radialGradient->setRadius(CSS::MeasureUnit(xml->attributes().value("r").toFloat()).asPx()); }
-    if ( xml->attributes().hasAttribute("fx") ) { radialGradient->setFX(CSS::MeasureUnit(xml->attributes().value("fx").toFloat()).asPx()); }
-    if ( xml->attributes().hasAttribute("fy") ) { radialGradient->setFY(CSS::MeasureUnit(xml->attributes().value("fy").toFloat()).asPx()); }
+    if ( xml->attributes().hasAttribute("cx") ) { radialGradient->setCX(CSS::MeasureUnit(xml->attributes().value("cx").toFloat()).val()); }
+    if ( xml->attributes().hasAttribute("cy") ) { radialGradient->setCY(CSS::MeasureUnit(xml->attributes().value("cy").toFloat()).val()); }
+    if ( xml->attributes().hasAttribute("r") ) { radialGradient->setRadius(CSS::MeasureUnit(xml->attributes().value("r").toFloat()).val()); }
+    if ( xml->attributes().hasAttribute("fx") ) { radialGradient->setFX(CSS::MeasureUnit(xml->attributes().value("fx").toFloat()).val()); }
+    if ( xml->attributes().hasAttribute("fy") ) { radialGradient->setFY(CSS::MeasureUnit(xml->attributes().value("fy").toFloat()).val()); }
+    if ( xml->attributes().hasAttribute("fr") ) { radialGradient->setFocalRadius(CSS::MeasureUnit(xml->attributes().value("fr").toFloat()).val()); }
 
     bool gs = parseGradientStops(radialGradient, xml);
 
