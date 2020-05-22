@@ -67,7 +67,7 @@ private:
     bool parseCss(CNodeInterface * level, QXmlStreamReader * xml);
     bool parseCircle(CNodeInterface * level, QXmlStreamReader * xml);
 
-    CMatrix parseTransform(QString transform);
+    CMatrix parseTransform(QXmlStreamReader * xml);
     CSS::Style parseStyle(QXmlStreamReader * xml);
 
     bool parseClipPath(CNodeInterface ** level, QXmlStreamReader * xml);

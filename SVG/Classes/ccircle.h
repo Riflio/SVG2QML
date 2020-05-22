@@ -2,6 +2,7 @@
 #define CCIRCLE_H
 
 #include "../Assets/cprimitive.h"
+#include "cbezier.h"
 #include "cpath.h"
 
 class CCircle: public CPrimitive
@@ -14,10 +15,12 @@ public:
     void setRadius(double radius);
     double radius() const;
 
-    CPath * toPath() const;
+    bool toPath();
 
 private:
     double _radius;
+
+    CBezier* drawBezierEllipseQuarter(CPoint center, QSize size) const;
 };
 
 #endif // CCIRCLE_H

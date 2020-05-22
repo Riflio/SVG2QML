@@ -237,6 +237,15 @@ void CPrimitive::scale(double sX, double sY)
     needUpdate(); //TODO: Можно просто так же маштабировать ограничительную рамку, если в дальнейшем только она из изменяемых останется
 }
 
+/**
+* @brief Преобразовываем себя в путь и добавляем к себе же уровнем ниже
+* @return
+*/
+bool CPrimitive::toPath()
+{
+    return false;
+}
+
 QString CPrimitive::ID() const
 {
     return _id;

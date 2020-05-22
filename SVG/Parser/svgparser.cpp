@@ -145,40 +145,42 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
 
 /**
 * @brief Парсим трансформации и отдаём в виде матрицы
-* @param transform
+* @param xml
 * @return
 */
-CMatrix SVGParser::parseTransform(QString transform)
+CMatrix SVGParser::parseTransform(QXmlStreamReader * xml)
 {
     CMatrix  matrix(3, 3);
 
-    if ( transform!="" ) {
-        QRegExp rxTransform("(\\w*)\\((.*)\\)"); //-- получаем тип трансформации и её параметры
-        QRegExp rxTransformParams("([-+]?\\d{1,10}(\\.\\d{1,10})?(e[+-]\\d{1,10})?)"); //-- Разбираем параметры на отдельные
+    QString transform = xml->attributes().value("transform").toString();
+    if ( transform.isEmpty() ) return matrix;
 
-        if (rxTransform.indexIn(transform, 0)==-1) throw 33;
 
-        QString command = rxTransform.cap(1);
+    QRegExp rxTransform("(\\w*)\\((.*)\\)"); //-- получаем тип трансформации и её параметры
+    QRegExp rxTransformParams("([-+]?\\d{1,10}(\\.\\d{1,10})?(e[+-]\\d{1,10})?)"); //-- Разбираем параметры на отдельные
 
-        CMatrix::TMatrix mParams;
+    if (rxTransform.indexIn(transform, 0)==-1) throw 33;
 
-        int pos =0, i =0;
-        while (( pos = rxTransformParams.indexIn(rxTransform.cap(2), pos)) != -1) {
-            mParams.insert( i, rxTransformParams.cap(1).toDouble() );
-            i++;
-            pos += rxTransformParams.matchedLength();
-        }
+    QString command = rxTransform.cap(1);
 
-        if (command == "matrix") { //-- готовая матрица
-            if ( mParams.count() <6 ) throw 23;
-            matrix.set(2, 3, mParams, CMatrix::SET_BY_COLS);
-        } else
-        if (command == "translate") {
-            if ( mParams.count() <2 ) throw 24;
-            matrix.translate(mParams[0], mParams[1]);
-        } else {
-            throw 25;
-        }
+    CMatrix::TMatrix mParams;
+
+    int pos =0, i =0;
+    while (( pos = rxTransformParams.indexIn(rxTransform.cap(2), pos)) != -1) {
+        mParams.insert( i, rxTransformParams.cap(1).toDouble() );
+        i++;
+        pos += rxTransformParams.matchedLength();
+    }
+
+    if (command == "matrix") { //-- готовая матрица
+        if ( mParams.count() <6 ) throw 23;
+        matrix.set(2, 3, mParams, CMatrix::SET_BY_COLS);
+    } else
+    if (command == "translate") {
+        if ( mParams.count() <2 ) throw 24;
+        matrix.translate(mParams[0], mParams[1]);
+    } else {
+        throw 25;
     }
 
     return matrix;
@@ -200,7 +202,7 @@ bool SVGParser::parseGroup(CNodeInterface **level, QXmlStreamReader * xml)
 
     *level = CNodeInterface::levelDown(*level, g);
 
-    _globalMatrix = parseTransform(xml->attributes().value("transform").toString()); //TODO: Домножать новую, что бы не затирать прежнюю?
+    _globalMatrix = parseTransform(xml); //TODO: Домножать новую, что бы не затирать прежнюю?
 
     return true;
 }
@@ -217,9 +219,8 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
     CNodeInterface::addNext(level, path);
 
     QString pathD = xml->attributes().value("d").toString();
-    QString transforms = xml->attributes().value("transform").toString();
 
-    CMatrix matrix = parseTransform(transforms);
+    CMatrix matrix = parseTransform(xml);
 
     CSS::Style style = parseStyle(xml);
     path->setStyles(style);
@@ -495,8 +496,7 @@ bool SVGParser::parseRect(CNodeInterface *level, QXmlStreamReader *xml)
 
     CNodeInterface::addNext(level, rect);
 
-    QString transforms = xml->attributes().value("transform").toString();
-    CMatrix matrix = parseTransform(transforms);
+    CMatrix matrix = parseTransform(xml);
     CSS::Style style = parseStyle(xml);
 
     double x = xml->attributes().value("x").toDouble();
@@ -729,10 +729,9 @@ bool SVGParser::parseImage(CNodeInterface *level, QXmlStreamReader * xml)
     //TODO: Доделать
     QString width = xml->attributes().value("width").toString();
     QString height = xml->attributes().value("height").toString();
-    QString data = xml->attributes().value("xlink:href").toString();
-    QString transforms = xml->attributes().value("transform").toString();
+    QString data = xml->attributes().value("xlink:href").toString();    
 
-    CMatrix transformsMatrix = parseTransform(transforms);
+    CMatrix transformsMatrix = parseTransform(xml);
 
     transformsMatrix.multiplication(_globalMatrix);
 
@@ -778,13 +777,16 @@ bool SVGParser::parseCss(CNodeInterface * level, QXmlStreamReader * xml)
 */
 bool SVGParser::parseCircle(CNodeInterface *level, QXmlStreamReader *xml)
 {
-    QString cx = xml->attributes().value("cx").toString();
-    QString cy = xml->attributes().value("cy").toString();
-    QString r = xml->attributes().value("r").toString();
+    double cx = xml->attributes().value("cx", "0").toDouble();
+    double cy = xml->attributes().value("cy", "0").toDouble();
+    double r = xml->attributes().value("r", "1").toDouble();
+    CPoint center(cx, cy);
 
-    CPoint center(cx.toDouble(), cy.toDouble());
+    CMatrix matrix = parseTransform(xml);
+    matrix.multiplication(_globalMatrix);
 
-    CCircle * circle = new CCircle();
+    center.transform(matrix);
+    CCircle * circle = new CCircle(center, r);
     circle->setStyles(parseStyle(xml));
 
     parseBaseAttributes(circle, xml);

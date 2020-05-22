@@ -64,6 +64,8 @@ public:
     virtual void rotate(const CPoint &center, double angle);
     virtual void scale(double sX, double sY);
 
+    virtual bool toPath();
+
     QString ID() const;
     void setID(QString id);
 

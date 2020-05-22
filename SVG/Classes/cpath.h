@@ -12,6 +12,7 @@ public:
 
     void reverse();
 
+    bool toPath() { return true; }
 
 private:
     bool _isClosed;

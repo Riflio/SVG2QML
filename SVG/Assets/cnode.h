@@ -117,26 +117,85 @@ public:
         node->prev = nullptr;
     }
 
+};
+
+/**
+* @brief Пробегаемся по всем итемам с учётом уровней
+*/
+class CNodeInterfaceIterator
+{
+public:
+    CNodeInterfaceIterator(CNodeInterface * rootItm): _rootItm(rootItm), _curItm(rootItm), _curLevel(rootItm), _curType(IT_NONE) {
+        if ( _curItm!=nullptr ) { _curType = IT_STARTELEMENT; }
+    }
+
+    //-- Устанавливаем при переходе к каждому элементу
+    enum IterationType: int {
+        IT_NONE = 2,
+        IT_STARTELEMENT = 4,
+        IT_STARTLEVEL = 8,
+        IT_ENDLEVEL = 16
+    };
+
     /**
-    * @brief Перебираем все итемы по очереди
-    * @param item
+    * @brief Переходим к следующему элементу
+    * @return
     */
-    static CNodeInterface * iterator(CNodeInterface * itm)
+    bool next()
     {
-        if ( itm->down!=nullptr ) {
-            return itm->down;
-        }  else if ( itm->next!=nullptr ) {
-            return itm->next;
-        } else if ( itm->up!=nullptr ) {
-            while(true) {
-                if ( itm->up==nullptr ) { return nullptr; }
-                itm = itm->up;
-                if ( itm->next!=nullptr ) { return itm->next; }
-            }
-        } else {
-            return nullptr;
+        if ( _curItm==nullptr ) { return false; }
+
+        if ( (_curType&IT_STARTELEMENT) && (_curItm->down!=nullptr) ) {
+            _curLevel = _curItm;
+            _curItm = _curItm->down;
+            _curType = (IT_STARTELEMENT | IT_STARTLEVEL);
+            return true;
+        } else
+        if ( _curItm->next!=nullptr ) {
+            _curItm = _curItm->next;
+            _curType = IT_STARTELEMENT;
+            return true;
+        } else
+        if ( _curItm->up!=nullptr ) {
+            _curItm = _curItm->up;
+            _curLevel = _curItm;
+            _curType = IT_ENDLEVEL;
+            return true;
         }
-     }
+
+        return false;
+    }
+
+    /**
+    * @brief Переходим сразу на следующий уровень и не важно в каком месте сейчас
+    * @return
+    */
+    bool nextLevel()
+    {
+        if ( _curItm->last!=nullptr ) { _curItm = _curItm->last; }
+        if ( _curItm->up==nullptr ) { _curItm = nullptr; return false; }
+        _curItm = _curItm->up;
+        _curLevel = _curItm;
+        _curType = IT_ENDLEVEL;
+        return true;
+    }
+
+    template<class T=CNodeInterface*>
+    T item() const { return static_cast<T>(_curItm); }
+
+    template<class T=CNodeInterface*>
+    T level() const { return static_cast<T>(_curLevel); }
+
+    template<class T=CNodeInterface*>
+    T rootItem() const { return static_cast<T>(_rootItm); }
+
+    int type() const { return _curType; }
+
+private:
+    CNodeInterface * _rootItm;
+    CNodeInterface * _curItm;
+    CNodeInterface * _curLevel;
+    int _curType;
 };
 
 #endif // CNODE_H

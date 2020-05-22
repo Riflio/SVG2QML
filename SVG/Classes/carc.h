@@ -18,7 +18,7 @@ public:
     bool largeArcFlag() const;
     bool sweepFlag() const;
 
-    CPath * toPath() const;
+    bool toPath();
 
     const double TAU = M_PI*2;
 

@@ -17,6 +17,7 @@
 #include "SVG/Classes/cgroup.h"
 #include "SVG/Classes/cimage.h"
 #include "SVG/Classes/carc.h"
+#include "SVG/Classes/ccircle.h"
 
 #include "SVG/Classes/flineargradient.h"
 #include "SVG/Classes/fradialgradient.h"
@@ -43,7 +44,7 @@ signals:
 public slots:
 
 protected:
-    QString generatePath(CNodeInterface **itm);
+    QString generatePath(CNodeInterface *item);
 
 private:
     QXmlStreamWriter * _xml;

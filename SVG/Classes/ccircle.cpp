@@ -30,42 +30,38 @@ double CCircle::radius() const
 }
 
 /**
-* @brief Преобразуем в путь
+* @brief Преобразуем в путь и добавляем к себе вниз
 * @return
 */
-CPath *CCircle::toPath() const
+bool CCircle::toPath()
 {
-/*
-function drawBezierOvalQuarter(centerX, centerY, sizeX, sizeY) {
-    ctx.beginPath();
-    ctx.moveTo(
-        centerX - (sizeX),
-        centerY - (0)
+    CPath * path = new CPath();
+    CPoint center = _points.p1();
+
+    CBezier * b1 = drawBezierEllipseQuarter(center, QSize(-_radius, _radius));
+    CBezier * b2 = drawBezierEllipseQuarter(center, QSize(_radius, _radius));
+    CBezier * b3 = drawBezierEllipseQuarter(center, QSize(_radius, -_radius));
+    CBezier * b4 = drawBezierEllipseQuarter(center, QSize(-_radius, -_radius));
+
+    CNodeInterface::addNext(path, b1);
+    CNodeInterface::addNext(path, b2);
+    CNodeInterface::addNext(path, b3);
+    CNodeInterface::addNext(path, b4);
+
+    CNodeInterface::addNext(this, path);
+
+    return true;
+}
+
+CBezier* CCircle::drawBezierEllipseQuarter(CPoint center, QSize size) const
+{
+    CBezier * b = new CBezier(
+        CPoint(center.x()-size.width(), center.y()-size.height()),
+        CPoint(center.x()-size.width(), center.y()-(0.552*size.height())),
+        CPoint(center.x()-(0.552*size.width()), center.y()-size.height()),
+        CPoint(center.x(), center.y()-size.height())
     );
-    ctx.bezierCurveTo(
-        centerX - (sizeX),
-        centerY - (0.552 * sizeY),
-        centerX - (0.552 * sizeX),
-        centerY - (sizeY),
-        centerX - (0),
-        centerY - (sizeY)
-    );
-        ctx.stroke();
+
+    return b;
 }
 
-function drawBezierOval(centerX, centerY, sizeX, sizeY) {
-    drawBezierOvalQuarter(centerX, centerY, -sizeX, sizeY);
-    drawBezierOvalQuarter(centerX, centerY, sizeX, sizeY);
-    drawBezierOvalQuarter(centerX, centerY, sizeX, -sizeY);
-    drawBezierOvalQuarter(centerX, centerY, -sizeX, -sizeY);
-}
-
-function drawBezierCircle(centerX, centerY, size) {
-    drawBezierOval(centerX, centerY, size, size)
-}
-
-drawBezierCircle(200, 200, 64)
-
-*/
-
-}

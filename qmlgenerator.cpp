@@ -27,7 +27,7 @@ SVGGenerator::GenerateStatus QMLGenerator::generateQML(QIODevice *device, CPrimi
 
     qml<<"Item {"<<"\n";
     qml<<tab(lvl+1)<<"id: "<<rootID<<"\n";
-    qml<<tab(lvl+1)<<"property var scaleShape: "<<"Qt.size(2, 2)"<<"\n";
+    qml<<tab(lvl+1)<<"property var scaleShape: "<<"Qt.size(1, 1)"<<"\n";
     lvl++;
 
     makeElement(rootItm, lvl, qml, rootID);
@@ -182,13 +182,37 @@ void QMLGenerator::makeGradientStops(FGradient *gr, int &lvl, QTextStream &qml)
 */
 void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const QString &rootID, bool firstInline)
 {
-    CNodeInterface * itm = el->down;
-    do {
-        CPrimitive * p = dynamic_cast<CPrimitive*>(itm);
+    CNodeInterfaceIterator i(el);
+    while( i.next() ) {
 
-        if ( p==nullptr ) break;
+        CPrimitive * p = i.item<CPrimitive*>();
 
-        if ( p->type()==CPrimitive::PT_PATH ) {
+        if ( (i.type()&CNodeInterfaceIterator::IT_STARTLEVEL) ) {
+            CPrimitive * level = i.level<CPrimitive*>();
+
+            if ( level->type()==CPrimitive::PT_GROUP ) {
+                qml<<tab(lvl++)<<"Item {"<<"\n";
+                makeID(level, lvl, qml);
+                qml<<tab(lvl)<<"anchors.fill: parent"<<"\n";
+            }
+        }
+
+        if ( (i.type()&CNodeInterfaceIterator::IT_STARTELEMENT) && (p->type()==CPrimitive::PT_PATH || p->type()==CPrimitive::PT_CIRCLE) ) {
+            QString pathCommnads = "";
+
+            if ( p->type()==CPrimitive::PT_CIRCLE ) {
+                CCircle * circle = static_cast<CCircle*>(p);
+                circle->toPath();
+                pathCommnads = generatePath(circle->down);
+            } else
+            if ( p->type()==CPrimitive::PT_PATH ) {
+                CPath * path = static_cast<CPath*>(p);
+                pathCommnads = generatePath(path);
+            } else {
+                qWarning()<<"Unsupported SVG element"<<p->type();
+                continue;
+            }
+
             qml<<tab((firstInline)?0:lvl)<<"Shape {"<<"\n";
                 makeID(p, ++lvl, qml);
                 qml<<tab(lvl)<<"width: "<<rootID<<".width"<<"\n";
@@ -199,7 +223,7 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
                     qml<<tab(lvl)<<"scale: "<<rootID<<".scaleShape"<<"\n";
 
                     qml<<tab(lvl)<<"PathSvg {"<<"\n";
-                        qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(generatePath(&itm))<<"\n";
+                        qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommnads)<<"\n";
                     qml<<tab(lvl)<<"}"<<"\n";
 
                     //-- Styles
@@ -227,34 +251,20 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
                 }
 
             qml<<tab(--lvl)<<"}"<<"\n";
+
+            i.nextLevel();
+            continue;
         }
 
-        if ( p->type()==CPrimitive::PT_GROUP ) {
-            qml<<tab(lvl++)<<"Item {"<<"\n";
-            makeID(p, lvl, qml);
-            qml<<tab(lvl)<<"anchors.fill: parent"<<"\n";
-        }
+        if ( (i.type()&CNodeInterfaceIterator::IT_ENDLEVEL) ) {
+            CPrimitive * level = i.level<CPrimitive*>();
+            if ( level->type()==CPrimitive::PT_GROUP) {
+                qml<<tab(--lvl)<<"}"<<"\n";
 
-        if ( itm->down!=nullptr ) {
-            itm = itm->down;
-        }  else if ( itm->next!=nullptr ) {
-            itm = itm->next;
-        } else if ( itm->up!=nullptr ) {
-            while(true) {
-                if ( (static_cast<CPrimitive*>(itm))->type()==CPrimitive::PT_GROUP) {
-                    qml<<tab(--lvl)<<"}"<<"\n";
-                }
-
-                if ( itm->up==nullptr ) { itm = nullptr; break; }
-                itm = itm->up;
-                if ( itm->next!=nullptr ) { itm = itm->next; break; }
             }
-        } else {
-            itm = nullptr;
         }
 
-    } while( itm!=nullptr );
-
+    }
 }
 
 /**

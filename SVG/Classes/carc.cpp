@@ -57,9 +57,9 @@ bool CArc::sweepFlag() const
 * @ref https://github.com/colinmeinke/svg-arc-to-cubic-bezier
 * @ref https://ru.wikipedia.org/wiki/%D0%9A%D1%80%D0%B8%D0%B2%D0%B0%D1%8F_%D0%91%D0%B5%D0%B7%D1%8C%D0%B5
 */
-CPath *CArc::toPath() const
+bool CArc::toPath()
 {
-    if ( (_rx==0) || (_ry==0) ) return nullptr;
+    if ( (_rx==0) || (_ry==0) ) return false;
 
     CPath * path = new CPath();
     CPoint s = _points.p1();
@@ -71,7 +71,7 @@ CPath *CArc::toPath() const
     double pxp = cosphi * (s.x() - e.x()) / 2 + sinphi * (s.y() - e.y()) / 2;
     double pyp = -sinphi * (s.x() - e.x()) / 2 + cosphi * (s.y() - e.y()) / 2;
 
-    if ( Equal::almostEqual(pxp, 0) && Equal::almostEqual(pyp, 0) ) { return nullptr; }
+    if ( Equal::almostEqual(pxp, 0) && Equal::almostEqual(pyp, 0) ) { return false; }
 
     double rx = abs(_rx);
     double ry = abs(_ry);
@@ -104,7 +104,9 @@ CPath *CArc::toPath() const
         p1 = p4;
     }
 
-    return path;
+    CNodeInterface::addNext(this, path);
+
+    return true;
 }
 
 CArc::TArcCenter CArc::getArcCenter(CPoint s, CPoint e, double rx, double ry, bool largeArc, bool sweep, double sinphi, double cosphi, double pxp, double pyp) const
