@@ -162,6 +162,22 @@ bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, const Q
 }
 
 /**
+* @brief Разбираемся с прозрачностью
+* @param itm
+* @param lvl
+* @param qml
+* @return
+*/
+bool QMLGenerator::makeOpacity(CPrimitive *itm, int &lvl, QTextStream &qml)
+{
+    if ( itm->styles().has("opacity") ) {
+        double opacity = itm->styles().get("opacity").value<CSS::MeasureUnit>().val();
+        qml<<tab(lvl)<<"opacity: "<<opacity<<"\n";
+    }
+    return true;
+}
+
+/**
 * @brief Выводим градиент без трансформаций
 * @param itm
 * @param gr
@@ -399,6 +415,9 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
                                 makeElement(cp->clipPath, lvl, qml, rootID, true);
                         qml<<tab(--lvl)<<"}"<<"\n";
                     }
+
+                    //-- Прозрачность
+                    makeOpacity(p, lvl, qml);
 
                 qml<<tab(--lvl)<<"}"<<"\n";
 

@@ -25,6 +25,8 @@ private:
 
     bool makeFill(CPrimitive * itm, int &lvl, QTextStream &qml, const QString &rootID, bool isSimple);
 
+    bool makeOpacity(CPrimitive * itm, int &lvl, QTextStream &qml);
+
     void makeFillGradient(CPrimitive * itm, FGradient * gr, int &lvl, QTextStream &qml, const QString &rootID, CDef::TDefType type);
     void makeFillGradientTransform(CPrimitive * itm, FGradient * gr, int &lvl, QTextStream &qml, const QString &rootID, CDef::TDefType type);
     void makeRadialGradient(FRadialGradient * gr, int &lvl, QTextStream &qml, const QString &rootID);
