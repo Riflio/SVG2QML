@@ -21,9 +21,17 @@ private:
     QString tab(int c);
     QString sanitizeID(QString id);
 
-    void makeFill(CPrimitive * itm, int &lvl, QTextStream &qml, const QString &rootID);
-    void makeStroke(CPrimitive * itm, int &lvl, QTextStream &qml, const QString &rootID);
+    QString primitiveToPathCommands(CPrimitive * p);
+
+    bool makeFill(CPrimitive * itm, int &lvl, QTextStream &qml, const QString &rootID, bool isSimple);
+
+    void makeFillGradient(CPrimitive * itm, FGradient * gr, int &lvl, QTextStream &qml, const QString &rootID, CDef::TDefType type);
+    void makeFillGradientTransform(CPrimitive * itm, FGradient * gr, int &lvl, QTextStream &qml, const QString &rootID, CDef::TDefType type);
+    void makeRadialGradient(FRadialGradient * gr, int &lvl, QTextStream &qml, const QString &rootID);
+    void makeLinearGradient(FLinearGradient * gr, int &lvl, QTextStream &qml, const QString &rootID);
     void makeGradientStops(FGradient * gr, int &lvl, QTextStream &qml, const QString &rootID);
+
+    void makeStroke(CPrimitive * itm, int &lvl, QTextStream &qml, const QString &rootID);
 
     void makeElement(CPrimitive * el, int &lvl, QTextStream &qml, const QString &rootID, bool firstInline=false);
 

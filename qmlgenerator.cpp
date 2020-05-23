@@ -20,9 +20,9 @@ SVGGenerator::GenerateStatus QMLGenerator::generateQML(QIODevice *device, CPrimi
     QString rootID = "svg2qml";
     QTextStream qml(device);    
 
-    qml<<"import QtQuick.Shapes 1.14"<<"\n";
-    qml<<"import QtQuick 2.14"<<"\n";
-    qml<<"import QtGraphicalEffects 1.14 as GE"<<"\n";
+    qml<<"import QtQuick.Shapes 1.12"<<"\n";
+    qml<<"import QtQuick 2.12"<<"\n";
+    qml<<"import QtGraphicalEffects 1.12 as GE"<<"\n";
     qml<<"\n";
 
     qml<<"Item {"<<"\n";
@@ -68,22 +68,48 @@ QString QMLGenerator::sanitizeID(QString id)
 }
 
 /**
-* @brief Разбираемся с заливкой
+* @brief Генерируем команды для path.d из примитивов
+* @param p
+* @return
+*/
+QString QMLGenerator::primitiveToPathCommands(CPrimitive *p)
+{
+    QString pathCommnads = "";
+    if ( p->type()==CPrimitive::PT_CIRCLE ) {
+        CCircle * circle = static_cast<CCircle*>(p);
+        circle->toPath();
+        pathCommnads = generatePath(circle->down);
+    } else
+    if ( p->type()==CPrimitive::PT_PATH ) {
+        CPath * path = static_cast<CPath*>(p);
+        pathCommnads = generatePath(path);
+    } else {
+        qWarning()<<"Unsupported SVG element"<<p->type();
+    }
+
+    return pathCommnads;
+}
+
+/**
+* @brief Разбираемся заливкой
 * @param itm
 * @param lvl
 * @param qml
+* @param isSimple - если просо цвет или градиент без трансформации
+* @return
 */
-void QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, const QString &rootID)
+bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, const QString &rootID, bool isSimple)
 {
     if ( !itm->styles().has("fill") ) {
         qml<<tab(lvl)<<"fillColor: "<<"("<<rootID<<".thinkLines)? \"transparent\" : "<<"\"transparent\""<<"\n";
-        return;
+        return false;
     }
 
     QVariant fill = itm->styles().get("fill");
 
     if ( fill.type()==QVariant::Color ) {
         qml<<tab(lvl)<<"fillColor: "<<"("<<rootID<<".thinkLines)? \"transparent\" : "<<"\""<<fill.toString()<<"\""<<"\n";
+        return false;
     } else
     if ( fill.type()==QVariant::Url ) {
         if ( CDefs::isCDefLink(fill.toUrl()) ) {            
@@ -91,41 +117,135 @@ void QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, const Q
 
             if ( def==nullptr ) {
                 qWarning()<<"Unable find def"<<fill.toUrl();
-                return;
+                return false;
             }
 
-            if ( def->defType()==CDef::DF_LINEARGRADIENT ) {
-                FLinearGradient * gr = dynamic_cast<FLinearGradient*>(def);
-                qml<<tab(lvl++)<<"fillGradient: "<<"LinearGradient {"<<"\n";
-                    qml<<tab(lvl)<<"x1:"<<gr->startPoint().x()<<"; "<<"y1:"<<gr->startPoint().y()<<"\n";
-                    qml<<tab(lvl)<<"x2:"<<gr->endPoint().x()<<"; "<<"y2:"<<gr->endPoint().y()<<"\n";
-                    makeGradientStops(gr, lvl, qml, rootID);
-                qml<<tab(--lvl)<<"}"<<"\n";
-            } else
-            if ( def->defType()==CDef::DF_RADIALGRADIENT ) {
-                FRadialGradient * gr = dynamic_cast<FRadialGradient*>(def);
-                qml<<tab(lvl++)<<"fillGradient: "<<" RadialGradient {"<<"\n";
-                    qml<<tab(lvl)<<"centerX: "<<gr->centerPoint().x()<<"; "<<"centerY: "<<gr->centerPoint().y()<<";"<<"\n";
-                    qml<<tab(lvl);
-                    qml<<"focalX: "<<((gr->focalPoint().x()==0)? "centerX" : QString::number(gr->focalPoint().x()) )<<"; ";
-                    qml<<"focalY: "<<((gr->focalPoint().y()==0)? "centerY" : QString::number(gr->focalPoint().y()))<<";"<<"\n";
-                    qml<<tab(lvl)<<"centerRadius: "<<gr->radius()<<"\n";
-                    qml<<tab(lvl)<<"focalRadius: "<<gr->focalRadius()<<"\n";
-                    makeGradientStops(gr, lvl, qml, rootID);
-                qml<<tab(--lvl)<<"}"<<"\n";
+            if ( def->defType()==CDef::DF_LINEARGRADIENT || def->defType()==CDef::DF_RADIALGRADIENT) {
+                FGradient * gr = dynamic_cast<FGradient*>(def);
+                if ( gr->transform().isDefault() ) {  //-- Если нет трансформаций, то выводим как обычно
+                    makeFillGradient(itm, gr, lvl, qml, rootID, def->defType());
+                    return false;
+                } else { //-- Есть трансформации - придётся мучаться
+                    if ( isSimple ) { //-- Если режим простая заливка, то выведем просто заливку цветом
+                        qml<<tab(lvl)<<"fillColor: "<<"\""<<gr->stops().last().color.name()<<"\""<<"\n";
+                        return false;
+                    } else {
+                        makeFillGradientTransform(itm, gr, lvl, qml, rootID, def->defType());
+                        return true;
+                    }
+                }
             } else {
                 qWarning()<<"Unsupported fill type"<<fill.toString();
             }
-
-
         } else {
             qWarning()<<"Unsupported fill value url"<<fill.toString();
         }
-
-
     } else {
         qWarning()<<"Unsupported fill type"<<fill.toString();
     }
+
+    return false;
+}
+
+/**
+* @brief Выводим градиент без трансформаций
+* @param itm
+* @param gr
+* @param lvl
+* @param qml
+* @param rootID
+*/
+void QMLGenerator::makeFillGradient(CPrimitive *itm, FGradient *gr, int &lvl, QTextStream &qml, const QString &rootID, CDef::TDefType type)
+{
+    if ( type==CDef::DF_LINEARGRADIENT ) { makeLinearGradient(dynamic_cast<FLinearGradient*>(gr), lvl, qml, rootID); } else
+    if ( type==CDef::DF_RADIALGRADIENT ) { makeRadialGradient(dynamic_cast<FRadialGradient*>(gr), lvl, qml, rootID); }
+}
+
+/**
+* @brief Делаем заливку градиентом с трансформацией
+* @param itm
+* @param lvl
+* @param qml
+* @param rootID
+*/
+void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, int &lvl, QTextStream &qml, const QString &rootID, CDef::TDefType type)
+{
+    //-- Внутрь основной засовываем такую же фигуру чисто с заливкой градиентом
+    qml<<tab(lvl++)<<"Shape {"<<"\n";
+        qml<<tab(lvl)<<"width: "<<rootID<<".width"<<"\n";
+        qml<<tab(lvl)<<"height: "<<rootID<<".height"<<"\n";
+
+        //-- Path
+        qml<<tab(lvl++)<<"ShapePath {"<<"\n";
+            //qml<<tab(lvl)<<"scale: "<<rootID<<".scaleShape"<<"\n";
+            QString pathCommands = primitiveToPathCommands(itm);
+
+            qml<<tab(lvl)<<"PathSvg {"<<"\n";
+                qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommands)<<"\n";
+            qml<<tab(lvl)<<"}"<<"\n";
+
+            qml<<tab(lvl)<<"strokeWidth: "<<"0"<<"\n";
+            qml<<tab(lvl)<<"strokeColor: "<<"\"transparent\""<<"\n";
+
+            //-- Сам градиент
+            makeFillGradient(itm, gr, lvl, qml, rootID, type);
+
+        qml<<tab(--lvl)<<"}"<<"\n";
+
+        //-- Трансформации
+
+        //-- Ещё и clipPath придётся сделать, что бы фигура с внутренним градиентом не вылезала шибко далеко
+        qml<<tab(lvl)<<"layer.enabled: "<<"true"<<"\n";
+        qml<<tab(lvl++)<<"layer.effect: "<<"GE.OpacityMask {"<<"\n";
+            qml<<tab(lvl++)<<"maskSource: "<<"Shape {"<<"\n";
+                qml<<tab(lvl)<<"width: "<<rootID<<".width"<<"\n";
+                qml<<tab(lvl)<<"height: "<<rootID<<".height"<<"\n";
+                qml<<tab(lvl++)<<"ShapePath {"<<"\n";
+                    //qml<<tab(lvl)<<"scale: "<<rootID<<".scaleShape"<<"\n";
+                    qml<<tab(lvl)<<"PathSvg {"<<"\n";
+                        qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommands)<<"\n";
+                    qml<<tab(lvl)<<"}"<<"\n";
+                    qml<<tab(lvl)<<"fillColor: "<<"\"#000000\""<<"\n";
+                qml<<tab(--lvl)<<"}"<<"\n";
+            qml<<tab(--lvl)<<"}"<<"\n";
+        qml<<tab(--lvl)<<"}"<<"\n";
+    qml<<tab(--lvl)<<"}"<<"\n";
+}
+
+/**
+* @brief Делаем заливку радиальным градиентом
+* @param gr
+* @param lvl
+* @param qml
+* @param rootID
+*/
+void QMLGenerator::makeRadialGradient(FRadialGradient *gr, int &lvl, QTextStream &qml, const QString &rootID)
+{
+    qml<<tab(lvl++)<<"fillGradient: "<<" RadialGradient {"<<"\n";
+        qml<<tab(lvl)<<"centerX: "<<gr->centerPoint().x()<<"; "<<"centerY: "<<gr->centerPoint().y()<<";"<<"\n";
+        qml<<tab(lvl);
+        qml<<"focalX: "<<((gr->focalPoint().x()==0)? "centerX" : QString::number(gr->focalPoint().x()) )<<"; ";
+        qml<<"focalY: "<<((gr->focalPoint().y()==0)? "centerY" : QString::number(gr->focalPoint().y()))<<";"<<"\n";
+        qml<<tab(lvl)<<"centerRadius: "<<gr->radius()<<"\n";
+        qml<<tab(lvl)<<"focalRadius: "<<gr->focalRadius()<<"\n";
+        makeGradientStops(gr, lvl, qml, rootID);
+        qml<<tab(--lvl)<<"}"<<"\n";
+}
+
+/**
+* @brief Делаем заливку линейным градиентом
+* @param gr
+* @param lvl
+* @param qml
+* @param rootID
+*/
+void QMLGenerator::makeLinearGradient(FLinearGradient *gr, int &lvl, QTextStream &qml, const QString &rootID)
+{
+    qml<<tab(lvl++)<<"fillGradient: "<<"LinearGradient {"<<"\n";
+        qml<<tab(lvl)<<"x1:"<<gr->startPoint().x()<<"; "<<"y1:"<<gr->startPoint().y()<<"\n";
+        qml<<tab(lvl)<<"x2:"<<gr->endPoint().x()<<"; "<<"y2:"<<gr->endPoint().y()<<"\n";
+        makeGradientStops(gr, lvl, qml, rootID);
+    qml<<tab(--lvl)<<"}"<<"\n";
 }
 
 /**
@@ -209,20 +329,10 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
         }
 
         if ( (i.type()&CNodeInterfaceIterator::IT_STARTELEMENT) && (p->type()==CPrimitive::PT_PATH || p->type()==CPrimitive::PT_CIRCLE) ) {
-            QString pathCommnads = "";
 
-            if ( p->type()==CPrimitive::PT_CIRCLE ) {
-                CCircle * circle = static_cast<CCircle*>(p);
-                circle->toPath();
-                pathCommnads = generatePath(circle->down);
-            } else
-            if ( p->type()==CPrimitive::PT_PATH ) {
-                CPath * path = static_cast<CPath*>(p);
-                pathCommnads = generatePath(path);
-            } else {
-                qWarning()<<"Unsupported SVG element"<<p->type();
-                continue;
-            }
+            QString pathCommnads = primitiveToPathCommands(p);
+
+            if ( pathCommnads.isEmpty() ) { continue; }
 
             qml<<tab(lvl)<<"Shape {"<<"\n";
                 makeID(p, ++lvl, qml);
@@ -231,17 +341,19 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
 
                 //-- Path
                 qml<<tab(lvl++)<<"ShapePath {"<<"\n";
-                    qml<<tab(lvl)<<"scale: "<<rootID<<".scaleShape"<<"\n";
+                    //qml<<tab(lvl)<<"scale: "<<rootID<<".scaleShape"<<"\n";
 
                     qml<<tab(lvl)<<"PathSvg {"<<"\n";
                         qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommnads)<<"\n";
                     qml<<tab(lvl)<<"}"<<"\n";
 
                     //-- Styles
-                    makeFill(p, lvl, qml, rootID);
                     makeStroke(p, lvl, qml, rootID);
+                    bool simpleFilled = makeFill(p, lvl, qml, rootID, true);
 
                 qml<<tab(--lvl)<<"}"<<"\n";
+
+                if ( !simpleFilled ) { makeFill(p, lvl, qml, rootID, false); }
 
                 //-- Clip path
                 if ( p->styles().has("clip-path") ) {
