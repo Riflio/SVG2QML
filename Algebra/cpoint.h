@@ -29,6 +29,9 @@ public:
     CPoint & set(const CPoint & p2);
     CPoint & set(double x, double y);
 
+    CPoint & setX(double x);
+    CPoint & setY(double y);
+
     CPoint & add(const CPoint & p2);
     CPoint & add(double x, double y);
     CPoint & subtract(const CPoint & p2);

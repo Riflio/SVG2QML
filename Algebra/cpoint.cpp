@@ -55,6 +55,18 @@ CPoint & CPoint::set(double x, double y)
     return *this;
 }
 
+CPoint &CPoint::setX(double x)
+{
+    _x = x;
+    return *this;
+}
+
+CPoint &CPoint::setY(double y)
+{
+    _y = y;
+    return *this;
+}
+
 
 CPoint & CPoint::subtract(const CPoint & p2)
 {
