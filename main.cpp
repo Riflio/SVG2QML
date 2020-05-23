@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
             source = "Z:/SVG2QML/tests/gradient_60_120.svg";
             dest = "Z:/SVG2QML/tests/test1_QML.qml";
         #else
-            source = "/home/pavelk/Projects/SVG2QML/SVG2QML/tests/test1.svg";
+            source = "/home/pavelk/Projects/SVG2QML/SVG2QML/tests/gradient_60_120.svg";
             dest = "/home/pavelk/Projects/SVG2QML/SVG2QML/tests/test1.qml";
         #endif
     }
