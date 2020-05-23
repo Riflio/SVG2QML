@@ -2,7 +2,6 @@
 #include <QDebug>
 #include <QRegExp>
 
-
 SVGParser::SVGParser(QObject *parent) : QObject(parent)
 {
     _rootItem = nullptr;
@@ -185,9 +184,7 @@ CMatrix SVGParser::parseTransform(QXmlStreamReader * xml, QString attrName)
 
         if ( commandStr=="matrix" ) { //-- Готовая матрица
             if ( params.count()!=6 ) throw 23;
-            CMatrix::TMatrix tParams;
-            for(int i=0; i<params.count(); ++i) { tParams.insert(i, params[i]); }
-            matrix.set(2, 3, tParams, CMatrix::SET_BY_COLS);
+            matrix.set(2, 3, params, CMatrix::SET_BY_COLS);
         } else
         if ( commandStr=="translate" ) {
             if ( params.count()!=2 ) throw 23;
