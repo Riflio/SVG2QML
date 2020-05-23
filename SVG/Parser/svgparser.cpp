@@ -697,6 +697,7 @@ void SVGParser::parseBaseAttributes(CPrimitive *itm, QXmlStreamReader *xml)
 
     //-- Трансформации
     CMatrix transforms = parseTransform(xml);
+    transforms.multiplication(_globalMatrix); //-- Учитываем и глобальную матрицу
     itm->setTransform(transforms);
 }
 
