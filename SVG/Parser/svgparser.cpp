@@ -52,6 +52,7 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
         //-- Detect start elements
         if ( _xml->tokenType()==QXmlStreamReader::StartElement ) {
 
+            QString elName = _xml->name().toString().toLower();
             bool defsParsed = false;
             if  ( defsLvl>0 ) {
                 if ( defsTokens.indexOf(_xml->name().toString())==-1 ) { qWarning()<<"Unsupported defs type"<<_xml->name(); continue; }
@@ -59,16 +60,16 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
                 if ( defsLvl==1 ) { //-- Каждого прямого наследника из defs считаем как отддельный
                     defsParsed = true;
 
-                    if ( _xml->name()=="clipPath" ) {
+                    if ( elName=="clipPath" ) {
                         parseClipPath(&currentLevel, _xml);
                     } else
-                    if ( _xml->name()=="linearGradient" ) {
+                    if ( elName=="linearGradient" ) {
                         parseLinearGradient(&currentLevel, _xml);                        
                     } else
-                    if ( _xml->name()=="radialGradient" ) {
+                    if ( elName=="radialGradient" ) {
                         parseRadialGradient(&currentLevel, _xml);                        
                     } else
-                    if ( _xml->name()=="style" ) {
+                    if ( elName=="style" ) {
                        //-- ниже распарсим
                     } else {
                         qWarning()<<"Unsupported defs element"<<_xml->name();
@@ -79,36 +80,40 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
                 defsLvl++;
             }
 
-            if ( _xml->name()=="svg" ) { //-- svg сам по себе как группа, парсим
+            elName = _xml->name().toString().toLower(); //-- Нужно, т.к. при парсинге defs мы могли перейти куда-нить
+            if ( elName=="svg" ) { //-- svg сам по себе как группа, парсим
                 parseGroup(&currentLevel, _xml);
             } else
-            if ( _xml->name()=="g" ) {                
+            if ( elName=="g" ) {
                 parseGroup(&currentLevel, _xml);
             } else
-            if ( _xml->name()=="path" ) {
+            if ( elName=="path" ) {
                 parsePath(currentLevel, _xml);
             } else
-            if ( _xml->name()=="rect" ) {
+            if ( elName=="rect" ) {
                 parseRect(currentLevel, _xml);
             } else
-            if ( _xml->name()=="line" ) {
+            if ( elName=="line" ) {
                 parseLine(currentLevel, _xml);
             } else
-            if ( _xml->name()=="image" ) {
+            if ( elName=="image" ) {
                 parseImage(currentLevel, _xml);
             } else
-            if ( _xml->name()=="style" ) {
+            if ( elName=="style" ) {
                 parseCss(currentLevel, _xml);
             } else
-            if ( _xml->name()=="defs" ) {
+            if ( elName=="defs" ) {
                 prevLevel = currentLevel;
                 defsLvl = 1;
             } else
-            if ( _xml->name()=="title" ) {
+            if ( elName=="title" ) {
                 _rootItem->setTitle(_xml->readElementText());
             } else
-            if ( _xml->name()=="circle" ) {
+            if ( elName=="circle" ) {
                 parseCircle(currentLevel, _xml);
+            } else
+            if ( elName=="ellipse" ) {
+                parseEllipse(currentLevel, _xml);
             } else
             if ( !defsParsed ) {
                 qWarning()<<"Unsupported element"<<_xml->name();
@@ -118,17 +123,19 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
         //-- Detect ends elements
         if ( _xml->tokenType() == QXmlStreamReader::EndElement ) {
 
+            QString elName = _xml->name().toString().toLower();
+
             if ( defsLvl>0 && defsTokens.indexOf(_xml->name().toString())>-1 ) {
                 defsLvl--;
             }
 
-            if ( _xml->name()=="svg" ) {
+            if ( elName=="svg" ) {
                 break;
             } else
-            if ( _xml->name()=="g" ) {
+            if ( elName=="g" ) {
                 currentLevel = static_cast<CPrimitive*>(CNodeInterface::levelUp(currentLevel));
             } else
-            if ( _xml->name()=="defs" ) {
+            if ( elName=="defs" ) {
                 defsLvl = 0;
                 currentLevel = prevLevel;
                 prevLevel = nullptr;
@@ -243,10 +250,8 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
 
     CMatrix matrix = parseTransform(xml);
 
-    CSS::Style style = parseStyle(xml);
-    path->setStyles(style);
-
     parseBaseAttributes(path, xml);
+    CSS::Style style = path->styles(); //-- Задаём всем вложенным те же стили, что и у нас
 
     CPoint openPathCoords(0,0); //-- Запоминаем в каких координатах открыли путь, что бы потом можно было закрыть
 
@@ -512,34 +517,17 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
 */
 bool SVGParser::parseRect(CNodeInterface *level, QXmlStreamReader *xml)
 {
-    CPath * rect = new CPath();
-    if ( xml->attributes().hasAttribute("id")) rect->setID(xml->attributes().value("id").toString());
+    CRect * rect = new CRect();
+    parseBaseAttributes(rect, xml);
+
+    if ( xml->attributes().hasAttribute("x") ) { rect->setX(xml->attributes().value("x").toDouble()); }
+    if ( xml->attributes().hasAttribute("y") ) { rect->setY(xml->attributes().value("y").toDouble()); }
+    if ( xml->attributes().hasAttribute("width") ) { rect->setWidth(xml->attributes().value("width").toDouble());  }
+    if ( xml->attributes().hasAttribute("height") ) { rect->setHeight(xml->attributes().value("height").toDouble()); }
+    if ( xml->attributes().hasAttribute("rx") ) { rect->setRX(xml->attributes().value("rx").toDouble()); }
+    if ( xml->attributes().hasAttribute("rx") ) { rect->setRY(xml->attributes().value("ry").toDouble()); }
 
     CNodeInterface::addNext(level, rect);
-
-    CMatrix matrix = parseTransform(xml);
-    CSS::Style style = parseStyle(xml);
-
-    double x = xml->attributes().value("x").toDouble();
-    double y = xml->attributes().value("y").toDouble();
-    double w = xml->attributes().value("width").toDouble();
-    double h = xml->attributes().value("height").toDouble();
-
-    CLine * t = new CLine(CPoint(x,y), CPoint(x+w, y));
-    CLine * r = new CLine(CPoint(x+w,y), CPoint(x+w, y+h));
-    CLine * b = new CLine(CPoint(x+w,y+h), CPoint(x, y+h));
-    CLine * l = new CLine(CPoint(x,y+h), CPoint(x, y));
-
-
-    t->setStyles(style);
-    r->setStyles(style);
-    b->setStyles(style);
-    l->setStyles(style);
-
-    CNodeInterface::addNext(rect, t);
-    CNodeInterface::addNext(rect, r);
-    CNodeInterface::addNext(rect, b);
-    CNodeInterface::addNext(rect, l);
 
     return true;
 }
@@ -719,8 +707,17 @@ CDef *SVGParser::hasLink(QXmlStreamReader *xml)
 */
 void SVGParser::parseBaseAttributes(CPrimitive *itm, QXmlStreamReader *xml)
 {
+    //-- Айдишник с классом
     if ( xml->attributes().hasAttribute("id") ) itm->setID(xml->attributes().value("id").toString());
     if ( xml->attributes().hasAttribute("class")) itm->setClassSVG(xml->attributes().value("class").toString());
+
+    //-- Стили
+    CSS::Style styles = parseStyle(xml);
+    itm->setStyles(styles);
+
+    //-- Трансформации
+    CMatrix transforms = parseTransform(xml);
+    itm->setTransform(transforms);
 }
 
 /**
@@ -740,7 +737,6 @@ bool SVGParser::parseLine(CNodeInterface * level, QXmlStreamReader * xml)
     CPoint p2(x2.toDouble(), y2.toDouble());
 
     CLine * line = new CLine(p1, p2);
-    line->setStyles(parseStyle(xml));
 
     parseBaseAttributes(line, xml);
 
@@ -813,13 +809,7 @@ bool SVGParser::parseCircle(CNodeInterface *level, QXmlStreamReader *xml)
     double r = xml->attributes().value("r").toDouble();
 
     CPoint center(cx, cy);
-
-    CMatrix matrix = parseTransform(xml);
-    matrix.multiplication(_globalMatrix);
-
-    center.transform(matrix);
     CCircle * circle = new CCircle(center, r);
-    circle->setStyles(parseStyle(xml));
 
     parseBaseAttributes(circle, xml);
 
@@ -829,4 +819,22 @@ bool SVGParser::parseCircle(CNodeInterface *level, QXmlStreamReader *xml)
 
 }
 
+/**
+* @brief Парсим эллипс
+* @param level
+* @param xml
+* @return
+*/
+bool SVGParser::parseEllipse(CNodeInterface *level, QXmlStreamReader *xml)
+{
+    CEllipse * ellipse = new CEllipse();
+    parseBaseAttributes(ellipse, xml);
 
+    if ( xml->attributes().hasAttribute("cx") ) { ellipse->setCX(xml->attributes().value("cx").toDouble()); }
+    if ( xml->attributes().hasAttribute("cy") ) { ellipse->setCY(xml->attributes().value("cy").toDouble()); }
+    if ( xml->attributes().hasAttribute("rx") ) { ellipse->setRX(xml->attributes().value("rx").toDouble()); }
+    if ( xml->attributes().hasAttribute("ry") ) { ellipse->setRY(xml->attributes().value("ry").toDouble()); }
+
+    CNodeInterface::addNext(level, ellipse);
+    return true;
+}

@@ -19,6 +19,8 @@
 #include "SVG/Classes/cimage.h"
 #include "SVG/Classes/carc.h"
 #include "SVG/Classes/ccircle.h"
+#include "SVG/Classes/crect.h"
+#include "SVG/Classes/cellipse.h"
 
 #include "SVG/Classes/fclippath.h"
 #include "SVG/Classes/flineargradient.h"
@@ -68,6 +70,7 @@ private:
     bool parseImage(CNodeInterface * level, QXmlStreamReader * xml);
     bool parseCss(CNodeInterface * level, QXmlStreamReader * xml);
     bool parseCircle(CNodeInterface * level, QXmlStreamReader * xml);
+    bool parseEllipse(CNodeInterface * level, QXmlStreamReader * xml);
 
     CMatrix parseTransform(QXmlStreamReader * xml, QString attrName="transform");
     CSS::Style parseStyle(QXmlStreamReader * xml);
