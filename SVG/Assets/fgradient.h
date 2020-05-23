@@ -2,6 +2,7 @@
 #define FGRADIENT_H
 
 #include "cdef.h"
+#include "Algebra/cmatrix.h"
 #include <QList>
 #include <QColor>
 
@@ -20,9 +21,12 @@ public:
 
     QList<TGradientStop> stops() const;
 
+    void setTransform(const CMatrix &transform);
+    CMatrix transform() const;
 
 protected:
     QList<TGradientStop> _stops;
+    CMatrix _transform;
 
 };
 

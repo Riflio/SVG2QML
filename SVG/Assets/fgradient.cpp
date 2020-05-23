@@ -19,3 +19,13 @@ QList<FGradient::TGradientStop> FGradient::stops() const
 {
     return _stops;
 }
+
+void FGradient::setTransform(const CMatrix &transform)
+{
+    _transform = transform;
+}
+
+CMatrix FGradient::transform() const
+{
+    return _transform;
+}
