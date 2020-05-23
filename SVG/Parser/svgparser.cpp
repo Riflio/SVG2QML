@@ -248,8 +248,6 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
 
     QString pathD = xml->attributes().value("d").toString();
 
-    CMatrix matrix = parseTransform(xml);
-
     parseBaseAttributes(path, xml);
     CSS::Style style = path->styles(); //-- Задаём всем вложенным те же стили, что и у нас
 
@@ -300,7 +298,6 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
                     p1.add(lastPoint);
                 }
                 lastPoint = p1;
-                p1.transform(matrix);
 
                 if ( !openPathCoords.isZero() ) { //-- Будем считать, что следующие параметры после первых двух это линии
                     CLine * line = new CLine(_globalCoords, p1);
@@ -331,9 +328,6 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
                     p4.add(lastPoint);
                 }
                 lastPoint = p4;
-                p2.transform(matrix);
-                p3.transform(matrix);
-                p4.transform(matrix);
 
                 prevPoints.clear();
                 prevPoints<<p1<<p2<<p3<<p4;
@@ -360,8 +354,6 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
                     p4.add(lastPoint);
                 }
                 lastPoint = p4;
-                p3.transform(matrix);
-                p4.transform(matrix);
 
                 prevPoints.clear();
                 prevPoints<<p1<<p2<<p3<<p4;
@@ -385,8 +377,6 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
                 lastPoint = p;
                 if (openPathCoords.isZero()) openPathCoords.set(p);
 
-                p.transform(matrix);
-
                 prevPoints.clear();
                 prevPoints<<p;
 
@@ -406,8 +396,6 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
                 lastPoint = p;
                 if (openPathCoords.isZero()) openPathCoords.set(p);
 
-                p.transform(matrix);
-
                 prevPoints.clear();
                 prevPoints<<p;
 
@@ -426,8 +414,6 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
                 }
                 lastPoint = p;
                 if (openPathCoords.isZero()) openPathCoords.set(p);
-
-                p.transform(matrix);
 
                 prevPoints.clear();
                 prevPoints<<p;
@@ -457,9 +443,6 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
                 }
                 lastPoint = pEnd;
 
-                pStart.transform(matrix);
-                pEnd.transform(matrix);
-
                 prevPoints.clear();
                 prevPoints<<pStart<<pEnd;
 
@@ -476,9 +459,6 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
 
             CPoint pe = openPathCoords;
             CPoint ps = lastPoint;
-
-            ps.transform(matrix);
-            pe.transform(matrix);
 
             if ( !ps.isEq(pe) ) { //-- Линию к началу, если отличается
                 CLine * line = new CLine(ps, pe);
