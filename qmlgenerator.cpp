@@ -120,11 +120,13 @@ bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, const Q
     QVariant fill = itm->styles().get("fill");
 
     if ( fill.type()==QVariant::Color ) {
-        qml<<tab(lvl)<<"fillColor: "<<"("<<rootID<<".thinkLines)? \"transparent\" : "<<"\""<<fill.toString()<<"\""<<"\n";
+        QColor color = fill.value<QColor>();
+        if ( itm->styles().has("fill-opacity") ) { color.setAlphaF(itm->styles().get("fill-opacity").value<CSS::MeasureUnit>().val());  }
+        qml<<tab(lvl)<<"fillColor: "<<"("<<rootID<<".thinkLines)? \"transparent\" : "<<"\""<<color.name(QColor::HexArgb)<<"\""<<"\n";
         return true;
     } else
     if ( fill.type()==QVariant::Url ) {
-        if ( CDefs::isCDefLink(fill.toUrl()) ) {            
+        if ( CDefs::isCDefLink(fill.toUrl()) ) {
             CDef * def = _defs.get(fill.toUrl());
 
             if ( def==nullptr ) {
@@ -139,7 +141,7 @@ bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, const Q
                     return false;
                 } else { //-- Есть трансформации - придётся мучаться
                     if ( isSimple ) { //-- Если режим простая заливка, то выведем просто заливку цветом
-                        qml<<tab(lvl)<<"fillColor: "<<"\""<<gr->stops().last().color.name()<<"\""<<"\n";
+                        qml<<tab(lvl)<<"fillColor: "<<"\""<<gr->stops().last().color.name(QColor::HexArgb)<<"\""<<"\n";
                         return false;
                     } else {
                         makeFillGradientTransform(itm, gr, lvl, qml, rootID, def->defType());
