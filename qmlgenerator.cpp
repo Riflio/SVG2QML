@@ -170,31 +170,36 @@ void QMLGenerator::makeFillGradient(CPrimitive *itm, FGradient *gr, int &lvl, QT
 */
 void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, int &lvl, QTextStream &qml, const QString &rootID, CDef::TDefType type)
 {
-    //-- Внутрь основной засовываем такую же фигуру чисто с заливкой градиентом
-    qml<<tab(lvl++)<<"Shape {"<<"\n";
+    //-- Внутрь основной засовываем итем, внутрь такую же фигуру чисто с заливкой градиентом, к итему ещё применяем маску, что бы градиент не вылезал за его пределы
+    qml<<tab(lvl++)<<"Item {"<<"\n";
         qml<<tab(lvl)<<"width: "<<rootID<<".width"<<"\n";
         qml<<tab(lvl)<<"height: "<<rootID<<".height"<<"\n";
+        qml<<tab(lvl++)<<"Shape {"<<"\n";
+            qml<<tab(lvl)<<"width: "<<rootID<<".width"<<"\n";
+            qml<<tab(lvl)<<"height: "<<rootID<<".height"<<"\n";
 
-        //-- Path
-        qml<<tab(lvl++)<<"ShapePath {"<<"\n";
-            //qml<<tab(lvl)<<"scale: "<<rootID<<".scaleShape"<<"\n";
-            QString pathCommands = primitiveToPathCommands(itm);
+            //-- Path
+            qml<<tab(lvl++)<<"ShapePath {"<<"\n";
+                //qml<<tab(lvl)<<"scale: "<<rootID<<".scaleShape"<<"\n";
+                QString pathCommands = primitiveToPathCommands(itm);
 
-            qml<<tab(lvl)<<"PathSvg {"<<"\n";
-                qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommands)<<"\n";
-            qml<<tab(lvl)<<"}"<<"\n";
+                qml<<tab(lvl)<<"PathSvg {"<<"\n";
+                    qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommands)<<"\n";
+                qml<<tab(lvl)<<"}"<<"\n";
 
-            qml<<tab(lvl)<<"strokeWidth: "<<"0"<<"\n";
-            qml<<tab(lvl)<<"strokeColor: "<<"\"transparent\""<<"\n";
+                qml<<tab(lvl)<<"strokeWidth: "<<"0"<<"\n";
+                qml<<tab(lvl)<<"strokeColor: "<<"\"transparent\""<<"\n";
 
-            //-- Сам градиент
-            makeFillGradient(itm, gr, lvl, qml, rootID, type);
+                //-- Сам градиент
+                makeFillGradient(itm, gr, lvl, qml, rootID, type);
 
+            qml<<tab(--lvl)<<"}"<<"\n";
+
+            //-- Трансформации
+            makeTransform(gr->transform(), lvl, qml);
         qml<<tab(--lvl)<<"}"<<"\n";
 
-        //-- Трансформации
-
-        //-- Ещё и clipPath придётся сделать, что бы фигура с внутренним градиентом не вылезала шибко далеко
+        //-- Ещё и clipPath придётся сделать, что бы фигура с внутренним градиентом не вылезала шибко далеко, но контур придётся сделать меньше на половину ширины заливки
         qml<<tab(lvl)<<"layer.enabled: "<<"true"<<"\n";
         qml<<tab(lvl++)<<"layer.effect: "<<"GE.OpacityMask {"<<"\n";
             qml<<tab(lvl++)<<"maskSource: "<<"Shape {"<<"\n";
@@ -206,6 +211,8 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, int
                         qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommands)<<"\n";
                     qml<<tab(lvl)<<"}"<<"\n";
                     qml<<tab(lvl)<<"fillColor: "<<"\"#000000\""<<"\n";
+                    qml<<tab(lvl)<<"strokeWidth: "<<"0"<<"\n";
+                    qml<<tab(lvl)<<"strokeColor: "<<"\"transparent\""<<"\n";
                 qml<<tab(--lvl)<<"}"<<"\n";
             qml<<tab(--lvl)<<"}"<<"\n";
         qml<<tab(--lvl)<<"}"<<"\n";
@@ -388,6 +395,22 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
         }
 
     }
+}
+
+/**
+* @brief Выводим матрицу трансформации
+* @param m
+* @param lvl
+* @param qml
+*/
+void QMLGenerator::makeTransform(const CMatrix &m, int &lvl, QTextStream &qml)
+{
+    qml<<tab(lvl)<<"transform: "<<"Matrix4x4 {"<<"matrix: Qt.matrix4x4("
+        <<m.getAt(0,0)<<", "<<m.getAt(0,1)<<", "<<"0"<<", "<<m.getAt(0,2)<<", "
+        <<m.getAt(1,0)<<", "<<m.getAt(1,1)<<", "<<"0"<<", "<<m.getAt(1,2)<<", "
+        <<"0, 0, 1, 0, "
+        <<"0, 0, 0, 1"
+    <<"); }"<<"\n";
 }
 
 /**
