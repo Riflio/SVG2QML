@@ -1,7 +1,10 @@
 #include "ccircle.h"
+#include "cpath.h"
+#include "cbezier.h"
+#include "cellipse.h"
 
 CCircle::CCircle()
-    :CPrimitive(PT_CIRCLE)
+    :CPrimitive(PT_CIRCLE, CPoint())
 {
 
 }
@@ -38,10 +41,10 @@ bool CCircle::toPath()
     CPath * path = new CPath();
     CPoint center = _points.p1();
 
-    CBezier * b1 = drawBezierEllipseQuarter(center, QSize(-_radius, -_radius));
-    CBezier * b2 = drawBezierEllipseQuarter(center, QSize(_radius, -_radius));
-    CBezier * b3 = drawBezierEllipseQuarter(center, QSize(_radius, _radius));
-    CBezier * b4 = drawBezierEllipseQuarter(center, QSize(-_radius, _radius));
+    CBezier * b1 = CEllipse::drawBezierEllipseQuarter(center, QSize(-_radius, -_radius));
+    CBezier * b2 = CEllipse::drawBezierEllipseQuarter(center, QSize(_radius, -_radius));
+    CBezier * b3 = CEllipse::drawBezierEllipseQuarter(center, QSize(_radius, _radius));
+    CBezier * b4 = CEllipse::drawBezierEllipseQuarter(center, QSize(-_radius, _radius));
 
     b2->reverse();
     b4->reverse();
@@ -55,17 +58,3 @@ bool CCircle::toPath()
     path->setIsClosed(true);
     return true;
 }
-
-CBezier* CCircle::drawBezierEllipseQuarter(CPoint center, QSize size) const
-{
-    double c = 0.55191502449;
-    CPoint p1(center.x()-size.width(), center.y());
-    CPoint p2(center.x()-size.width(), center.y()-(c*size.height()));
-    CPoint p3(center.x()-(c*size.width()), center.y()-size.height());
-    CPoint p4(center.x(), center.y()-size.height());
-
-    CBezier * b = new CBezier(p1, p2, p3, p4);
-
-    return b;
-}
-
