@@ -90,10 +90,12 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p)
     if ( p->type()==CPrimitive::PT_CIRCLE ) {
         CCircle * circle = static_cast<CCircle*>(p);
         circle->toPath();
+        circle->applyTransform();
         pathCommnads = generatePath(circle->down);
     } else
     if ( p->type()==CPrimitive::PT_PATH ) {
         CPath * path = static_cast<CPath*>(p);
+        path->applyTransform();
         pathCommnads = generatePath(path);
     } else
     if ( p->type()==CPrimitive::PT_RECT ) {
