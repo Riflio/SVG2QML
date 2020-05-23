@@ -34,6 +34,7 @@ SOURCES += \
         SVG/Classes/cbezier.cpp \
         SVG/Classes/ccircle.cpp \
         SVG/Classes/cdoc.cpp \
+        SVG/Classes/cellipse.cpp \
         SVG/Classes/cgroup.cpp \
         SVG/Classes/cimage.cpp \
         SVG/Classes/cline.cpp \
@@ -85,6 +86,7 @@ HEADERS += \
     SVG/Classes/cbezier.h \
     SVG/Classes/ccircle.h \
     SVG/Classes/cdoc.h \
+    SVG/Classes/cellipse.h \
     SVG/Classes/cgroup.h \
     SVG/Classes/cimage.h \
     SVG/Classes/cline.h \
