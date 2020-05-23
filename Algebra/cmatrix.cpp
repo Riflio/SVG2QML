@@ -1,5 +1,6 @@
 #include "cmatrix.h"
 #include "Algebra/equal.h"
+#include "math.h"
 #include <QDebug>
 
 CMatrix::CMatrix(int mi, int mj):
@@ -12,6 +13,13 @@ CMatrix::CMatrix(int mi, int mj):
         }
     }
 }
+
+CMatrix::CMatrix(int mi, int mj, const QList<double> &matrix)
+    : _mi(mi), _mj(mj)
+{
+    set(mi, mj, matrix);
+}
+
 
 /**
 * @brief Отдаём размер нашей матрицы
@@ -37,6 +45,28 @@ CMatrix::TMatrix CMatrix::matrix() const
 * @return
 */
 CMatrix & CMatrix::set(int mi, int mj, const TMatrix & matrix, SETBY dir)
+{
+    if ( matrix.count() != mi*mj ) throw 20;
+
+    if ( dir == SET_BY_ROWS) {
+        for (int i=0, d=0; i<mi; i++) {
+            for (int j=0; j<mj; j++, d++) {
+                setAt(i, j, matrix[d] );
+            }
+        }
+    } else
+    if( dir==SET_BY_COLS) {
+        for (int i=0, d=0; i<mj; i++) {
+            for (int j=0; j<mi; j++, d++) {
+                setAt(j, i, matrix[d]);
+            }
+        }
+    }
+
+    return *this;
+}
+
+CMatrix &CMatrix::set(int mi, int mj, const QList<double> &matrix, CMatrix::SETBY dir)
 {
     if ( matrix.count() != mi*mj ) throw 20;
 
@@ -84,15 +114,14 @@ double CMatrix::getAt(int i, int j) const
 
 /**
 * @brief Перемещение
-* @param tx
-* @param ty
+* @param tx - сдвиг по X
+* @param ty - сдвиг по Y
 * @return
 */
 CMatrix & CMatrix::translate(double tx, double ty)
 {
-    setAt(0, _mj-1, tx);
-    setAt(1, _mj-1, ty);
-
+    CMatrix mt(3, 3, {1, 0, tx, 0, 1, ty, 0, 0, 1});
+    multiplication(mt);
     return *this;
 }
 
@@ -104,20 +133,22 @@ CMatrix & CMatrix::translate(double tx, double ty)
 */
 CMatrix & CMatrix::scale(double sx, double sy)
 {
-    setAt(0,0, sx);
-    setAt(1,1, sy);
-
+    CMatrix ms(3, 3, {sx, 0, 0, 0, sy, 0, 0, 0, 1});
+    multiplication(ms);
     return *this;
 }
 
 /**
 * @brief Поворот
-* @param angle
+* @param angle - угол в градусах
 * @return
 */
 CMatrix &CMatrix::rotate(double angle)
 {
-
+    double a = angle *(M_PI/180);
+    CMatrix mr(3, 3, {cos(a), -sin(a), 0, sin(a), cos(a), 0, 0, 0, 1});
+    multiplication(mr);
+    return *this;
 }
 
 /**
@@ -160,21 +191,23 @@ CMatrix & CMatrix::subtraction(const CMatrix & m)
 */
 CMatrix & CMatrix::multiplication(const CMatrix & m)
 {
-    if ( _mj!=m._mi ) throw 21; //--multiplication error: Target matrix count rows and source matrix count cols mismatch
+    if ( _mj!=m._mi ) throw 21;
 
-     for (int i=0; i<_mi; i++) {
+    TMatrix mn;
+    mn.reserve(_mi*_mj);
+
+    for (int i=0; i<_mi; i++) {
         for (int j=0; j< _mj; j++) {
-            double summ = 0.0;
+            mn[i+j*_mi] = 0;
             for (int l=0; l< _mi; l++) {
-                summ += getAt(i, l) * m.getAt(l, j);
+                mn[i+j*_mi] += getAt(i, l) * m.getAt(l, j);
             }
-
-            setAt(i, j, summ);
-
         }
     }
 
-     return *this;
+    _matrix = mn;
+
+    return *this;
 }
 
 /**
@@ -213,7 +246,7 @@ CMatrix CMatrix::clon()
 */
 CMatrix CMatrix::apply(const CMatrix & m) const
 {
-    if ( _mj != m._mj ) throw 22; //'apply error: Count cols target and source matrix mismatch');
+    if ( _mj != m._mj ) throw 22;
 
     CMatrix r (m._mj, 1);
 
@@ -260,13 +293,11 @@ bool CMatrix::isDefault() const
 QDebug operator<<(QDebug dbg, const CMatrix & m)
 {
     dbg<<"\n";
-
     for (int i=0;  i< m._mi; i++) {
         for (int j=0; j< m._mj; j++) {
-             dbg<<"   "<<m.getAt(i, j);
+             dbg.noquote()<<QString::number(m.getAt(i, j)).leftJustified(10, ' ');
         }
         dbg<<"\n";
     }
-
-    return dbg.space();
+    return dbg.nospace();
 }

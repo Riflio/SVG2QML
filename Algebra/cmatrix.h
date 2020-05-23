@@ -10,6 +10,7 @@
 class CMatrix {
 public:
     CMatrix(int mi=3, int mj=3);
+    CMatrix(int mi, int mj, const QList<double> &matrix);
 
     typedef QHash<int, double> TMatrix;
 
@@ -23,6 +24,7 @@ public:
     double getAt(int i, int j) const;
 
     CMatrix & set(int mi, int mj, const TMatrix & matrix, SETBY dir = SET_BY_ROWS);
+    CMatrix & set(int mi, int mj, const QList<double> & matrix, SETBY dir = SET_BY_ROWS);
     CMatrix & setAt(int i, int j, double val);
     CMatrix & translate(double tx, double ty);
     CMatrix & scale(double sx, double sy);
