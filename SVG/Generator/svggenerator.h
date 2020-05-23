@@ -18,6 +18,8 @@
 #include "SVG/Classes/cimage.h"
 #include "SVG/Classes/carc.h"
 #include "SVG/Classes/ccircle.h"
+#include "SVG/Classes/crect.h"
+#include "SVG/Classes/cellipse.h"
 
 #include "SVG/Classes/flineargradient.h"
 #include "SVG/Classes/fradialgradient.h"
