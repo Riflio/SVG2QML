@@ -38,13 +38,16 @@ int main(int argc, char *argv[])
             source = "Z:/SVG2QML/tests/gradient_60_120.svg";
             dest = "Z:/SVG2QML/tests/test1_QML.qml";
         #else
-            source = "/home/pavelk/Projects/SVG2QML/SVG2QML/tests/gradient_60_120.svg";
+            source = "/home/pavelk/Projects/SVG2QML/SVG2QML/tests/test_ellipses.svg";
             dest = "/home/pavelk/Projects/SVG2QML/SVG2QML/tests/test1.qml";
         #endif
     }
 
+    AppCore * appCore = new AppCore(nullptr);
 
     QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("appCore", QVariant::fromValue(appCore));
+
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [url](QObject *obj, const QUrl &objUrl) {
@@ -53,10 +56,9 @@ int main(int argc, char *argv[])
     }, Qt::QueuedConnection);
     engine.load(url);
 
-    AppCore * appCore = new AppCore(nullptr);
+    //-- GO GO GO
     appCore->go(source, dest);
 
-    engine.rootContext()->setContextProperty("appCore", QVariant::fromValue(appCore));
 
     return app.exec();
 }

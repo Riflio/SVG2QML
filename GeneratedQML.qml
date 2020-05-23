@@ -6,6 +6,16 @@ Item {
 
     Loader {
         anchors.fill: parent
-        source: (generatedQML.loaded)? "file:/"+appCore.generateQMLPath : ""
+        source: (generatedQML.loaded && appCore.generateQMLPath!=="")? "file:/"+appCore.generateQMLPath : ""
+
+        onSourceChanged: {
+            console.log("Begin load", source)
+        }
+
+        onLoaded: {
+            console.log("LOADED")
+        }
+
+
     }
 }
