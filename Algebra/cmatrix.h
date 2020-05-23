@@ -31,6 +31,7 @@ public:
     CMatrix & rotate(double angle);
     CMatrix & addition(const CMatrix & m);
     CMatrix & subtraction(const CMatrix & m);
+    CMatrix & clear();
 
     CMatrix & multiplication(const CMatrix & m);
     CMatrix & multiplication(double n);

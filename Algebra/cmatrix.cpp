@@ -6,12 +6,7 @@
 CMatrix::CMatrix(int mi, int mj):
     _mi(mi), _mj(mj)
 {
-    //-- Создаём базовую единичную матрицу
-    for (int i=0; i<_mi; i++) {
-        for (int j=0; j<_mj; j++) {
-            setAt(i, j, (i==j)? 1: 0 );
-        }
-    }
+    clear();
 }
 
 CMatrix::CMatrix(int mi, int mj, const QList<double> &matrix)
@@ -181,6 +176,20 @@ CMatrix & CMatrix::subtraction(const CMatrix & m)
         _matrix[i] -= m._matrix[i];
     }
 
+    return *this;
+}
+
+/**
+* @brief Очищаем и устанавливаем обратно в единичную
+* @return
+*/
+CMatrix &CMatrix::clear()
+{
+    for (int i=0; i<_mi; i++) {
+        for (int j=0; j<_mj; j++) {
+            setAt(i, j, (i==j)? 1: 0 );
+        }
+    }
     return *this;
 }
 
