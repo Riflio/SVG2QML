@@ -4,7 +4,7 @@
 #include "Algebra/cvector2d.h"
 
 CArc::CArc()
-    :CPrimitive(CPrimitive::PT_ARC)
+    :CPrimitive(PT_ARC)
 {
 
 }
