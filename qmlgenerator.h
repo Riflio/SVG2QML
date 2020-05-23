@@ -9,12 +9,23 @@ class QMLGenerator : public SVGGenerator
 public:
     explicit QMLGenerator(QObject *parent = nullptr);
 
+    struct TSettings {
+        QString rootName = "svg2qml";
+        QString versionQtQuick = "2.12";
+        QString versionQtQuickShapes = "1.12";
+        QString versionQtGraphicalEffects = "1.12";
+        bool enableScale = false; //-- Использовать или нет свойство scale
+    };
+
+    void setSettings(TSettings settings);
+    TSettings settings() const;
 
     GenerateStatus generateQML(QIODevice *device, CPrimitive * rootItm, const CDefs &defs);
 
 signals:
 
 private:
+    TSettings _settings;
     CPrimitive * _rootItm;
     CDefs _defs;
 
@@ -23,19 +34,19 @@ private:
 
     QString primitiveToPathCommands(CPrimitive * p);
 
-    bool makeFill(CPrimitive * itm, int &lvl, QTextStream &qml, const QString &rootID, bool isSimple);
+    bool makeFill(CPrimitive * itm, int &lvl, QTextStream &qml, bool isSimple);
 
     bool makeOpacity(CPrimitive * itm, int &lvl, QTextStream &qml);
 
-    void makeFillGradient(CPrimitive * itm, FGradient * gr, int &lvl, QTextStream &qml, const QString &rootID, CDef::TDefType type);
-    void makeFillGradientTransform(CPrimitive * itm, FGradient * gr, int &lvl, QTextStream &qml, const QString &rootID, CDef::TDefType type);
-    void makeRadialGradient(FRadialGradient * gr, int &lvl, QTextStream &qml, const QString &rootID);
-    void makeLinearGradient(FLinearGradient * gr, int &lvl, QTextStream &qml, const QString &rootID);
-    void makeGradientStops(FGradient * gr, int &lvl, QTextStream &qml, const QString &rootID);
+    void makeFillGradient(CPrimitive * itm, FGradient * gr, int &lvl, QTextStream &qml, CDef::TDefType type);
+    void makeFillGradientTransform(CPrimitive * itm, FGradient * gr, int &lvl, QTextStream &qml, CDef::TDefType type);
+    void makeRadialGradient(FRadialGradient * gr, int &lvl, QTextStream &qml);
+    void makeLinearGradient(FLinearGradient * gr, int &lvl, QTextStream &qml);
+    void makeGradientStops(FGradient * gr, int &lvl, QTextStream &qml);
 
-    void makeStroke(CPrimitive * itm, int &lvl, QTextStream &qml, const QString &rootID);
+    void makeStroke(CPrimitive * itm, int &lvl, QTextStream &qml);
 
-    void makeElement(CPrimitive * el, int &lvl, QTextStream &qml, const QString &rootID, bool firstInline=false);
+    void makeElement(CPrimitive * el, int &lvl, QTextStream &qml, bool firstInline=false);
 
     void makeTransform(const CMatrix &m, int &lvl, QTextStream &qml);
 
