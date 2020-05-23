@@ -146,44 +146,68 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
 /**
 * @brief Парсим трансформации и отдаём в виде матрицы
 * @param xml
+* @param attrName
 * @return
 */
-CMatrix SVGParser::parseTransform(QXmlStreamReader * xml)
+CMatrix SVGParser::parseTransform(QXmlStreamReader * xml, QString attrName)
 {
-    CMatrix  matrix(3, 3);
+    CMatrix matrix(3, 3);
 
-    QString transform = xml->attributes().value("transform").toString();
+    QString transform = xml->attributes().value(attrName).toString();
     if ( transform.isEmpty() ) return matrix;
 
+    QRegExp rxTransform("(\\w*)(?:[ ]+)?\\((.*)\\)"); //-- Получаем тип трансформации и её параметры
+    QRegExp rxTransformParams(RX_PARAMS); //-- Разбираем параметры на отдельные
 
-    QRegExp rxTransform("(\\w*)\\((.*)\\)"); //-- получаем тип трансформации и её параметры
-    QRegExp rxTransformParams("([-+]?\\d{1,10}(\\.\\d{1,10})?(e[+-]\\d{1,10})?)"); //-- Разбираем параметры на отдельные
+    rxTransform.setMinimal(true);
 
     if (rxTransform.indexIn(transform, 0)==-1) throw 33;
 
-    QString command = rxTransform.cap(1);
+    typedef  QPair<QString, QString> TCommand;
+    QList<TCommand> commandsList;
 
-    CMatrix::TMatrix mParams;
-
-    int pos =0, i =0;
-    while (( pos = rxTransformParams.indexIn(rxTransform.cap(2), pos)) != -1) {
-        mParams.insert( i, rxTransformParams.cap(1).toDouble() );
-        i++;
-        pos += rxTransformParams.matchedLength();
+    int posCommand = 0;
+    while ( ( posCommand = rxTransform.indexIn(transform, posCommand))!=-1  ) {
+        posCommand += rxTransform.matchedLength();
+        commandsList.append(TCommand(rxTransform.cap(1).toLower(), rxTransform.cap(2)));
     }
 
-    if (command == "matrix") { //-- готовая матрица
-        if ( mParams.count() <6 ) throw 23;
-        matrix.set(2, 3, mParams, CMatrix::SET_BY_COLS);
-    } else
-    if (command == "translate") {
-        if ( mParams.count() <2 ) throw 24;
-        matrix.translate(mParams[0], mParams[1]);
-    } else {
-        throw 25;
+    foreach ( TCommand command, commandsList) {
+        QString commandStr = command.first;
+        QString paramsStr = command.second;
+
+        QList<double> params;
+        int posParams = 0;
+        while ( (posParams = rxTransformParams.indexIn(paramsStr, posParams))!=-1 ) {
+            params.append(rxTransformParams.cap(1).toDouble());
+            posParams += rxTransformParams.matchedLength();
+        }
+
+        if ( commandStr=="matrix" ) { //-- Готовая матрица
+            if ( params.count()!=6 ) throw 23;
+            CMatrix::TMatrix tParams;
+            for(int i=0; i<params.count(); ++i) { tParams.insert(i, params[i]); }
+            matrix.set(2, 3, tParams, CMatrix::SET_BY_COLS);
+        } else
+        if ( commandStr=="translate" ) {
+            if ( params.count()!=2 ) throw 23;
+            matrix.translate(params[0], params[1]);
+        } else
+        if ( commandStr=="rotate" ) {
+            if ( params.count()!=1 ) throw 23;
+            matrix.rotate(params[0]);
+        } else
+        if ( commandStr=="scale" ) {
+            if ( params.count()!=2 ) throw 23;
+            matrix.scale(params[0], params[1]);
+        } else {
+            throw 25;
+        }
+
     }
 
     return matrix;
+
 
 }
 
@@ -232,7 +256,7 @@ bool SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
     QString allowedCommands = "mcslvhvazMCSLVHAZ";
 
     QRegExp rxCommands(QString("([%1])([^%1]*)").arg(allowedCommands)); //-- Ищем команды и берём их параметры
-    QRegExp rxCommandParams("([-+]?(\\d{1,10}|\\.)(\\.)?(\\d{1,10})?(e[+-]\\d{1,10})?)"); //-- Разбираем параметры на отдельные
+    QRegExp rxCommandParams(RX_PARAMS); //-- Разбираем параметры на отдельные
 
     QList<CPoint> prevPoints; //-- Запоминаем список точек от предыдущей команды, т.к. они могут потребоваться для текущей
     QList<double> params; //-- Список параметров у текущей команды
@@ -587,6 +611,9 @@ bool SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamReader *xm
     _defs[_xml->attributes().value("id").toString()] = linearGradient;
     *level = linearGradient;
 
+    CMatrix matrix = parseTransform(xml, "gradientTransform");
+    linearGradient->setTransform(matrix);
+
     if ( xml->attributes().hasAttribute("x1") ) { linearGradient->setX1(CSS::MeasureUnit(xml->attributes().value("x1").toFloat()).val()); }
     if ( xml->attributes().hasAttribute("y1") ) { linearGradient->setY1(CSS::MeasureUnit(xml->attributes().value("y1").toFloat()).val()); }
     if ( xml->attributes().hasAttribute("x2") ) { linearGradient->setX2(CSS::MeasureUnit(xml->attributes().value("x2").toFloat()).val()); }
@@ -610,6 +637,9 @@ bool SVGParser::parseRadialGradient(CNodeInterface **level, QXmlStreamReader *xm
 
     _defs[_xml->attributes().value("id").toString()] = radialGradient;
     *level = radialGradient;
+
+    CMatrix matrix = parseTransform(xml, "gradientTransform");
+    radialGradient->setTransform(matrix);
 
     if ( xml->attributes().hasAttribute("cx") ) { radialGradient->setCX(CSS::MeasureUnit(xml->attributes().value("cx").toFloat()).val()); }
     if ( xml->attributes().hasAttribute("cy") ) { radialGradient->setCY(CSS::MeasureUnit(xml->attributes().value("cy").toFloat()).val()); }
@@ -649,6 +679,7 @@ bool SVGParser::parseGradientStops(FGradient *gradient, QXmlStreamReader *xml)
                 if ( style.has("stop-color") ) {
                     gs.color = style.get("stop-color").value<QColor>();
                 }
+
                 if ( style.has("stop-opacity") ) {
                     gs.color.setAlphaF(style.get("stop-opacity").value<CSS::MeasureUnit>().val());
                 }

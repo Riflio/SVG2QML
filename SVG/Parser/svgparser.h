@@ -46,6 +46,8 @@ public:
 
     CDefs defs() const;
 
+    #define RX_PARAMS "([-+]?(\\d{1,10}|\\.)(\\.)?(\\d{1,10})?(e[+-]\\d{1,10})?)"
+
 signals:
 
 public slots:
@@ -67,7 +69,7 @@ private:
     bool parseCss(CNodeInterface * level, QXmlStreamReader * xml);
     bool parseCircle(CNodeInterface * level, QXmlStreamReader * xml);
 
-    CMatrix parseTransform(QXmlStreamReader * xml);
+    CMatrix parseTransform(QXmlStreamReader * xml, QString attrName="transform");
     CSS::Style parseStyle(QXmlStreamReader * xml);
 
     bool parseClipPath(CNodeInterface ** level, QXmlStreamReader * xml);
