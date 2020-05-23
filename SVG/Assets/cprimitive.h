@@ -5,8 +5,10 @@
 #include <QPainterPath>
 #include <QList>
 
-#include "cnode.h"
 #include "Algebra/cpoint.h"
+#include "Algebra/cmatrix.h"
+
+#include "cnode.h"
 #include "cpoints.h"
 #include "cboundingbox.h"
 
@@ -29,7 +31,8 @@ public:
         PT_POLYGON,
         PT_ARC,
         PT_RECT,
-        PT_CIRCLE
+        PT_CIRCLE,
+        PT_ELLIPSE
     };
 
     CPrimitive(const CPrimitive&other);
@@ -64,6 +67,8 @@ public:
     virtual void rotate(const CPoint &center, double angle);
     virtual void scale(double sX, double sY);
 
+    virtual bool applyTransform(const CMatrix &matrix = CMatrix());
+
     virtual bool toPath();
 
     QString ID() const;
@@ -88,6 +93,9 @@ public:
 
     void needUpdate();
 
+    CMatrix trandform() const;
+    void setTransform(const CMatrix &matrix);
+
 protected:
     PrimitiveType _type;
     CPoints _points;
@@ -95,6 +103,8 @@ protected:
     mutable CBoundingBox _bbox; //-- Ограничительная рамка
     QString _id; //-- Айдишник из SVG
     QString _class; //-- Класс из SVG
+
+    CMatrix _transformMatrix;
 
     void drawPath(const QPainterPath &path, QPainter *painter);
 

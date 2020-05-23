@@ -226,7 +226,7 @@ void CPrimitive::scale(double sX, double sY)
         _points[i].set(_points[i].x()*sX, _points[i].y()*sY);
     }
 
-    //-- Остальных на уровне, если есть
+    //-- Остальных на нижнем уровне, если есть
     if ( this->down!=nullptr ) {
         for (CNodeInterface * ni=this->down; ni!=nullptr; ni=ni->next) {
             CPrimitive * pi = static_cast<CPrimitive*>(ni);
@@ -235,6 +235,32 @@ void CPrimitive::scale(double sX, double sY)
     }
 
     needUpdate(); //TODO: Можно просто так же маштабировать ограничительную рамку, если в дальнейшем только она из изменяемых останется
+}
+
+/**
+* @brief Применяем заданную матрицу трансформаций
+* @param matrix - если нужно применить ещё и какую-то другую
+* @return
+*/
+bool CPrimitive::applyTransform(const CMatrix &matrix)
+{
+    CMatrix totalMatrix = _transformMatrix.multiplication(matrix);
+
+    //-- Себя
+    for (int i=0; i<_points.count(); ++i) {
+        _points[i].transform(totalMatrix);
+    }
+
+    //-- Остальным на нижнем уровне, если есть
+    if ( this->down!=nullptr ) {
+        for (CNodeInterface * ni=this->down; ni!=nullptr; ni=ni->next) {
+            CPrimitive * pi = static_cast<CPrimitive*>(ni);
+            pi->applyTransform(totalMatrix);
+        }
+    }
+
+    _transformMatrix.clear();
+    return true;
 }
 
 /**
@@ -299,6 +325,16 @@ void CPrimitive::needUpdate()
     //-- Придётся и у предка то же, т.к. может быть основан на наших
     CPrimitive * upItm = static_cast<CPrimitive*>(up);
     if ( upItm!=nullptr ) upItm->needUpdate();
+}
+
+CMatrix CPrimitive::trandform() const
+{
+    return _transformMatrix;
+}
+
+void CPrimitive::setTransform(const CMatrix &matrix)
+{
+    _transformMatrix = matrix;
 }
 
 /**
