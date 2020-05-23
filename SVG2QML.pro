@@ -39,6 +39,7 @@ SOURCES += \
         SVG/Classes/cline.cpp \
         SVG/Classes/cpath.cpp \
         SVG/Classes/cpolygon.cpp \
+        SVG/Classes/crect.cpp \
         SVG/Classes/fclippath.cpp \
         SVG/Classes/flineargradient.cpp \
         SVG/Classes/fradialgradient.cpp \
@@ -89,6 +90,7 @@ HEADERS += \
     SVG/Classes/cline.h \
     SVG/Classes/cpath.h \
     SVG/Classes/cpolygon.h \
+    SVG/Classes/crect.h \
     SVG/Classes/fclippath.h \
     SVG/Classes/flineargradient.h \
     SVG/Classes/fradialgradient.h \
