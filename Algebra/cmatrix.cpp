@@ -1,13 +1,11 @@
 #include "cmatrix.h"
+#include "Algebra/equal.h"
 #include <QDebug>
 
 CMatrix::CMatrix(int mi, int mj):
     _mi(mi), _mj(mj)
 {
-
-    /**
-    * Создаём базовую единичную матрицу
-    */
+    //-- Создаём базовую единичную матрицу
     for (int i=0; i<_mi; i++) {
         for (int j=0; j<_mj; j++) {
             setAt(i, j, (i==j)? 1: 0 );
@@ -30,14 +28,13 @@ CMatrix::TMatrix CMatrix::matrix() const
     return _matrix;
 }
 
-
 /**
-* Устанавливаем значения в матрицу
-* направление - столбцы, строки
-*
-* mi кол-во строк
-* mj кол-во столбцов
-* dir направлени
+* @brief Устанавливаем значения в матрицу
+* @param mi кол-во строк
+* @param mj кол-во столбцов
+* @param matrix
+* @param dir направлени
+* @return
 */
 CMatrix & CMatrix::set(int mi, int mj, const TMatrix & matrix, SETBY dir)
 {
@@ -46,7 +43,7 @@ CMatrix & CMatrix::set(int mi, int mj, const TMatrix & matrix, SETBY dir)
     if ( dir == SET_BY_ROWS) {
         for (int i=0, d=0; i<mi; i++) {
             for (int j=0; j<mj; j++, d++) {
-                setAt( i, j, matrix[d] );
+                setAt(i, j, matrix[d] );
             }
         }
     } else
@@ -63,7 +60,7 @@ CMatrix & CMatrix::set(int mi, int mj, const TMatrix & matrix, SETBY dir)
 
 
 /**
-* Устанавливаем на конкретное место значение
+* @brief Устанавливаем на конкретное место значение
 * @param i
 * @param j
 * @param val
@@ -86,7 +83,10 @@ double CMatrix::getAt(int i, int j) const
 }
 
 /**
-* Перемещение
+* @brief Перемещение
+* @param tx
+* @param ty
+* @return
 */
 CMatrix & CMatrix::translate(double tx, double ty)
 {
@@ -97,7 +97,10 @@ CMatrix & CMatrix::translate(double tx, double ty)
 }
 
 /**
-* Маштаб
+* @brief Маштаб
+* @param sx
+* @param sy
+* @return
 */
 CMatrix & CMatrix::scale(double sx, double sy)
 {
@@ -108,7 +111,19 @@ CMatrix & CMatrix::scale(double sx, double sy)
 }
 
 /**
-* Сложение матриц
+* @brief Поворот
+* @param angle
+* @return
+*/
+CMatrix &CMatrix::rotate(double angle)
+{
+
+}
+
+/**
+* @brief Сложение матриц
+* @param m
+* @return
 */
 CMatrix & CMatrix::addition(const CMatrix & m)
 {
@@ -123,7 +138,9 @@ CMatrix & CMatrix::addition(const CMatrix & m)
 
 
 /**
-* Вычитание матриц
+* @brief Вычитание матриц
+* @param m
+* @return
 */
 CMatrix & CMatrix::subtraction(const CMatrix & m)
 {
@@ -136,9 +153,10 @@ CMatrix & CMatrix::subtraction(const CMatrix & m)
     return *this;
 }
 
-
 /**
-* Умножение на матрицу
+* @brief Умножение на матрицу
+* @param m
+* @return
 */
 CMatrix & CMatrix::multiplication(const CMatrix & m)
 {
@@ -173,7 +191,8 @@ CMatrix &CMatrix::multiplication(double n)
 }
 
 /**
-* Копируем матрицу
+* @brief Копируем матрицу
+* @return
 */
 CMatrix CMatrix::clon()
 {
@@ -188,7 +207,9 @@ CMatrix CMatrix::clon()
 
 
 /**
-* Применяем трансформации
+* @brief Применяем трансформации
+* @param m
+* @return
 */
 CMatrix CMatrix::apply(const CMatrix & m) const
 {
@@ -216,6 +237,23 @@ QMatrix CMatrix::toQMatrix()
     QMatrix m;
     m.setMatrix(getAt(0,0), getAt(0,1), getAt(1,0), getAt(1,1), getAt(0,2), getAt(1,2));
     return m;
+}
+
+/**
+* @brief Отвечаем, если матрица единичная
+* @return
+*/
+bool CMatrix::isDefault() const
+{
+    for (int i=0; i<_mi; i++) {
+        for (int j=0; j<_mj; j++) {
+            if ( !Equal::almostEqual(_matrix[i+j*_mi], ((i==j)? 1: 0)) )  {
+                 return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 

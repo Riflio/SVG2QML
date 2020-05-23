@@ -26,7 +26,7 @@ public:
     CMatrix & setAt(int i, int j, double val);
     CMatrix & translate(double tx, double ty);
     CMatrix & scale(double sx, double sy);
-
+    CMatrix & rotate(double angle);
     CMatrix & addition(const CMatrix & m);
     CMatrix & subtraction(const CMatrix & m);
 
@@ -36,6 +36,8 @@ public:
     CMatrix apply(const CMatrix & m) const;
 
     QMatrix toQMatrix();
+
+    bool isDefault() const;
 
     friend QDebug operator<<(QDebug dbg, const CMatrix & m);
 
