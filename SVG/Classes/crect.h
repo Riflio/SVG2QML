@@ -11,7 +11,7 @@ public:
 
     void setX(double x);
     void setY(double y);
-    void seWidth(double width);
+    void setWidth(double width);
     void setHeight(double height);
     void setRX(double x);
     void setRY(double y);
@@ -21,6 +21,7 @@ public:
 
     TRadius radius() const;
 
+    bool toPath() override;
 
 private:
     CPoint _tl;
