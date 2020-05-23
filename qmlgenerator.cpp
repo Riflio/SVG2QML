@@ -83,6 +83,18 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p)
     if ( p->type()==CPrimitive::PT_PATH ) {
         CPath * path = static_cast<CPath*>(p);
         pathCommnads = generatePath(path);
+    } else
+    if ( p->type()==CPrimitive::PT_RECT ) {
+        CRect * rect = static_cast<CRect*>(p);
+        rect->toPath();
+        rect->applyTransform();
+        pathCommnads = generatePath(rect->down);
+    } else
+    if ( p->type()==CPrimitive::PT_ELLIPSE ) {
+        CEllipse * ellipse = static_cast<CEllipse*>(p);
+        ellipse->toPath();
+        ellipse->applyTransform();
+        pathCommnads = generatePath(ellipse->down);
     } else {
         qWarning()<<"Unsupported SVG element"<<p->type();
     }
@@ -102,14 +114,14 @@ bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, const Q
 {
     if ( !itm->styles().has("fill") ) {
         qml<<tab(lvl)<<"fillColor: "<<"("<<rootID<<".thinkLines)? \"transparent\" : "<<"\"transparent\""<<"\n";
-        return false;
+        return true;
     }
 
     QVariant fill = itm->styles().get("fill");
 
     if ( fill.type()==QVariant::Color ) {
         qml<<tab(lvl)<<"fillColor: "<<"("<<rootID<<".thinkLines)? \"transparent\" : "<<"\""<<fill.toString()<<"\""<<"\n";
-        return false;
+        return true;
     } else
     if ( fill.type()==QVariant::Url ) {
         if ( CDefs::isCDefLink(fill.toUrl()) ) {            
@@ -318,6 +330,9 @@ void QMLGenerator::makeGradientStops(FGradient *gr, int &lvl, QTextStream &qml, 
 */
 void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const QString &rootID, bool firstInline)
 {
+    //-- Что из элементов поддерживаем пока что
+    QList<int> supportedTypes = {CPrimitive::PT_PATH, CPrimitive::PT_CIRCLE, CPrimitive::PT_RECT, CPrimitive::PT_ELLIPSE};
+
     CNodeInterfaceIterator i(el);
     while( i.next() ) {
 
@@ -331,59 +346,65 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, const
                 lvl++;
                 makeID(level, lvl, qml);
                 qml<<tab(lvl)<<"width: "<<rootID<<".width"<<"\n";
-                qml<<tab(lvl)<<"height: "<<rootID<<".height"<<"\n";
-            }
+                qml<<tab(lvl)<<"height: "<<rootID<<".height"<<"\n";                
+            }                        
         }
 
-        if ( (i.type()&CNodeInterfaceIterator::IT_STARTELEMENT) && (p->type()==CPrimitive::PT_PATH || p->type()==CPrimitive::PT_CIRCLE) ) {
+        if ( (i.type()&CNodeInterfaceIterator::IT_STARTELEMENT) ) {
 
-            QString pathCommnads = primitiveToPathCommands(p);
+            if ( p->type()==CPrimitive::PT_GROUP ) continue;
 
-            if ( pathCommnads.isEmpty() ) { continue; }
+            if (  supportedTypes.indexOf(p->type())>-1 ) {
+                QString pathCommnads = primitiveToPathCommands(p);
 
-            qml<<tab(lvl)<<"Shape {"<<"\n";
-                makeID(p, ++lvl, qml);
-                qml<<tab(lvl)<<"width: "<<rootID<<".width"<<"\n";
-                qml<<tab(lvl)<<"height: "<<rootID<<".height"<<"\n";
+                if ( pathCommnads.isEmpty() ) { continue; }
 
-                //-- Path
-                qml<<tab(lvl++)<<"ShapePath {"<<"\n";
-                    //qml<<tab(lvl)<<"scale: "<<rootID<<".scaleShape"<<"\n";
+                qml<<tab(lvl)<<"Shape {"<<"\n";
+                    makeID(p, ++lvl, qml);
+                    qml<<tab(lvl)<<"width: "<<rootID<<".width"<<"\n";
+                    qml<<tab(lvl)<<"height: "<<rootID<<".height"<<"\n";
 
-                    qml<<tab(lvl)<<"PathSvg {"<<"\n";
-                        qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommnads)<<"\n";
-                    qml<<tab(lvl)<<"}"<<"\n";
+                    //-- Path
+                    qml<<tab(lvl++)<<"ShapePath {"<<"\n";
+                        //qml<<tab(lvl)<<"scale: "<<rootID<<".scaleShape"<<"\n";
 
-                    //-- Styles
-                    makeStroke(p, lvl, qml, rootID);
-                    bool simpleFilled = makeFill(p, lvl, qml, rootID, true);
+                        qml<<tab(lvl)<<"PathSvg {"<<"\n";
+                            qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommnads)<<"\n";
+                        qml<<tab(lvl)<<"}"<<"\n";
+
+                        //-- Styles
+                        makeStroke(p, lvl, qml, rootID);
+                        bool simpleFilled = makeFill(p, lvl, qml, rootID, true);
+
+                    qml<<tab(--lvl)<<"}"<<"\n";
+
+                    if ( !simpleFilled ) { makeFill(p, lvl, qml, rootID, false); }
+
+                    //-- Clip path
+                    if ( p->styles().has("clip-path") ) {
+                        CDef * def = _defs.get(p->styles().get("clip-path").toUrl());
+
+                        if ( def==nullptr || def->defType()!=CDef::DF_CLIPPATH ) {
+                            qWarning()<<"Not supported clip-path resource";
+                            continue;
+                        }
+
+                        FClipPath * cp = static_cast<FClipPath*>(def);
+
+                        qml<<tab(lvl)<<"layer.enabled: "<<"true"<<"\n";
+                        qml<<tab(lvl++)<<"layer.effect: "<<"GE.OpacityMask {"<<"\n";
+                            qml<<tab(lvl)<<"maskSource: ";
+                                makeElement(cp->clipPath, lvl, qml, rootID, true);
+                        qml<<tab(--lvl)<<"}"<<"\n";
+                    }
 
                 qml<<tab(--lvl)<<"}"<<"\n";
 
-                if ( !simpleFilled ) { makeFill(p, lvl, qml, rootID, false); }
-
-                //-- Clip path
-                if ( p->styles().has("clip-path") ) {
-                    CDef * def = _defs.get(p->styles().get("clip-path").toUrl());
-
-                    if ( def==nullptr || def->defType()!=CDef::DF_CLIPPATH ) {
-                        qWarning()<<"Not supported clip-path resource";
-                        continue;
-                    }
-
-                    FClipPath * cp = static_cast<FClipPath*>(def);
-
-                    qml<<tab(lvl)<<"layer.enabled: "<<"true"<<"\n";
-                    qml<<tab(lvl++)<<"layer.effect: "<<"GE.OpacityMask {"<<"\n";
-                        qml<<tab(lvl)<<"maskSource: ";
-                            makeElement(cp->clipPath, lvl, qml, rootID, true);
-                    qml<<tab(--lvl)<<"}"<<"\n";
-                }
-
-            qml<<tab(--lvl)<<"}"<<"\n";
-
-            i.nextLevel();
-            continue;
+                i.nextLevel();
+                continue;
+            } else {
+                qWarning()<<"Not supported SVG element"<<p->type();
+            }
         }
 
         if ( (i.type()&CNodeInterfaceIterator::IT_ENDLEVEL) ) {
