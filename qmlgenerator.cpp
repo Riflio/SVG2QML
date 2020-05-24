@@ -174,6 +174,11 @@ bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, bool is
         } else {
             qWarning()<<"Unsupported fill value url"<<fill.toString();
         }
+    } else
+    if ( fill.type()==QVariant::String ) {
+        if ( fill.toString()=="none" ) {
+            qml<<tab(lvl)<<"fillColor: "<<"\"transparent\""<<"\n";
+        }
     } else {
         qWarning()<<"Unsupported fill type"<<fill.toString();
     }
