@@ -38,8 +38,9 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
     CNodeInterface * currentLevel = _rootItem;
     CNodeInterface * prevLevel = nullptr; //-- Запоминаем предыдущий
 
-    int defsLvl = 0; //-- Defs section lvl
-    QStringList defsTokens = {"g", "path", "rect", "line", "image", "linearGradient", "radialGradient", "clipPath", "style"};
+    int defsLvl = 0; //-- Подсчитываем на каком уровне в defs, что бы знать прямых наследников
+    QStringList fPrimitiveTokens = {"g", "path", "line", "rect", "circle", "ellipse"}; //-- Что из примитивов заносим в FPrimitive, если они в секции defs
+    QStringList toDefsForse = { "lineargradient", "radialgradient", "clippath" }; //-- Что принудительно заносим в defs, да же если они вне этой секции
 
     _xml = new QXmlStreamReader(device);
 
@@ -53,34 +54,23 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
         if ( _xml->tokenType()==QXmlStreamReader::StartElement ) {
 
             QString elName = _xml->name().toString().toLower();
-            bool defsParsed = false;
-            if  ( defsLvl>0 ) {
-                if ( defsTokens.indexOf(_xml->name().toString())==-1 ) { qWarning()<<"Unsupported defs type"<<_xml->name(); continue; }
 
+            if  ( defsLvl>0 ) { //-- Мы в секции defs
                 if ( defsLvl==1 ) { //-- Каждого прямого наследника из defs считаем как отддельный
-                    defsParsed = true;
-
-                    if ( elName=="clippath" ) {
-                        parseClipPath(&currentLevel, _xml);
-                    } else
-                    if ( elName=="lineargradient" ) {
-                        parseLinearGradient(&currentLevel, _xml);                        
-                    } else
-                    if ( elName=="radialgradient" ) {
-                        parseRadialGradient(&currentLevel, _xml);                        
-                    } else
-                    if ( elName=="style" ) {
-                       //-- ниже распарсим
-                    } else {
-                        qWarning()<<"Unsupported defs element"<<_xml->name();
-                        defsParsed = false;
+                    prevLevel = currentLevel;
+                    if ( fPrimitiveTokens.indexOf(elName)>-1 ) {
+                        FPrimitive * fPrim = new FPrimitive();
+                        currentLevel = fPrim->primitive;
                     }
                 }
-
                 defsLvl++;
             }
 
-            elName = _xml->name().toString().toLower(); //-- Нужно, т.к. при парсинге defs мы могли перейти куда-нить
+            if ( (defsLvl==0) && (toDefsForse.indexOf(elName)>-1) ) { //-- Что принудительно заносить в defs
+                 defsLvl=1;
+                 prevLevel = currentLevel;
+            }
+
             if ( elName=="svg" ) { //-- svg сам по себе как группа, парсим
                 parseGroup(&currentLevel, _xml);
             } else
@@ -102,8 +92,7 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
             if ( elName=="style" ) {
                 parseCss(currentLevel, _xml);
             } else
-            if ( elName=="defs" ) {
-                prevLevel = currentLevel;
+            if ( elName=="defs" ) {                
                 defsLvl = 1;
             } else
             if ( elName=="title" ) {
@@ -115,7 +104,16 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
             if ( elName=="ellipse" ) {
                 parseEllipse(currentLevel, _xml);
             } else
-            if ( !defsParsed ) {
+            if ( elName=="lineargradient" ) {
+                parseLinearGradient(&currentLevel, _xml);
+            } else
+            if ( elName=="radialgradient" ) {
+                parseRadialGradient(&currentLevel, _xml);
+            } else
+            if ( elName=="clippath" ) {
+                parseClipPath(&currentLevel, _xml);
+            }
+            else {
                 qWarning()<<"Unsupported element"<<_xml->name();
             }
         }
@@ -125,7 +123,10 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
 
             QString elName = _xml->name().toString().toLower();
 
-            if ( defsLvl>0 && defsTokens.indexOf(_xml->name().toString())>-1 ) {
+            if ( defsLvl>0 ) {
+                if ( defsLvl==1 ) { //-- Когда закончили со вложенными, возвращаем прежний уровень
+                    currentLevel = prevLevel;
+                }
                 defsLvl--;
             }
 
@@ -137,7 +138,6 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
             } else
             if ( elName=="defs" ) {
                 defsLvl = 0;
-                currentLevel = prevLevel;
                 prevLevel = nullptr;
             }
         }

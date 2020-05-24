@@ -43,6 +43,7 @@ SOURCES += \
         SVG/Classes/crect.cpp \
         SVG/Classes/fclippath.cpp \
         SVG/Classes/flineargradient.cpp \
+        SVG/Classes/fprimitive.cpp \
         SVG/Classes/fradialgradient.cpp \
         SVG/Generator/svggenerator.cpp \
         SVG/Parser/svgparser.cpp \
@@ -95,6 +96,7 @@ HEADERS += \
     SVG/Classes/crect.h \
     SVG/Classes/fclippath.h \
     SVG/Classes/flineargradient.h \
+    SVG/Classes/fprimitive.h \
     SVG/Classes/fradialgradient.h \
     SVG/Generator/svggenerator.h \
     SVG/Parser/svgparser.h \

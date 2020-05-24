@@ -25,8 +25,10 @@
 #include "SVG/Classes/fclippath.h"
 #include "SVG/Classes/flineargradient.h"
 #include "SVG/Classes/fradialgradient.h"
+#include "SVG/Classes/fprimitive.h"
 
 #include "SVG/Assets/cdefs.h"
+
 
 class SVGParser : public QObject
 {
