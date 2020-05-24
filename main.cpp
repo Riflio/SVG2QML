@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
         dest = args[1];
     } else {
         #ifdef Q_OS_WIN
-            source = "Z:/SVG2QML/tests/test_ui1.svg";
+            source = "Z:/SVG2QML/tests/gradient_60_120.svg";
             dest = "Z:/SVG2QML/tests/test1_QML.qml";
         #else
             source = "/home/pavelk/Projects/SVG2QML/SVG2QML/tests/test_bezier1.svg";
