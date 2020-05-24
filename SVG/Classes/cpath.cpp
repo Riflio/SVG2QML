@@ -49,8 +49,8 @@ CPath *CPath::makeOffset(double d)
 
             qDebug()<<"--offsets beziers"<<obl.count();
 
-            foreach (CBezier * of, obl) {
-                //--
+            foreach (CBezier * ob, obl) {
+                CNodeInterface::addNext(offsetPath, ob);
             }
 
 
