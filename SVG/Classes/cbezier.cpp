@@ -221,6 +221,7 @@ double CBezier::evalBez(const QVector<double> poly, double t) const
 QList<CBezier *> CBezier::makeOffset(double d)
 {
 
+     //d = 0.1;
     _dpoints = derive(_points);
 
     QList<CBezier *> list;
@@ -404,12 +405,13 @@ QList<CBezier *> CBezier::reduce()
     foreach(CBezier * p1, pass1) {
         double t1 = 0;
         double t2 = 0;
+        bool exStop = false;
         while (t2 <= 1) {
             for (t2 = t1 + step; t2 <= 1 + step; t2 += step) {
                 CBezier * segment = p1->split(t1, t2)[0];
                 if ( !segment->simple() ) {
                     t2 -= step;
-                    if ( abs(t1-t2)<step ) { return {}; }
+                    if ( abs(t1-t2)<step ) { exStop = true; break; }
                     segment = p1->split(t1, t2)[0];
                     segment->_t1 = map(t1, 0, 1, p1->_t1, p1->_t2);
                     segment->_t2 = map(t2, 0, 1, p1->_t1, p1->_t2);
@@ -418,7 +420,12 @@ QList<CBezier *> CBezier::reduce()
                     break;
                 }
             }
+
+            if ( exStop ) break;
         }
+
+        if ( exStop ) continue;
+
         if ( t1<1 ) {
             CBezier * segment = p1->split(t1, 1)[0];
             segment->_t1 = map(t1, 0, 1, p1->_t1, p1->_t2);

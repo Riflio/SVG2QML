@@ -38,6 +38,7 @@ void CPath::reverse()
 CPath *CPath::makeOffset(double d)
 {
     CPath * offsetPath = new CPath();
+    offsetPath->setIsClosed(isClosed());
 
     for (CNodeInterface * ni = down; ni!=nullptr; ni=ni->next) {
         CPrimitive * pr = static_cast<CPrimitive*>(ni);
