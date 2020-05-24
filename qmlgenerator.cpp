@@ -384,6 +384,14 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
         qml<<tab(lvl)<<"miterLimit: "<<miterLimit<<"\n";
     }
 
+    if ( itm->styles().has("stroke-dasharray") ) {
+        QList<CSS::MeasureUnit> dashList = itm->styles().get("stroke-dasharray").value<QList<CSS::MeasureUnit>>();
+        QStringList dashListStr;
+        foreach (CSS::MeasureUnit mu, dashList) { dashListStr<<QString::number(mu.val()); }
+        qml<<tab(lvl)<<"strokeStyle: "<<"ShapePath.DashLine"<<"\n";
+        qml<<tab(lvl)<<"dashPattern: "<<"["<<dashListStr.join(", ")<<"]"<<"\n";
+    }
+
 }
 
 /**
