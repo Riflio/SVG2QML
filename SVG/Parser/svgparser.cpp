@@ -530,7 +530,11 @@ CSS::Style SVGParser::parseStyle(QXmlStreamReader * xml)
     }
 
     //-- У элемента так же могут быть заданы стили как атрибуты элемента - занесём их в стили
-    QStringList cssTokens = {"stroke", "stroke-width", "fill", "stop-color", "stop-opacity", "clip-path"};
+    QStringList cssTokens = {
+        "stroke", "stroke-width", "stroke-dasharray", "stroke-opacity",
+        "stroke-linejoin", "stroke-linecap", "stroke-miterlimit",
+        "fill", "stop-color", "stop-opacity", "clip-path", "fill-opacity"
+    };
 
     foreach(QString cssToken, cssTokens) {
         if ( xml->attributes().hasAttribute(cssToken) ) {
