@@ -5,30 +5,31 @@ Convert SVG file to native QML file.
 ## Поддерживаемые элементы:
 В скобках указаны поддерживаемые индивидуальные параметры. 
 Список общих дальше.
-  - svg
-  - defs
-  - title
-  - g
-  - line (x1, y1, x2, y2)
-  - rect (x, y, width, height, rx, ry)
-  - circle (cx, cy, r)
-  - ellipse (cx, cy, rx, ry)
-  - path ("d" commands: "mcslvhvazMCSLVHAZ")
-  - clipPath (g, rect, circle, ellipse, path)
-  - linearGradient (x1, y1, x2, y2, gradientTransform)
-  -- stop (offset, stop-color, stop-opacity) 
-  - radialGradient (cx, cy, r, fx, fy, gradientTransform)
-  -- stop (offset, stop-color, stop-opacity)
-  - style (base selector "#id", ".class", etc)
+- svg
+- defs
+- title
+- g
+- line (x1, y1, x2, y2)
+- rect (x, y, width, height, rx, ry)
+- circle (cx, cy, r)
+- ellipse (cx, cy, rx, ry)
+- path ("d" commands: "mcslvhvazMCSLVHAZ")
+- clipPath (g, rect, circle, ellipse, path)
+- linearGradient (x1, y1, x2, y2, gradientTransform)
+ - stop (offset, stop-color, stop-opacity) 
+- radialGradient (cx, cy, r, fx, fy, gradientTransform)
+ - stop (offset, stop-color, stop-opacity)
+- style (base selector "#id", ".class")
 
 ## Поддерживаемые общие параметры
-  - opacity
+ - opacity
  - fill (color, opacity, gradient)
  - stroke (color, opacity, width, linejoin: bevel/miter/roud, linecap: butt/round/square, miterlimit, dasharray)
  - style (only upper parameters)
  - transform (translate, scale, rotate, matrix3x2)
  - id
  - class
+
 ## В планах
  - text
 
