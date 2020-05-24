@@ -14,7 +14,7 @@ public:
 
     bool toPath() { return true; }
 
-    CPath * makeOffset();
+    CPath * makeOffset(double d);
 
 private:
     bool _isClosed;

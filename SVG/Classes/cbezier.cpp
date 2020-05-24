@@ -221,7 +221,13 @@ double CBezier::evalBez(const QVector<double> poly, double t) const
 QList<CBezier *> CBezier::makeOffset(double d)
 {
 
-    //make dpoints
+    _dpoints = derive(_points);
+
+    QList<CBezier *> list;
+
+    list = boffset(d);
+
+    return list;
 }
 
 /**
@@ -268,7 +274,9 @@ CPoint CBezier::derivative(double t)
 {
     double mt = 1 - t, a = 0, b = 0, c = 0;
 
-    CPoints p = dpoints[0];
+    if ( _dpoints.count()==0 ) { _dpoints = derive(_points); }
+
+    CPoints p = _dpoints[0];
 
     a = mt * mt;
     b = mt * t * 2;
@@ -290,7 +298,6 @@ CBezier::TOffset CBezier::boffset(double t, double d)
 
 QList<CBezier *> CBezier::boffset(double d)
 {
-    QList<CBezier*> retList;
     bool linear = false;
 
     if ( linear ) {
@@ -304,14 +311,14 @@ QList<CBezier *> CBezier::boffset(double d)
         return { new CBezier(np) };
     }
 
-    /*var reduced = reduce();
+    QList<CBezier*> retList;
+    QList<CBezier *> reduced = reduce();
 
-    return reduced.map(function(s) {
-      /*if (s._linear) {
-        return s.boffset(d)[0];
-      }
-      return s.bscale(d);
-    });*/
+    foreach (CBezier * s, reduced) {
+        retList.append(s->bscale(d));
+    }
+
+    return retList;
 }
 
 /**
@@ -335,11 +342,10 @@ CBezier * CBezier::bscale(double d)
 
     //-- Move all points by distance 'd' wrt the origin 'o'
     CPoints points = _points;
-    CPoints np;
+    CPoints np = _points;
 
     //-- Move end points by fixed distance along normal.
     for (int t=0; t<2; t++) {
-        np[t * order] = points[t * order];
         np[t * order].incX( ((t==1)? r2 : r1) * v[t].n.x());
         np[t * order].incY( ((t==1)? r2 : r1) * v[t].n.y());
     }
@@ -371,13 +377,13 @@ CBezier * CBezier::bscale(double d)
 }
 
 
-void CBezier::reduce()
+QList<CBezier *> CBezier::reduce()
 {
-/*    double step = 0.01;
+    double step = 0.01;
     QList<CBezier *> pass1;
     QList<CBezier *> pass2;
 
-    // first pass: split on extrema
+    //-- First pass: split on extrema
     QList<double> extrema = bextrema().roots;
     if ( extrema.indexOf(0)==-1 ) {
       extrema.prepend(0);
@@ -386,51 +392,53 @@ void CBezier::reduce()
       extrema.append(1);
     }
 
-    for (int t1 = extrema[0], i = 1; i<extrema.count(); ++i) {
-      int t2 = extrema[i];
-      CBezier * segment = split(t1, t2);
+    double t1 = extrema[0];
+    for (int i = 1; i<extrema.count(); ++i) {
+      double t2 = extrema[i];
+      CBezier * segment = split(t1, t2)[0];
       pass1.append(segment);
       t1 = t2;
     }
 
-    // second pass: further reduce these segments to simple segments
+    //-- Second pass: further reduce these segments to simple segments
     foreach(CBezier * p1, pass1) {
-      int t1 = 0;
-      int t2 = 0;
-      while (t2 <= 1) {
-        for (t2 = t1 + step; t2 <= 1 + step; t2 += step) {
-          CBezier * segment = p1.split(t1, t2);
-          if ( !segment.simple() ) {
-            t2 -= step;
-            if ( abs(t1 - t2)<step ) {
-              return [];
+        double t1 = 0;
+        double t2 = 0;
+        while (t2 <= 1) {
+            for (t2 = t1 + step; t2 <= 1 + step; t2 += step) {
+                CBezier * segment = p1->split(t1, t2)[0];
+                if ( !segment->simple() ) {
+                    t2 -= step;
+                    if ( abs(t1-t2)<step ) { return {}; }
+                    segment = p1->split(t1, t2)[0];
+                    segment->_t1 = map(t1, 0, 1, p1->_t1, p1->_t2);
+                    segment->_t2 = map(t2, 0, 1, p1->_t1, p1->_t2);
+                    pass2.append(segment);
+                    t1 = t2;
+                    break;
+                }
             }
-            segment = p1.split(t1, t2);
-            segment._t1 = umap(t1, 0, 1, p1._t1, p1._t2);
-            segment._t2 = umap(t2, 0, 1, p1._t1, p1._t2);
-            pass2.push(segment);
-            t1 = t2;
-            break;
-          }
         }
-      }
-      if ( t1<1 ) {
-        segment = p1.split(t1, 1);
-        segment._t1 = utils.map(t1, 0, 1, p1._t1, p1._t2);
-        segment._t2 = p1._t2;
-        pass2.push(segment);
-      }
-    });
-    return pass2;*/
+        if ( t1<1 ) {
+            CBezier * segment = p1->split(t1, 1)[0];
+            segment->_t1 = map(t1, 0, 1, p1->_t1, p1->_t2);
+            segment->_t2 = p1->_t2;
+            pass2.append(segment);
+        }
+    }
+
+    return pass2;
 }
 
 CBezier::TExtrema CBezier::bextrema()
 {
     TExtrema ret;
 
+    if ( _dpoints.count()==0 ) { _dpoints = derive(_points); }
+
     for (int c=0; c<2; ++c) {
         QList<double> p0;
-        foreach (CPoint dp, dpoints[0]) {
+        foreach (CPoint dp, _dpoints[0]) {
             switch (c) {
                 case 0: p0.append(dp.x()); break;
                 case 1: p0.append(dp.y()); break;
@@ -439,7 +447,7 @@ CBezier::TExtrema CBezier::bextrema()
         ret.result[c] = droots(p0);
 
         QList<double> p1;
-        foreach (CPoint dp, dpoints[1]) {
+        foreach (CPoint dp, _dpoints[1]) {
             switch (c) {
                 case 0: p1.append(dp.x()); break;
                 case 1: p1.append(dp.y()); break;
@@ -459,7 +467,7 @@ CBezier::TExtrema CBezier::bextrema()
     std::sort(ret.roots.begin(), ret.roots.end());
 
     QList<double> rootsFiltered;
-    for (int idx=0; idx<=ret.roots.count(); ++idx) {
+    for (int idx=0; idx<ret.roots.count(); ++idx) {
         if ( ret.roots.indexOf(ret.roots[idx])==idx ) { rootsFiltered.append(ret.roots[idx]); }
     }
 
@@ -484,40 +492,52 @@ CPoint CBezier::lli4(const CPoint &p1, const CPoint &p2, const CPoint &p3, CPoin
 
 QList<double> CBezier::droots(const QList<double> &p)
 {
-    double a = p[0], b = p[1], c = p[2];
-    double d = a - 2 * b + c;
+    if ( p.count()==3 ) {
+        double a = p[0], b = p[1], c = p[2];
+        double d = a - 2 * b + c;
 
-    if (d != 0) {
-        double m1 = -sqrt(b*b - a*c);
-        double m2 = -a + b;
-            double v1 = -(m1+m2) / d;
-            double v2 = -(-m1+m2) / d;
-            return {v1, v2};
+        if (d != 0) {
+            double m1 = -sqrt(b*b - a*c);
+            double m2 = -a + b;
+                double v1 = -(m1+m2) / d;
+                double v2 = -(-m1+m2) / d;
+                return {v1, v2};
+        } else
+        if ( b!=c && d==0 ) {
+            return {(2*b-c) / (2*(b-c))};
+        }
+
+        return {};
     } else
-    if ( b!=c && d==0 ) {
-        return {(2*b-c) / (2*(b-c))};
+    if ( p.count()==2 ) {
+        double a = p[0];
+        double b = p[1];
+        if ( !Equal::almostEqual(a, b) ) {
+            return {a / (a - b)};
+        }
+        return {};
     }
 
     return {};
 }
 
-CPoints CBezier::hull(double t)
+CPoints CBezier::hull(double t) const
 {
     CPoints p = _points;
     CPoints q;
+    q.reserve(4);
 
-    int idx = 0;
-    q[idx++] = p[0];
-    q[idx++] = p[1];
-    q[idx++] = p[2];
-    q[idx++] = p[3];
+    q.add(p[0]);
+    q.add(p[1]);
+    q.add(p[2]);
+    q.add(p[3]);
 
     //-- We lerp between all points at each iteration, until we have 1 point left.
     while ( p.count()>1 ) {
         CPoints _p;
         for (int i=0, l=p.count()-1; i<l; ++i) {
             CPoint pt = lerp(t, p[i], p[i+1]);
-            q[idx++] = pt;
+            q.add(pt);
             _p.append(pt);
         }
         p = _p;
@@ -532,36 +552,111 @@ CPoint CBezier::lerp(double r, const CPoint &v1, const CPoint &v2) const
     return ret;
 }
 
-CBezier::TSplit CBezier::split(double t1, double t2) const
+QList<CBezier*> CBezier::split(double t1, double t2) const
 {
-/*    //-- Shortcuts
-    if ( t1==0 && t2==t2) {
-        //return split(t2).first;
+    //-- Shortcuts
+    if ( t1==0 && t2>=0) {
+        return { split(t2)[0] };
     }
     if ( t2==1 ) {
-        //return split(t1).second;
+        return { split(t1)[1] };
     }
 
     //-- No shortcut: use "de Casteljau" iteration.
     CPoints q = hull(t1);
 
-    TSplit result {new CBezier([q[0], q[4], q[7], q[9]]), new Bezier([q[9], q[8], q[6], q[3]]), q};
+    QList<CBezier *> result { new CBezier({q[0], q[4], q[7], q[9]}), new CBezier({q[9], q[8], q[6], q[3]}) };
 
-    // make sure we bind _t1/_t2 information!
-    result.left._t1 = utils.map(0, 0, 1, this._t1, this._t2);
-    result.left._t2 = utils.map(t1, 0, 1, this._t1, this._t2);
-    result.right._t1 = utils.map(t1, 0, 1, this._t1, this._t2);
-    result.right._t2 = utils.map(1, 0, 1, this._t1, this._t2);
+    //-- Make sure we bind _t1/_t2 information!
+    result[0]->_t1 = map(0, 0, 1, _t1, _t2);
+    result[0]->_t2 = map(t1, 0, 1, _t1, _t2);
+    result[1]->_t1 = map(t1, 0, 1, _t1, _t2);
+    result[1]->_t2 = map(1, 0, 1, _t1, _t2);
 
-    // if we have no t2, we're done
-    if ( t2!=t2 ) {
+    //-- If we have no t2, we're done
+    if ( t2<0 ) {
         return result;
     }
 
-    // if we have a t2, split again:
-    t2 = utils.map(t2, t1, 1, 0, 1);
-    var subsplit = result.right.split(t2);
-    return subsplit.left;*/
+    //-- If we have a t2, split again:
+    t2 = map(t2, t1, 1, 0, 1);
+    result = result[1]->split(t2);
+    return result;
+}
+
+/**
+* @brief CBezier::map
+* @ref
+* @param v
+* @param ds
+* @param de
+* @param ts
+* @param te
+* @return
+*/
+double CBezier::map(double v, double ds, double de, double ts, double te) const
+{
+    double d1 = de - ds;
+    double d2 = te - ts;
+    double v2 = v - ds;
+    double r = v2 / d1;
+    return ts + d2 * r;
+}
+
+bool CBezier::simple()
+{
+    double a1 = angle(_points[0], _points[3], _points[1]);
+    double a2 = angle(_points[0], _points[3], _points[2]);
+    if ((a1 > 0 && a2 < 0) || (a1 < 0 && a2 > 0)) return false;
+
+    CPoint n1 = normal(0);
+    CPoint n2 = normal(1);
+    double s = n1.x()*n2.x() + n1.y()* n2.y();
+    double angle = abs(acos(s));
+    return angle < M_PI / 3;
+}
+
+/**
+* @brief Угол между точками v1 и v2 с центром в o
+* @ref https://github.com/Pomax/bezierjs/blob/master/lib/utils.js
+* @param p1
+* @param p2
+* @param p3
+* @return
+*/
+double CBezier::angle(CPoint o, CPoint v1, CPoint v2) const
+{
+    double dx1 = v1.x() - o.x();
+    double dy1 = v1.y() - o.y();
+    double dx2 = v2.x() - o.x();
+    double dy2 = v2.y() - o.y();
+    double cross = dx1*dy2 - dy1*dx2;
+    double dot = dx1*dx2 + dy1*dy2;
+    return atan2(cross, dot);
+}
+
+/**
+* @brief
+* @ref https://github.com/Pomax/bezierjs/blob/master/lib/utils.js
+* @param points
+* @return
+*/
+QList<CPoints> CBezier::derive(const CPoints &points) const
+{
+    QList<CPoints> dpoints;
+
+    CPoints p = points;
+    for (int d = p.count(), c = d-1; d>1; --d, --c) {
+        CPoints list;
+        for (int j = 0; j<c; ++j) {
+            CPoint dpt(c*(p[j+1].x() - p[j].x()),  c*(p[j+1].y() - p[j].y()));
+            list.add(dpt);
+        }
+        dpoints.append(list);
+        p = list;
+    }
+
+    return dpoints;
 }
 
 

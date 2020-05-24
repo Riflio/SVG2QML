@@ -43,7 +43,7 @@ public:
     CPoint normal(double t);
     CPoint derivative(double t);
 
-    void reduce();
+    QList<CBezier *> reduce();
 
     struct TExtrema {
         QMap<int, QList<double>> result;
@@ -54,21 +54,26 @@ public:
 
     CPoint lli4(const CPoint &p1, const CPoint &p2, const CPoint &p3, CPoint const &p4) const;
 
-    QList<CPoints> dpoints;
+    QList<CPoints> _dpoints;
 
     QList<double> droots(const QList<double> &p);
 
-    CPoints hull(double t);
+    CPoints hull(double t) const;
 
     CPoint lerp(double r, const CPoint &v1, const CPoint &v2) const;
 
-    struct TSplit {
-        CBezier * first;
-        CBezier * second;
-        CPoints span;
-    };
+    QList<CBezier *> split(double t1, double t2 = -1) const;
 
-    TSplit split(double t1, double t2) const;
+    double _t1 = 0;
+    double _t2 = 1;
+
+    double map(double v, double ds, double de, double ts, double te) const;
+
+    bool simple();
+
+    double angle(CPoint o, CPoint v1, CPoint v2) const;
+
+    QList<CPoints> derive(const CPoints &points) const;
 
 protected:    
     inline double evalBez(const QVector<double> poly, double t) const;

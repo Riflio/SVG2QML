@@ -84,7 +84,7 @@ QString QMLGenerator::sanitizeID(QString id)
 * @param p
 * @return
 */
-QString QMLGenerator::primitiveToPathCommands(CPrimitive *p)
+QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset)
 {
     QString pathCommnads = "";
     if ( p->type()==CPrimitive::PT_CIRCLE ) {
@@ -96,6 +96,11 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p)
     if ( p->type()==CPrimitive::PT_PATH ) {
         CPath * path = static_cast<CPath*>(p);
         path->applyTransform();
+
+        if ( offset!=0 ) {
+            path = path->makeOffset(offset);
+        }
+
         pathCommnads = generatePath(path);
     } else
     if ( p->type()==CPrimitive::PT_RECT ) {
