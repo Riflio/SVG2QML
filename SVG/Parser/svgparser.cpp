@@ -60,13 +60,13 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
                 if ( defsLvl==1 ) { //-- Каждого прямого наследника из defs считаем как отддельный
                     defsParsed = true;
 
-                    if ( elName=="clipPath" ) {
+                    if ( elName=="clippath" ) {
                         parseClipPath(&currentLevel, _xml);
                     } else
-                    if ( elName=="linearGradient" ) {
+                    if ( elName=="lineargradient" ) {
                         parseLinearGradient(&currentLevel, _xml);                        
                     } else
-                    if ( elName=="radialGradient" ) {
+                    if ( elName=="radialgradient" ) {
                         parseRadialGradient(&currentLevel, _xml);                        
                     } else
                     if ( elName=="style" ) {
