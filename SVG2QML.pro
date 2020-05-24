@@ -102,6 +102,7 @@ HEADERS += \
     qmlgenerator.h
 
 DISTFILES += \
+    readme.md \
     tests/gradient_60_120.svg \
     tests/test1.svg \
     tests/test_bezier1.svg \
