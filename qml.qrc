@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>GeneratedQML.qml</file>
+        <file>CompareQML.qml</file>
     </qresource>
 </RCC>
