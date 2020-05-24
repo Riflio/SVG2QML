@@ -38,9 +38,10 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
     CNodeInterface * currentLevel = _rootItem;
     CNodeInterface * prevLevel = nullptr; //-- Запоминаем предыдущий
 
+    bool inDefs = false; //-- Мы в секции defs
     int defsLvl = 0; //-- Подсчитываем на каком уровне в defs, что бы знать прямых наследников
     QStringList fPrimitiveTokens = {"g", "path", "line", "rect", "circle", "ellipse"}; //-- Что из примитивов заносим в FPrimitive, если они в секции defs
-    QStringList toDefsForse = { "lineargradient", "radialgradient", "clippath" }; //-- Что принудительно заносим в defs, да же если они вне этой секции
+    QStringList toDefsForse = { "lineargradient", "radialgradient", "clippath", "style" }; //-- Что принудительно заносим в defs, да же если они вне этой секции
 
     _xml = new QXmlStreamReader(device);
 
@@ -55,8 +56,14 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
 
             QString elName = _xml->name().toString().toLower();
 
-            if  ( defsLvl>0 ) { //-- Мы в секции defs
-                if ( defsLvl==1 ) { //-- Каждого прямого наследника из defs считаем как отддельный
+            //-- Что принудительно заносить в defs
+            if ( (defsLvl==0) && (toDefsForse.indexOf(elName)>-1) ) {
+                inDefs = false; //-- Мы будем не в реальной секции, что бы как только кончится итем сразу выйти
+                defsLvl = 1;
+            }
+
+            if  ( defsLvl>0 ) {
+                if ( defsLvl==1 ) { //-- Каждого прямого наследника из defs считаем как отдельный
                     prevLevel = currentLevel;
                     if ( fPrimitiveTokens.indexOf(elName)>-1 ) {
                         FPrimitive * fPrim = new FPrimitive();
@@ -64,11 +71,6 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
                     }
                 }
                 defsLvl++;
-            }
-
-            if ( (defsLvl==0) && (toDefsForse.indexOf(elName)>-1) ) { //-- Что принудительно заносить в defs
-                 defsLvl=1;
-                 prevLevel = currentLevel;
             }
 
             if ( elName=="svg" ) { //-- svg сам по себе как группа, парсим
@@ -92,7 +94,8 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
             if ( elName=="style" ) {
                 parseCss(currentLevel, _xml);
             } else
-            if ( elName=="defs" ) {                
+            if ( elName=="defs" ) {
+                inDefs = true;
                 defsLvl = 1;
             } else
             if ( elName=="title" ) {
@@ -124,10 +127,14 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
             QString elName = _xml->name().toString().toLower();
 
             if ( defsLvl>0 ) {
+                defsLvl--;
                 if ( defsLvl==1 ) { //-- Когда закончили со вложенными, возвращаем прежний уровень
                     currentLevel = prevLevel;
+                    if ( !inDefs ) { //-- Если нас не было в реальной секции, то сразу и завершаем
+                        defsLvl = 0;
+                        prevLevel = nullptr;
+                    }
                 }
-                defsLvl--;
             }
 
             if ( elName=="svg" ) {
@@ -137,6 +144,7 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
                 currentLevel = static_cast<CPrimitive*>(CNodeInterface::levelUp(currentLevel));
             } else
             if ( elName=="defs" ) {
+                inDefs = false;
                 defsLvl = 0;
                 prevLevel = nullptr;
             }
