@@ -1,5 +1,5 @@
 #include "cline.h"
-#include <QDebug>
+#include "cpath.h"
 
 /**
 * @brief CLine
@@ -8,6 +8,11 @@
 */
 CLine::CLine(CPoint s, CPoint e):
     CPrimitive(PT_LINE, s, e)
+{
+
+}
+
+CLine::CLine(const CLine &other): CPrimitive(other)
 {
 
 }
@@ -35,4 +40,13 @@ CPoints CLine::lianirize(double tol) const
     res.append(_points.p1());
     res.append(_points.p2());
     return res;
+}
+
+bool CLine::toPath()
+{
+    CPath * path = new CPath();
+    CLine * line = new CLine(*this);
+    CNodeInterface::addNext(path, line);
+    CNodeInterface::addNext(this, path);
+    return true;
 }
