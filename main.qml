@@ -11,6 +11,10 @@ Window {
         anchors.fill: parent
         color: "transparent"
 
+        CompareQML {
+            anchors.fill: parent
+        }
+
         GeneratedQML {
             anchors.fill: parent
         }
