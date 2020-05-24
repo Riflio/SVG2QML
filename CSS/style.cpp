@@ -26,13 +26,26 @@ void Style::set(QString styleName, QString value)
     if ( rxURL.indexIn(value)>-1 ) { //-- URL
         vr = QVariant::fromValue(QUrl(rxURL.cap(1)));
     } else
-    if ( rxMeasureUnit.indexIn(value)>-1 ) { //-- Число с единицами измерения
-        MeasureUnit me;
-        me.setVal(rxMeasureUnit.cap(1).toDouble());
-        if ( rxMeasureUnit.cap(3)=="px" ) { me.setType(MeasureUnit::MU_PX); } else
-        if ( rxMeasureUnit.cap(3)=="%" ) { me.setType(MeasureUnit::MU_PERCENT); }
-        else { me.setType(MeasureUnit::MU_PT); }
-        vr = QVariant::fromValue(me);
+    if ( rxMeasureUnit.indexIn(value, 0)>-1 ) { //-- Число с единицами измерения
+
+        QList<MeasureUnit> muList;
+        int muPos = 0;
+        while ( (muPos=rxMeasureUnit.indexIn(value, muPos))>-1 ) {
+            muPos += rxMeasureUnit.matchedLength();
+
+            MeasureUnit mu;
+            mu.setVal(rxMeasureUnit.cap(1).toDouble());
+            if ( rxMeasureUnit.cap(3)=="px" ) { mu.setType(MeasureUnit::MU_PX); } else
+            if ( rxMeasureUnit.cap(3)=="%" ) { mu.setType(MeasureUnit::MU_PERCENT); }
+            else { mu.setType(MeasureUnit::MU_PT); }
+            muList.append(mu);
+        }
+        if ( muList.count()==1 ) {
+            vr = QVariant::fromValue(muList[0]);
+        } else {
+            vr = QVariant::fromValue(muList);
+        }
+
     } else
     { //-- Ничего не подходит, ставим как есть
         vr = value;
