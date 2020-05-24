@@ -103,4 +103,8 @@ HEADERS += \
 
 DISTFILES += \
     tests/gradient_60_120.svg \
-    tests/test1.svg
+    tests/test1.svg \
+    tests/test_bezier1.svg \
+    tests/test_ellipses.svg \
+    tests/test_lines.svg \
+    tests/test_rects.svg
