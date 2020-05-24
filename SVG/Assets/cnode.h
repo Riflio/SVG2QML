@@ -156,7 +156,7 @@ public:
             _curType = IT_STARTELEMENT;
             return true;
         } else
-        if ( _curItm->up!=nullptr ) {
+        if ( _curItm->up!=_rootItm->up ) {
             _curItm = _curItm->up;
             _curLevel = _curItm;
             _curType = IT_ENDLEVEL;
@@ -173,7 +173,7 @@ public:
     bool nextLevel()
     {
         if ( _curItm->last!=nullptr ) { _curItm = _curItm->last; }
-        if ( _curItm->up==nullptr ) { _curItm = nullptr; return false; }
+        if ( _curItm->up==_rootItm->up ) { _curItm = nullptr; return false; }
         _curItm = _curItm->up;
         _curLevel = _curItm;
         _curType = IT_ENDLEVEL;
