@@ -56,6 +56,12 @@ CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, c
     needUpdate();
 }
 
+CPrimitive::CPrimitive(CPrimitive::PrimitiveType type, const CPoints &points)
+    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(type),  _points(points), _id("")
+{
+
+}
+
 CPrimitive::~CPrimitive()
 {
     CNodeInterface::removeFromLevel(this);

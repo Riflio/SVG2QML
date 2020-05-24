@@ -45,6 +45,7 @@ public:
     CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2);
     CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, const CPoint &p3, const CPoint &p4);
     CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, const CPoint &p3, const CPoint &p4, const CPoint &p5, const CPoint &p6);
+    CPrimitive(PrimitiveType type, const CPoints &points);
 
     PrimitiveType type() const;
     CPoints points() const;
