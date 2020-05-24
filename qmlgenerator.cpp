@@ -104,6 +104,12 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p)
         rect->applyTransform();
         pathCommnads = generatePath(rect->down);
     } else
+    if ( p->type()==CPrimitive::PT_LINE ) {
+        CLine * line = static_cast<CLine*>(p);
+        line->toPath();
+        line->applyTransform();
+        pathCommnads = generatePath(line->down);
+    } else
     if ( p->type()==CPrimitive::PT_ELLIPSE ) {
         CEllipse * ellipse = static_cast<CEllipse*>(p);
         ellipse->toPath();
@@ -311,7 +317,9 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
     if ( itm->styles().has("stroke") ) {
         QVariant stroke = itm->styles().get("stroke");
         if ( stroke.type()==QVariant::Color ) {
-            qml<<tab(lvl)<<"strokeColor: "<<"("<<_settings.rootName<<".thinkLines)? \"black\" : "<<"\""<<stroke.toString()<<"\""<<"\n";
+            QColor color = stroke.value<QColor>();
+            if ( itm->styles().has("stroke-opacity") ) { color.setAlphaF(itm->styles().get("stroke-opacity").value<CSS::MeasureUnit>().val()); }
+            qml<<tab(lvl)<<"strokeColor: "<<"("<<_settings.rootName<<".thinkLines)? \"black\" : "<<"\""<<color.name(QColor::HexArgb)<<"\""<<"\n";
         } else
         if ( stroke.toString()=="none" ) {
             qml<<tab(lvl)<<"strokeColor: "<<"("<<_settings.rootName<<".thinkLines)? \"black\"  : "<< "\"transparent\""<<"\n";
@@ -340,6 +348,42 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
     } else {
          qml<<tab(lvl)<<"strokeWidth: "<<"("<<_settings.rootName<<".thinkLines)? 1 : 0"<<"\n";
     }
+
+    if ( itm->styles().has("stroke-linejoin") ) {
+        QString linejoin = itm->styles().get("stroke-linejoin").toString();
+        if ( linejoin=="bevel" ) {
+            qml<<tab(lvl)<<"joinStyle: "<<"ShapePath.BevelJoin"<<"\n";
+        } else
+        if ( linejoin=="miter" ) {
+            qml<<tab(lvl)<<"joinStyle: "<<"ShapePath.MiterJoin"<<"\n";
+        } else
+        if ( linejoin=="round" ) {
+            qml<<tab(lvl)<<"joinStyle: "<<"ShapePath.RoundJoin"<<"\n";
+        } else {
+            qWarning()<<"Unsupported stroke-linejoin type:"<<linejoin;
+        }
+    }
+
+    if ( itm->styles().has("stroke-linecap") ) {
+        QString linecap = itm->styles().get("stroke-linecap").toString();
+        if ( linecap=="butt" ) {
+            qml<<tab(lvl)<<"capStyle: "<<"ShapePath.FlatCap"<<"\n";
+        } else
+        if ( linecap=="round" ) {
+            qml<<tab(lvl)<<"capStyle: "<<"ShapePath.RoundCap"<<"\n";
+        } else
+        if ( linecap=="square" ) {
+            qml<<tab(lvl)<<"capStyle: "<<"ShapePath.SquareCap"<<"\n";
+        } else {
+            qWarning()<<"Not supported stroke-linecap type:"<<linecap;
+        }
+    }
+
+    if ( itm->styles().has("stroke-miterlimit") ) {
+        double miterLimit = itm->styles().get("stroke-miterlimit").value<CSS::MeasureUnit>().val();
+        qml<<tab(lvl)<<"miterLimit: "<<miterLimit<<"\n";
+    }
+
 }
 
 /**
@@ -364,7 +408,7 @@ void QMLGenerator::makeGradientStops(FGradient *gr, int &lvl, QTextStream &qml)
 void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, bool firstInline)
 {
     //-- Что из элементов поддерживаем пока что
-    QList<int> supportedTypes = {CPrimitive::PT_PATH, CPrimitive::PT_CIRCLE, CPrimitive::PT_RECT, CPrimitive::PT_ELLIPSE};
+    QList<int> supportedTypes = {CPrimitive::PT_PATH, CPrimitive::PT_CIRCLE, CPrimitive::PT_RECT, CPrimitive::PT_ELLIPSE, CPrimitive::PT_LINE};
 
     CNodeInterfaceIterator i(el);
     while( i.next() ) {
