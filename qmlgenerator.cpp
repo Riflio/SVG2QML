@@ -158,7 +158,7 @@ bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, bool is
                 FGradient * gr = dynamic_cast<FGradient*>(def);
                 if ( gr->transform().isDefault() ) {  //-- Если нет трансформаций, то выводим как обычно
                     makeFillGradient(itm, gr, lvl, qml, def->defType());
-                    return false;
+                    return true;
                 } else { //-- Есть трансформации - придётся мучаться
                     if ( isSimple ) { //-- Если режим простая заливка, то выведем просто заливку цветом
                         qml<<tab(lvl)<<"fillColor: "<<"\""<<gr->stops().last().color.name(QColor::HexArgb)<<"\""<<"\n";
@@ -178,6 +178,7 @@ bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, bool is
     if ( fill.type()==QVariant::String ) {
         if ( fill.toString()=="none" ) {
             qml<<tab(lvl)<<"fillColor: "<<"\"transparent\""<<"\n";
+            return true;
         }
     } else {
         qWarning()<<"Unsupported fill type"<<fill.toString();
