@@ -205,3 +205,183 @@ double CBezier::evalBez(const QVector<double> poly, double t) const
     double x = poly[0]*(1-t)*(1-t)*(1-t)+3*poly[1]*t*(1-t)*(1-t)+3*poly[2]*t*t*(1-t)+poly[3]*t*t*t;
     return x;
 }
+
+/**
+* @brief Сделаем параллельную кривую на заданном расстоянии
+* @param d
+* @ref https://pomax.github.io/bezierjs/
+* @return
+*/
+QList<CBezier *> CBezier::makeOffset(double d)
+{
+
+}
+
+
+
+/**
+offset: function(t, d) {
+      if (typeof d !== "undefined") {
+        var c = this.get(t);
+        var n = this.normal(t);
+        var ret = {
+          c: c,
+          n: n,
+          x: c.x + n.x * d,
+          y: c.y + n.y * d
+        };
+        if (this._3d) {
+          ret.z = c.z + n.z * d;
+        }
+        return ret;
+      }
+      if (this._linear) {
+        var nv = this.normal(0);
+        var coords = this.points.map(function(p) {
+          var ret = {
+            x: p.x + t * nv.x,
+            y: p.y + t * nv.y
+          };
+          if (p.z && n.z) {
+            ret.z = p.z + t * nv.z;
+          }
+          return ret;
+        });
+        return [new Bezier(coords)];
+      }
+      var reduced = this.reduce();
+      return reduced.map(function(s) {
+        if (s._linear) {
+          return s.offset(t)[0];
+        }
+        return s.scale(t);
+      });
+    },
+ reduce: function() {
+      var i,
+        t1 = 0,
+        t2 = 0,
+        step = 0.01,
+        segment,
+        pass1 = [],
+        pass2 = [];
+      // first pass: split on extrema
+      var extrema = this.extrema().values;
+      if (extrema.indexOf(0) === -1) {
+        extrema = [0].concat(extrema);
+      }
+      if (extrema.indexOf(1) === -1) {
+        extrema.push(1);
+      }
+
+      for (t1 = extrema[0], i = 1; i < extrema.length; i++) {
+        t2 = extrema[i];
+        segment = this.split(t1, t2);
+        segment._t1 = t1;
+        segment._t2 = t2;
+        pass1.push(segment);
+        t1 = t2;
+      }
+
+      // second pass: further reduce these segments to simple segments
+      pass1.forEach(function(p1) {
+        t1 = 0;
+        t2 = 0;
+        while (t2 <= 1) {
+          for (t2 = t1 + step; t2 <= 1 + step; t2 += step) {
+            segment = p1.split(t1, t2);
+            if (!segment.simple()) {
+              t2 -= step;
+              if (abs(t1 - t2) < step) {
+                // we can never form a reduction
+                return [];
+              }
+              segment = p1.split(t1, t2);
+              segment._t1 = utils.map(t1, 0, 1, p1._t1, p1._t2);
+              segment._t2 = utils.map(t2, 0, 1, p1._t1, p1._t2);
+              pass2.push(segment);
+              t1 = t2;
+              break;
+            }
+          }
+        }
+        if (t1 < 1) {
+          segment = p1.split(t1, 1);
+          segment._t1 = utils.map(t1, 0, 1, p1._t1, p1._t2);
+          segment._t2 = p1._t2;
+          pass2.push(segment);
+        }
+      });
+      return pass2;
+    },
+
+scale: function(d) {
+      var order = this.order;
+      var distanceFn = false;
+      if (typeof d === "function") {
+        distanceFn = d;
+      }
+      if (distanceFn && order === 2) {
+        return this.raise().scale(distanceFn);
+      }
+
+      // TODO: add special handling for degenerate (=linear) curves.
+      var clockwise = this.clockwise;
+      var r1 = distanceFn ? distanceFn(0) : d;
+      var r2 = distanceFn ? distanceFn(1) : d;
+      var v = [this.offset(0, 10), this.offset(1, 10)];
+      var o = utils.lli4(v[0], v[0].c, v[1], v[1].c);
+      if (!o) {
+        throw new Error("cannot scale this curve. Try reducing it first.");
+      }
+      // move all points by distance 'd' wrt the origin 'o'
+      var points = this.points,
+        np = [];
+
+      // move end points by fixed distance along normal.
+      [0, 1].forEach(
+        function(t) {
+          var p = (np[t * order] = utils.copy(points[t * order]));
+          p.x += (t ? r2 : r1) * v[t].n.x;
+          p.y += (t ? r2 : r1) * v[t].n.y;
+        }.bind(this)
+      );
+
+      if (!distanceFn) {
+        // move control points to lie on the intersection of the offset
+        // derivative vector, and the origin-through-control vector
+        [0, 1].forEach(
+          function(t) {
+            if (this.order === 2 && !!t) return;
+            var p = np[t * order];
+            var d = this.derivative(t);
+            var p2 = { x: p.x + d.x, y: p.y + d.y };
+            np[t + 1] = utils.lli4(p, p2, o, points[t + 1]);
+          }.bind(this)
+        );
+        return new Bezier(np);
+      }
+
+      // move control points by "however much necessary to
+      // ensure the correct tangent to endpoint".
+      [0, 1].forEach(
+        function(t) {
+          if (this.order === 2 && !!t) return;
+          var p = points[t + 1];
+          var ov = {
+            x: p.x - o.x,
+            y: p.y - o.y
+          };
+          var rc = distanceFn ? distanceFn((t + 1) / order) : d;
+          if (distanceFn && !clockwise) rc = -rc;
+          var m = sqrt(ov.x * ov.x + ov.y * ov.y);
+          ov.x /= m;
+          ov.y /= m;
+          np[t + 1] = {
+            x: p.x + rc * ov.x,
+            y: p.y + rc * ov.y
+          };
+        }.bind(this)
+      );
+      return new Bezier(np);
+    },

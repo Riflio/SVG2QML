@@ -30,3 +30,11 @@ void CPath::reverse()
     }
 }
 
+/**
+* @brief Создаём параллельный путь
+* @return
+*/
+CPath *CPath::makeOffset()
+{
+
+}

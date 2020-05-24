@@ -21,6 +21,8 @@ public:
 
     QPair<CBezier,CBezier> subDivide(double t) const;
 
+    QList<CBezier*> makeOffset(double d);
+
 protected:    
     inline double evalBez(const QVector<double> poly, double t) const;
 
