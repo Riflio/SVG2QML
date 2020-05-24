@@ -86,6 +86,8 @@ QString QMLGenerator::sanitizeID(QString id)
 */
 QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset)
 {
+    offset = -5;
+
     QString pathCommnads = "";
     if ( p->type()==CPrimitive::PT_CIRCLE ) {
         CCircle * circle = static_cast<CCircle*>(p);

@@ -32,7 +32,7 @@ private:
     QString tab(int c);
     QString sanitizeID(QString id);
 
-    QString primitiveToPathCommands(CPrimitive * p, double offset=1);
+    QString primitiveToPathCommands(CPrimitive * p, double offset=0);
 
     bool makeFill(CPrimitive * itm, int &lvl, QTextStream &qml, bool isSimple);
 
