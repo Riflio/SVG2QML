@@ -33,6 +33,7 @@ void CPath::reverse()
 
 /**
 * @brief Создаём параллельный путь
+* @param d - смещение
 * @return
 */
 CPath *CPath::makeOffset(double d)
@@ -40,25 +41,19 @@ CPath *CPath::makeOffset(double d)
     CPath * offsetPath = new CPath();
     offsetPath->setIsClosed(isClosed());
 
+    //TODO: Доделать смещение остальных примитивов
     for (CNodeInterface * ni = down; ni!=nullptr; ni=ni->next) {
         CPrimitive * pr = static_cast<CPrimitive*>(ni);
 
-        if ( pr->type()==PT_BEZIER ) {
-            qDebug()<<"MAKE BEZIER OFFSET";
+        if ( pr->type()==PT_BEZIER ) {            
             CBezier * b = static_cast<CBezier*>(pr);
             QList<CBezier*> obl = b->makeOffset(d);
-
-            qDebug()<<"--offsets beziers"<<obl.count();
-
             foreach (CBezier * ob, obl) {
                 CNodeInterface::addNext(offsetPath, ob);
             }
-
-
         } else {
             qWarning()<<"Not supported primitive for offset"<<pr->type();
         }
-
 
     }
 
