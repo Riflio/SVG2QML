@@ -218,16 +218,10 @@ double CBezier::evalBez(const QVector<double> poly, double t) const
 * @ref https://pomax.github.io/bezierjs/
 * @return
 */
-QList<CBezier *> CBezier::makeOffset(double d)
+QList<CBezier *> CBezier::makeOffset(double d) const
 {
-
-     //d = 0.1;
-    _dpoints = derive(_points);
-
     QList<CBezier *> list;
-
     list = boffset(d);
-
     return list;
 }
 
@@ -237,10 +231,16 @@ QList<CBezier *> CBezier::makeOffset(double d)
 */
 bool CBezier::direction()
 {
-
+ //TODO: Вычисляем направление по/против часовой
 }
 
-CPoint CBezier::get(double t)
+/**
+* @brief Получаем точку на кривой
+* @ref https://pomax.github.io/bezierjs/#get
+* @param t position 0-1
+* @return
+*/
+CPoint CBezier::get(double t) const
 {
     if ( t==0) { return _points[0]; }
     if ( t==1 ) { return _points[3]; }
@@ -259,7 +259,12 @@ CPoint CBezier::get(double t)
     return ret;
 }
 
-CPoint CBezier::normal(double t)
+/**
+* @brief CBezier::normal
+* @param t
+* @return
+*/
+CPoint CBezier::normal(double t) const
 {
     CPoint d = derivative(t);
     double q = sqrt(d.x()*d.x() + d.y()*d.y());
@@ -268,16 +273,15 @@ CPoint CBezier::normal(double t)
 
 /**
 * @brief Вычисляем производную
+* @ref https://pomax.github.io/bezierjs/#derivative
 * @param t
 * @return
 */
-CPoint CBezier::derivative(double t)
+CPoint CBezier::derivative(double t) const
 {
     double mt = 1 - t, a = 0, b = 0, c = 0;
 
-    if ( _dpoints.count()==0 ) { _dpoints = derive(_points); }
-
-    CPoints p = _dpoints[0];
+    CPoints p = dPoints()[0];
 
     a = mt * mt;
     b = mt * t * 2;
@@ -288,6 +292,13 @@ CPoint CBezier::derivative(double t)
     return ret;
 }
 
+/**
+* @brief CBezier::boffset
+* @ref https://pomax.github.io/bezierjs/#offset
+* @param t
+* @param d
+* @return
+*/
 CBezier::TOffset CBezier::boffset(double t, double d)
 {
     CPoint c = get(t);
@@ -297,7 +308,13 @@ CBezier::TOffset CBezier::boffset(double t, double d)
     return ret;
 }
 
-QList<CBezier *> CBezier::boffset(double d)
+/**
+* @brief CBezier::boffset
+* @ref https://pomax.github.io/bezierjs/#offset
+* @param d
+* @return
+*/
+QList<CBezier *> CBezier::boffset(double d) const
 {
     bool linear = false;
 
@@ -324,6 +341,7 @@ QList<CBezier *> CBezier::boffset(double d)
 
 /**
 * @brief Маштабируем
+* @ref https://pomax.github.io/bezierjs/#scale
 * @param d
 * @return
 */
@@ -377,25 +395,29 @@ CBezier * CBezier::bscale(double d)
     return new CBezier(np);
 }
 
-
-QList<CBezier *> CBezier::reduce()
+/**
+* @brief CBezier::reduce
+* @ref https://pomax.github.io/bezierjs/#reduce
+* @return
+*/
+QList<CBezier *> CBezier::reduce() const
 {
     double step = 0.01;
     QList<CBezier *> pass1;
     QList<CBezier *> pass2;
 
     //-- First pass: split on extrema
-    QList<double> extrema = bextrema().roots;
-    if ( extrema.indexOf(0)==-1 ) {
-      extrema.prepend(0);
+    QList<double> extr = extrema().roots;
+    if ( extr.indexOf(0)==-1 ) {
+      extr.prepend(0);
     }
-    if ( extrema.indexOf(1)==-1 ) {
-      extrema.append(1);
+    if ( extr.indexOf(1)==-1 ) {
+      extr.append(1);
     }
 
-    double t1 = extrema[0];
-    for (int i = 1; i<extrema.count(); ++i) {
-      double t2 = extrema[i];
+    double t1 = extr[0];
+    for (int i = 1; i<extr.count(); ++i) {
+      double t2 = extr[i];
       CBezier * segment = split(t1, t2)[0];
       pass1.append(segment);
       t1 = t2;
@@ -437,11 +459,16 @@ QList<CBezier *> CBezier::reduce()
     return pass2;
 }
 
-CBezier::TExtrema CBezier::bextrema()
+/**
+* @brief CBezier::extrema
+* @ref https://pomax.github.io/bezierjs/#extrema
+* @return
+*/
+CBezier::TExtrema CBezier::extrema() const
 {
     TExtrema ret;
 
-    if ( _dpoints.count()==0 ) { _dpoints = derive(_points); }
+    dPoints();
 
     for (int c=0; c<2; ++c) {
         QList<double> p0;
@@ -483,7 +510,15 @@ CBezier::TExtrema CBezier::bextrema()
     return ret;
 }
 
-
+/**
+* @brief CBezier::lli4
+* @ref https://github.com/Pomax/bezierjs/blob/master/lib/utils.js
+* @param p1
+* @param p2
+* @param p3
+* @param p4
+* @return
+*/
 CPoint CBezier::lli4(const CPoint &p1, const CPoint &p2, const CPoint &p3, CPoint const &p4) const
 {
     double nx = (p1.x() * p2.y() - p1.y() * p2.x()) * (p3.x() - p4.x()) - (p1.x() - p2.x()) * (p3.x() * p4.y() - p3.y() * p4.x());
@@ -497,7 +532,13 @@ CPoint CBezier::lli4(const CPoint &p1, const CPoint &p2, const CPoint &p3, CPoin
     return CPoint(nx/d, ny/d);
 }
 
-QList<double> CBezier::droots(const QList<double> &p)
+/**
+* @brief CBezier::droots
+* @ref https://github.com/Pomax/bezierjs/blob/master/lib/utils.js
+* @param p
+* @return
+*/
+QList<double> CBezier::droots(const QList<double> &p) const
 {
     if ( p.count()==3 ) {
         double a = p[0], b = p[1], c = p[2];
@@ -528,6 +569,12 @@ QList<double> CBezier::droots(const QList<double> &p)
     return {};
 }
 
+/**
+* @brief CBezier::hull
+* @ref https://pomax.github.io/bezierjs/#hull
+* @param t
+* @return
+*/
 CPoints CBezier::hull(double t) const
 {
     CPoints p = _points;
@@ -553,12 +600,27 @@ CPoints CBezier::hull(double t) const
     return q;
 }
 
+/**
+* @brief CBezier::lerp
+* @ref https://github.com/Pomax/bezierjs/blob/master/lib/utils.js
+* @param r
+* @param v1
+* @param v2
+* @return
+*/
 CPoint CBezier::lerp(double r, const CPoint &v1, const CPoint &v2) const
 {
     CPoint ret(v1.x()+r*(v2.x() - v1.x()), v1.y() + r*(v2.y() - v1.y()));
     return ret;
 }
 
+/**
+* @brief CBezier::split
+* @ref https://pomax.github.io/bezierjs/#split
+* @param t1
+* @param t2
+* @return
+*/
 QList<CBezier*> CBezier::split(double t1, double t2) const
 {
     //-- Shortcuts
@@ -593,7 +655,7 @@ QList<CBezier*> CBezier::split(double t1, double t2) const
 
 /**
 * @brief CBezier::map
-* @ref
+* @ref https://github.com/Pomax/bezierjs/blob/master/lib/utils.js
 * @param v
 * @param ds
 * @param de
@@ -610,10 +672,15 @@ double CBezier::map(double v, double ds, double de, double ts, double te) const
     return ts + d2 * r;
 }
 
-bool CBezier::simple()
+/**
+* @brief CBezier::simple
+* @ref https://github.com/Pomax/bezierjs/blob/master/lib/bezier.js
+* @return
+*/
+bool CBezier::simple() const
 {
-    double a1 = angle(_points[0], _points[3], _points[1]);
-    double a2 = angle(_points[0], _points[3], _points[2]);
+    double a1 = _points[0].angle(_points[3], _points[1]);
+    double a2 = _points[0].angle(_points[3], _points[2]);
     if ((a1 > 0 && a2 < 0) || (a1 < 0 && a2 > 0)) return false;
 
     CPoint n1 = normal(0);
@@ -621,25 +688,6 @@ bool CBezier::simple()
     double s = n1.x()*n2.x() + n1.y()* n2.y();
     double angle = abs(acos(s));
     return angle < M_PI / 3;
-}
-
-/**
-* @brief Угол между точками v1 и v2 с центром в o
-* @ref https://github.com/Pomax/bezierjs/blob/master/lib/utils.js
-* @param p1
-* @param p2
-* @param p3
-* @return
-*/
-double CBezier::angle(CPoint o, CPoint v1, CPoint v2) const
-{
-    double dx1 = v1.x() - o.x();
-    double dy1 = v1.y() - o.y();
-    double dx2 = v2.x() - o.x();
-    double dy2 = v2.y() - o.y();
-    double cross = dx1*dy2 - dy1*dx2;
-    double dot = dx1*dx2 + dy1*dy2;
-    return atan2(cross, dot);
 }
 
 /**
@@ -664,6 +712,16 @@ QList<CPoints> CBezier::derive(const CPoints &points) const
     }
 
     return dpoints;
+}
+
+/**
+* @brief CBezier::dPoints
+* @return
+*/
+QList<CPoints> CBezier::dPoints() const
+{
+    if ( _dpoints.count()==0 ) { _dpoints = derive(_points); }
+    return _dpoints;
 }
 
 
