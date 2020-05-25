@@ -82,49 +82,51 @@ QString QMLGenerator::sanitizeID(QString id)
 /**
 * @brief Генерируем команды для path.d из примитивов
 * @param p
+* @param offset
 * @return
 */
 QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset)
 {
-    offset = -5;
+    CPath * tPath = nullptr;
 
-    QString pathCommnads = "";
     if ( p->type()==CPrimitive::PT_CIRCLE ) {
         CCircle * circle = static_cast<CCircle*>(p);
         circle->toPath();
         circle->applyTransform();
-        pathCommnads = generatePath(circle->down);
+        tPath = static_cast<CPath*>(circle->down);
     } else
     if ( p->type()==CPrimitive::PT_PATH ) {
         CPath * path = static_cast<CPath*>(p);
         path->applyTransform();
-
-        if ( offset!=0 ) {
-            path = path->makeOffset(offset);
-        }
-
-        pathCommnads = generatePath(path);
+        tPath = path;
     } else
     if ( p->type()==CPrimitive::PT_RECT ) {
         CRect * rect = static_cast<CRect*>(p);
         rect->toPath();
         rect->applyTransform();
-        pathCommnads = generatePath(rect->down);
+        tPath = static_cast<CPath*>(rect->down);
     } else
     if ( p->type()==CPrimitive::PT_LINE ) {
         CLine * line = static_cast<CLine*>(p);
         line->toPath();
         line->applyTransform();
-        pathCommnads = generatePath(line->down);
+        tPath = static_cast<CPath*>(line->down);
     } else
     if ( p->type()==CPrimitive::PT_ELLIPSE ) {
         CEllipse * ellipse = static_cast<CEllipse*>(p);
         ellipse->toPath();
         ellipse->applyTransform();
-        pathCommnads = generatePath(ellipse->down);
+        tPath = static_cast<CPath*>(ellipse->down);
     } else {
         qWarning()<<"Unsupported SVG element"<<p->type();
+        return "";
     }
+
+    if ( offset>0 ) {
+        tPath = tPath->makeOffset(offset);
+    }
+
+    QString pathCommnads = generatePath(tPath);
 
     return pathCommnads;
 }
