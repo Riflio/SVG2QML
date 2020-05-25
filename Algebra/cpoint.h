@@ -50,6 +50,8 @@ public:
     CPoint & transform(const CMatrix & m1);
     CPoint & lerp(const CPoint & that, double t);
 
+    double angle(const CPoint &p1, const CPoint &p2) const;
+
     //-- Сравнение
     bool lt(const CPoint & that) const;
     bool lte(const CPoint & that) const;

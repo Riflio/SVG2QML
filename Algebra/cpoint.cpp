@@ -223,6 +223,22 @@ CPoint & CPoint::lerp(const CPoint & that, double t)
     return *this;
 }
 
+/**
+* @brief Угол между точками p1 и p2 с центром у нас
+* @param p1
+* @param p2
+* @return
+*/
+double CPoint::angle(const CPoint &p1, const CPoint &p2) const
+{
+    double dx1 = p1.x() - _x;
+    double dy1 = p1.y() - _y;
+    double dx2 = p2.x() - _x;
+    double dy2 = p2.y() - _y;
+    double cross = dx1*dy2 - dy1*dx2;
+    double dot = dx1*dx2 + dy1*dy2;
+    return atan2(cross, dot);
+}
 
 /**
 * Применяем матрицу трансформации к точке
