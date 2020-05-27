@@ -11,11 +11,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc, argv);
 
-    /*
+
     QSurfaceFormat format;
-    format.setSamples(16);
+    format.setSamples(8);
     QSurfaceFormat::setDefaultFormat(format);
-    */
+
 
     QCommandLineParser parser;
     parser.setApplicationDescription("SVG to QML converter.");
