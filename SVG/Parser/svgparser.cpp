@@ -221,7 +221,8 @@ CMatrix SVGParser::parseTransform(QXmlStreamReader * xml, QString attrName)
             matrix.rotate(params[0]);
         } else
         if ( commandStr=="scale" ) {
-            if ( params.count()!=2 ) throw 23;
+            if ( (params.count()==0) || (params.count()>2) ) throw 23;
+            if ( params.count()==1 ) { params.append(params[0]); }
             matrix.scale(params[0], params[1]);
         } else {
             throw 25;
@@ -586,7 +587,16 @@ CPrimitive * SVGParser::parseClipPath(CNodeInterface **level, QXmlStreamReader *
 CPrimitive * SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamReader *xml)
 {
     CDef * def = hasLink(xml);
-    FLinearGradient * linearGradient = (def!=nullptr)? new FLinearGradient(*(dynamic_cast<FLinearGradient*>(def))) : new FLinearGradient();
+
+    FLinearGradient * linearGradient = nullptr;
+
+    if ( def!=nullptr ) {
+        FGradient * defGradient = dynamic_cast<FGradient*>(def);
+        if ( defGradient==nullptr ) { qWarning()<<"LinearGradient link to not FGradient."; return nullptr; }
+        linearGradient = new FLinearGradient(*defGradient);
+    } else {
+        linearGradient = new FLinearGradient();
+    }
 
     _defs[_xml->attributes().value("id").toString()] = linearGradient;
     *level = linearGradient;
@@ -615,7 +625,16 @@ CPrimitive * SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamRe
 CPrimitive * SVGParser::parseRadialGradient(CNodeInterface **level, QXmlStreamReader *xml)
 {
     CDef * def = hasLink(xml);
-    FRadialGradient * radialGradient = (def!=nullptr)? new FRadialGradient(*(dynamic_cast<FRadialGradient*>(def))) : new FRadialGradient();
+
+    FRadialGradient * radialGradient = nullptr;
+
+    if ( def!=nullptr ) {
+        FGradient * defGradiend = dynamic_cast<FGradient*>(def);
+        if ( defGradiend==nullptr ) { qWarning()<<"RadialGradient link to not FGradient."; return nullptr; }
+        radialGradient = new FRadialGradient(*defGradiend);
+    } else {
+        radialGradient = new FRadialGradient();
+    }
 
     _defs[_xml->attributes().value("id").toString()] = radialGradient;
     *level = radialGradient;

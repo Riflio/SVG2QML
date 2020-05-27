@@ -9,6 +9,7 @@ class FRadialGradient: public FGradient
 public:
     FRadialGradient();
     FRadialGradient(const FRadialGradient &other);
+    FRadialGradient(const FGradient &other);
 
     void setCX(float x);
     void setCY(float y);

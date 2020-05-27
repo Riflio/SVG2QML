@@ -11,6 +11,15 @@ FLinearGradient::FLinearGradient(const FLinearGradient &other): FGradient(other)
     _endPoint = other._endPoint;
 }
 
+FLinearGradient::FLinearGradient(const FGradient &other): FGradient(other)
+{
+    if ( other.defType()==DF_LINEARGRADIENT ) {
+        const FLinearGradient otherLinear = dynamic_cast<const FLinearGradient&>(other);
+        _startPoint = otherLinear._startPoint;
+        _endPoint = otherLinear._endPoint;
+    }
+}
+
 void FLinearGradient::setX1(float x)
 {
     _startPoint.setX(x);

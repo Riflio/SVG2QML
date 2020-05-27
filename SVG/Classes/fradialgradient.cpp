@@ -13,6 +13,17 @@ FRadialGradient::FRadialGradient(const FRadialGradient &other): FGradient(other)
     _focalRadius = other._focalRadius;
 }
 
+FRadialGradient::FRadialGradient(const FGradient &other): FGradient(other), _radius(0), _focalRadius(0)
+{
+    if ( other.defType()==DF_RADIALGRADIENT ) {
+        const FRadialGradient otherRadial = dynamic_cast<const FRadialGradient&>(other);
+        _centerPoint = otherRadial._centerPoint;
+        _focalPoint = otherRadial._focalPoint;
+        _radius = otherRadial._radius;
+        _focalRadius = otherRadial._focalRadius;
+    }
+}
+
 void FRadialGradient::setCX(float x)
 {
     _centerPoint.setX(x);

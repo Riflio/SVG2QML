@@ -9,6 +9,7 @@ class FLinearGradient : public FGradient
 public:
     FLinearGradient();
     FLinearGradient(const FLinearGradient &other);
+    FLinearGradient(const FGradient &other);
 
     void setX1(float x);
     void setY1(float y);

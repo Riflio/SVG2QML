@@ -37,6 +37,9 @@ Convert SVG file to native QML file.
  - text
  - image
 
+## Problems
+ - def element must be defined before it used in xlink:href in svg file
+
 ### Как работает
 Все SVG.g преобразуются в QML.Item, соблюдая вложенность.
 Все SVG.circle, SVG.line, SVG.ellipse, SVG.rect преобразуются сначала в SVG.path, 

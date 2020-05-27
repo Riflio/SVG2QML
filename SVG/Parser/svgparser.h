@@ -52,7 +52,7 @@ public:
 
     CDefs defs() const;
 
-    #define RX_PARAMS "([-+]?(\\d{1,10}|\\.)(\\.)?(\\d{1,10})?(e[+-]\\d{1,10})?)"
+    #define RX_PARAMS "([-+]?(\\d{1,20}|\\.)(\\.)?(\\d{1,20})?(e[+-]\\d{1,20})?)"
 
 signals:
 
