@@ -106,6 +106,9 @@ HEADERS += \
     qmlgenerator.h
 
 DISTFILES += \
+    examples/buttons1.png \
+    examples/buttons1.svg \
+    examples/buttons1_original.png \
     readme.md \
     tests/gradient_60_120.svg \
     tests/test1.svg \

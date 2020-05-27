@@ -2,6 +2,11 @@
 Convert SVG file to native QML file.
 Преобразует SVG файл в готовый нативный QML файл.
 
+![Original SVG file](/examples/buttons1_original.png)
+![Converted QML file](/examples/buttons1.png)
+
+See [Original SVG file](/examples/buttons1.svg) and [Converted QML file](/examples/buttons1.qml)
+
 ## Поддерживаемые элементы:
 В скобках указаны поддерживаемые индивидуальные параметры. 
 Список общих дальше.
@@ -39,6 +44,10 @@ Convert SVG file to native QML file.
 
 ## Problems
  - def element must be defined before it used in xlink:href in svg file
+
+## Tips
+ - In Inkscape save as "simple svg".
+ - In Adove Illustrator save as "SVG Tiny 1.1".
 
 ### Как работает
 Все SVG.g преобразуются в QML.Item, соблюдая вложенность.
