@@ -10,7 +10,7 @@
 class CImage: public CPrimitive
 {
 public:
-    CImage(CPoint topLeft, QString type, QString encoding, QByteArray data, CMatrix transofrms);
+    CImage(CPoint topLeft, QString type, QString encoding, QByteArray data);
     void cpaint(QPainter *painter, const CBoundingBox &area);
     void cstream(QDataStream &dataStream, double scale);
     CPoints lianirize(double tol) const;
@@ -20,7 +20,6 @@ private:
     QString _imgType;
     QString _encoding;
     QByteArray _data;
-    CMatrix _transforms;
 };
 
 #endif // CIMAGE_H

@@ -40,6 +40,7 @@ SOURCES += \
         SVG/Classes/cline.cpp \
         SVG/Classes/cpath.cpp \
         SVG/Classes/cpolygon.cpp \
+        SVG/Classes/cpolyline.cpp \
         SVG/Classes/crect.cpp \
         SVG/Classes/fclippath.cpp \
         SVG/Classes/flineargradient.cpp \
@@ -93,6 +94,7 @@ HEADERS += \
     SVG/Classes/cline.h \
     SVG/Classes/cpath.h \
     SVG/Classes/cpolygon.h \
+    SVG/Classes/cpolyline.h \
     SVG/Classes/crect.h \
     SVG/Classes/fclippath.h \
     SVG/Classes/flineargradient.h \
@@ -110,4 +112,5 @@ DISTFILES += \
     tests/test_bezier1.svg \
     tests/test_ellipses.svg \
     tests/test_lines.svg \
+    tests/test_polyline.svg \
     tests/test_rects.svg

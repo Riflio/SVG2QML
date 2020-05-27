@@ -20,6 +20,8 @@
 #include "SVG/Classes/ccircle.h"
 #include "SVG/Classes/crect.h"
 #include "SVG/Classes/cellipse.h"
+#include "SVG/Classes/cpolyline.h"
+#include "SVG/Classes/cpolygon.h"
 
 #include "SVG/Classes/flineargradient.h"
 #include "SVG/Classes/fradialgradient.h"

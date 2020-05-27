@@ -32,7 +32,8 @@ public:
         PT_ARC,
         PT_RECT,
         PT_CIRCLE,
-        PT_ELLIPSE
+        PT_ELLIPSE,
+        PT_POLYLINE
     };
 
     CPrimitive(const CPrimitive&other);
@@ -78,6 +79,12 @@ public:
     QString classSVG() const;
     void setClassSVG(QString classSVG);
 
+    void setTitle(QString title);
+    QString title() const;
+
+    void setDescr(QString descr);
+    QString descr() const;
+
     friend QDataStream& operator <<(QDataStream &dataStream, const CPrimitive &p) { Q_UNUSED(p); return dataStream; }
 
     CPoint &operator[](int i);
@@ -106,6 +113,9 @@ protected:
     QString _class; //-- Класс из SVG
 
     CMatrix _transformMatrix;
+
+    QString _title;
+    QString _descr;
 
     void drawPath(const QPainterPath &path, QPainter *painter);
 

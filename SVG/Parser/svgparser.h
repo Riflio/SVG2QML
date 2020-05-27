@@ -21,6 +21,8 @@
 #include "SVG/Classes/ccircle.h"
 #include "SVG/Classes/crect.h"
 #include "SVG/Classes/cellipse.h"
+#include "SVG/Classes/cpolyline.h"
+#include "SVG/Classes/cpolygon.h"
 
 #include "SVG/Classes/fclippath.h"
 #include "SVG/Classes/flineargradient.h"
@@ -65,23 +67,26 @@ private:
 
     CSS::CssParser * _cssParser;
 
-    bool parseGroup(CNodeInterface **level, QXmlStreamReader * xml);
-    bool parsePath(CNodeInterface * level, QXmlStreamReader * xml);
-    bool parseRect(CNodeInterface * level, QXmlStreamReader * xml);
-    bool parseLine(CNodeInterface * level, QXmlStreamReader * xml);
-    bool parseImage(CNodeInterface * level, QXmlStreamReader * xml);
+    CPrimitive * parseGroup(CNodeInterface **level, QXmlStreamReader * xml);
+    CPrimitive * parsePath(CNodeInterface * level, QXmlStreamReader * xml);
+    CPrimitive * parseRect(CNodeInterface * level, QXmlStreamReader * xml);
+    CPrimitive * parseLine(CNodeInterface * level, QXmlStreamReader * xml);
+    CPrimitive * parseImage(CNodeInterface * level, QXmlStreamReader * xml);
+    CPrimitive * parseCircle(CNodeInterface * level, QXmlStreamReader * xml);
+    CPrimitive * parseEllipse(CNodeInterface * level, QXmlStreamReader * xml);
+    CPrimitive * parsePolyline(CNodeInterface * level, QXmlStreamReader * xml);
+    CPrimitive * parsePolygon(CNodeInterface * level, QXmlStreamReader * xml);
+    CPrimitive * parseClipPath(CNodeInterface ** level, QXmlStreamReader * xml);
+    CPrimitive * parseLinearGradient(CNodeInterface ** level, QXmlStreamReader * xml);
+    CPrimitive * parseRadialGradient(CNodeInterface ** level, QXmlStreamReader * xml);
+
+    bool parseGradientStops(FGradient * gradient, QXmlStreamReader * xml);
     bool parseCss(CNodeInterface * level, QXmlStreamReader * xml);
-    bool parseCircle(CNodeInterface * level, QXmlStreamReader * xml);
-    bool parseEllipse(CNodeInterface * level, QXmlStreamReader * xml);
+    QList<double> parseParams(QString attr, QXmlStreamReader * xml) const;
+    QList<double> parseParams(QString params) const;
 
     CMatrix parseTransform(QXmlStreamReader * xml, QString attrName="transform");
     CSS::Style parseStyle(QXmlStreamReader * xml);
-
-    bool parseClipPath(CNodeInterface ** level, QXmlStreamReader * xml);
-
-    bool parseLinearGradient(CNodeInterface ** level, QXmlStreamReader * xml);
-    bool parseRadialGradient(CNodeInterface ** level, QXmlStreamReader * xml);
-    bool parseGradientStops(FGradient * gradient, QXmlStreamReader * xml);
 
     CDefs _defs;
 

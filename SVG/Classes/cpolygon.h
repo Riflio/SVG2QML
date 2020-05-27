@@ -11,11 +11,15 @@ public:
     CPolygon(const CPoints &points);
     CPolygon(const CPoint &tl, const CPoint &br);
 
-    void cpaint(QPainter *painter, const CBoundingBox &area);
-    CPoints lianirize(double tol) const;
+    void addPoint(const CPoint &p);
+
+    void cpaint(QPainter *painter, const CBoundingBox &area) override;
+    CPoints lianirize(double tol) const override;
     double area() const;
     bool isClosed() const;
     void close();
+
+    bool toPath() override;
 
     int pointInPolygon(const CPoint &point) const;
     bool isRectangle(double tolerance=0.001) const;

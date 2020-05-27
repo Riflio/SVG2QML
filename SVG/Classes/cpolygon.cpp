@@ -1,8 +1,10 @@
 #include "cpolygon.h"
 #include "Algebra/csegment.h"
 #include "Algebra/equal.h"
+#include "cpath.h"
+#include "cline.h"
 
-CPolygon::CPolygon():CPrimitive(CPrimitive::PT_POLYGON)
+CPolygon::CPolygon():CPrimitive(PT_POLYGON)
 {
 
 }
@@ -26,6 +28,11 @@ CPolygon::CPolygon(const CPoint &tl, const CPoint &br):CPrimitive(CPrimitive::PT
     points.add(CPoint(tl.x(), br.y()));
     points.add(tl);
     setPoints(points);
+}
+
+void CPolygon::addPoint(const CPoint &p)
+{
+    _points.add(p);
 }
 
 void CPolygon::cpaint(QPainter *painter, const CBoundingBox &area)
@@ -86,6 +93,25 @@ void CPolygon::close()
     if ( !isClosed() ) {
         _points.add(_points.first());
     }
+}
+
+bool CPolygon::toPath()
+{
+    if ( _points.count()==0 ) return false;
+
+    CPath * path = new CPath();
+
+    CPoint prevPoint = _points[0];
+    for(int i=1; i<_points.count(); ++i) {
+        CLine * line = new CLine(prevPoint, _points[i]);
+        CNodeInterface::addNext(path, line);
+        prevPoint = _points[i];
+    }
+
+
+    path->setIsClosed(true);
+    CNodeInterface::addNext(this, path);
+    return true;
 }
 
 /**

@@ -8,10 +8,13 @@ Convert SVG file to native QML file.
 - svg
 - defs
 - title
+- desc
 - g
 - line (x1, y1, x2, y2)
 - rect (x, y, width, height, rx, ry)
 - circle (cx, cy, r)
+- polyline (points)
+- polygon (points)
 - ellipse (cx, cy, rx, ry)
 - path ("d" commands: "mcslvhvazMCSLVHAZ")
 - clipPath (g, rect, circle, ellipse, path)
@@ -32,6 +35,7 @@ Convert SVG file to native QML file.
 
 ## В планах
  - text
+ - image
 
 ### Как работает
 Все SVG.g преобразуются в QML.Item, соблюдая вложенность.

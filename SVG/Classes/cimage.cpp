@@ -1,8 +1,8 @@
 #include "cimage.h"
 #include <QDebug>
 
-CImage::CImage(CPoint topLeft, QString imgType, QString encoding, QByteArray data, CMatrix transofrms):
-    CPrimitive(PT_IMAGE), _imgType(imgType), _encoding(encoding), _data(data), _transforms(transofrms)
+CImage::CImage(CPoint topLeft, QString imgType, QString encoding, QByteArray data):
+    CPrimitive(PT_IMAGE), _imgType(imgType), _encoding(encoding), _data(data)
 {
     qDebug()<<"IMAGE"<<imgType<<encoding<<data.left(80);
 
@@ -28,7 +28,7 @@ void CImage::cpaint(QPainter *painter, const CBoundingBox &area)
     //mScale.scale(scale, scale);
 
 
-    resultMatrix = _transforms.clon().multiplication(mScale);
+    resultMatrix = _transformMatrix.clon().multiplication(mScale);
 
     resultMatrix.setAt(0,2, points().p1().x());
     resultMatrix.setAt(1,2, points().p1().y());

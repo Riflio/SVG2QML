@@ -298,6 +298,26 @@ void CPrimitive::setClassSVG(QString classSVG)
     _class = classSVG;
 }
 
+void CPrimitive::setTitle(QString title)
+{
+    _title = title;
+}
+
+QString CPrimitive::title() const
+{
+    return _title;
+}
+
+void CPrimitive::setDescr(QString descr)
+{
+    _descr = descr;
+}
+
+QString CPrimitive::descr() const
+{
+    return _descr;
+}
+
 CPoint &CPrimitive::operator[](int i)
 {
     return _points[i];

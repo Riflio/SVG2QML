@@ -106,6 +106,18 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset)
         rect->applyTransform();
         tPath = static_cast<CPath*>(rect->down);
     } else
+    if ( p->type()==CPrimitive::PT_POLYLINE ) {
+        CPolyline * polyline = static_cast<CPolyline*>(p);
+        polyline->toPath();
+        polyline->applyTransform();
+        tPath = static_cast<CPath*>(polyline->down);
+    } else
+    if ( p->type()==CPrimitive::PT_POLYGON ) {
+        CPolygon * polygon = static_cast<CPolygon*>(p);
+        polygon->toPath();
+        polygon->applyTransform();
+        tPath = static_cast<CPath*>(polygon->down);
+    } else
     if ( p->type()==CPrimitive::PT_LINE ) {
         CLine * line = static_cast<CLine*>(p);
         line->toPath();
@@ -339,7 +351,7 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
         if ( stroke.toString()=="none" ) {
             qml<<tab(lvl)<<"strokeColor: "<<"("<<_settings.rootName<<".thinkLines)? \"black\"  : "<< "\"transparent\""<<"\n";
         } else {
-            qWarning()<<"Unsupported stroke color value: "<<stroke.toString();
+            qml<<tab(lvl)<<"strokeColor: "<<"("<<_settings.rootName<<".thinkLines)? \"black\"  : "<< "\""<<stroke.toString()<<"\""<<"\n";
         }
     } else {
         qml<<tab(lvl)<<"strokeColor: "<<"("<<_settings.rootName<<".thinkLines)? \"black\" : "<<"\"transparent\""<<"\n";
@@ -433,7 +445,9 @@ void QMLGenerator::makeGradientStops(FGradient *gr, int &lvl, QTextStream &qml)
 void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, bool firstInline)
 {
     //-- Что из элементов поддерживаем пока что
-    QList<int> supportedTypes = {CPrimitive::PT_PATH, CPrimitive::PT_CIRCLE, CPrimitive::PT_RECT, CPrimitive::PT_ELLIPSE, CPrimitive::PT_LINE};
+    QList<int> supportedTypes = {CPrimitive::PT_PATH, CPrimitive::PT_CIRCLE, CPrimitive::PT_RECT,
+                                 CPrimitive::PT_ELLIPSE, CPrimitive::PT_LINE, CPrimitive::PT_POLYLINE,
+                                 CPrimitive::PT_POLYGON};
 
     CNodeInterfaceIterator i(el);
     while( i.next() ) {

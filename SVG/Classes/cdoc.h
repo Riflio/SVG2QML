@@ -11,11 +11,8 @@ class CDoc: public CPrimitive
 public:
     CDoc();
 
-    void setTitle(QString title);
-    QString title() const;
-
 private:
-    QString _title;
+
 };
 
 #endif // CDOC_H
