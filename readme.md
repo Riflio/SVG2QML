@@ -52,7 +52,7 @@ See [Original SVG file](/examples/buttons1.svg) and [Converted QML file](/exampl
 
 ## Tips
  - In Inkscape save as "simple svg".
- - In Adove Illustrator save as "SVG Tiny 1.1".
+ - In Adobe Illustrator save as "SVG Tiny 1.1".
 
 ### Как работает
 
