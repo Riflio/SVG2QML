@@ -56,13 +56,13 @@ See [Original SVG file](/examples/buttons1.svg) and [Converted QML file](/exampl
 
 ### Как работает
 
-Все SVG.g преобразуются в QML.Item, соблюдая вложенность.
-Все SVG.circle, SVG.line, SVG.ellipse, SVG.rect преобразуются сначала в SVG.path,
-за тем, если указан SVG.transform, то он сразу применяется к SVG.path.
-Все SVG.path преобразуются в QML.Shape { QML.ShapePath { QML.PathSvg { path: "path command" }}}.
-Все SVG.clipPath преобразуются сначала в SVG.path, а за тем
-преобразуются в QML.OpacityMask { maskSource: QML.Shape { ... }  }
-Все SVG.linearGradient, SVG.radialGradient преобразуются в QML.LinearGradient и QML.RadialGradient для каждой QML.ShapePath соответственно. Если у градиентов есть gradientTransform, то будет две QML.Shape у одной заливка обычным цветом, у другой градиент и трансформация. Так же будет сделана QML.OpacityMask, что бы градиент не вылезал за пределы основной фигуры.
+Все SVG.g преобразуются в QML.Item, соблюдая вложенность.<br/>
+Все SVG.circle, SVG.line, SVG.ellipse, SVG.rect преобразуются сначала в SVG.path,<br/>
+за тем, если указан SVG.transform, то он сразу применяется к SVG.path.<br/>
+Все SVG.path преобразуются в QML.Shape { QML.ShapePath { QML.PathSvg { path: "path command" }}}.<br/>
+Все SVG.clipPath преобразуются сначала в SVG.path, а за тем<br/>
+преобразуются в QML.OpacityMask { maskSource: QML.Shape { ... }  }<br/>
+Все SVG.linearGradient, SVG.radialGradient преобразуются в QML.LinearGradient и QML.RadialGradient для каждой QML.ShapePath соответственно. Если у градиентов есть gradientTransform, то будет две QML.Shape у одной заливка обычным цветом, у другой градиент и трансформация. Так же будет сделана QML.OpacityMask, что бы градиент не вылезал за пределы основной фигуры.<br/>
 
 ### Что не поддерживается
 
