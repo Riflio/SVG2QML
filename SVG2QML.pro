@@ -107,6 +107,7 @@ HEADERS += \
 
 DISTFILES += \
     examples/buttons1.png \
+    examples/buttons1.qml \
     examples/buttons1.svg \
     examples/buttons1_original.png \
     readme.md \
