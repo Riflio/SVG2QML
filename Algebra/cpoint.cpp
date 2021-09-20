@@ -70,11 +70,13 @@ CPoint &CPoint::setY(double y)
 CPoint &CPoint::incX(double x)
 {
     _x += x;
+    return *this;
 }
 
 CPoint &CPoint::incY(double y)
 {
     _y += y;
+    return *this;
 }
 
 
