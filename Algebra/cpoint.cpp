@@ -70,11 +70,13 @@ CPoint &CPoint::setY(double y)
 CPoint &CPoint::incX(double x)
 {
     _x += x;
+    return *this;
 }
 
 CPoint &CPoint::incY(double y)
 {
     _y += y;
+    return *this;
 }
 
 
@@ -272,9 +274,19 @@ QDebug operator<<(QDebug dbg, const CPoint & p)
 }
 
 
-CPoint CPoint::operator* (double v) const
+CPoint CPoint::operator *(double v) const
 {
     return CPoint(x()*v, y()*v, epsilon());
+}
+
+CPoint CPoint::operator -(const CPoint& p) const
+{
+    return CPoint(x()-p.x(), y()-p.y(), _epsilon);
+}
+
+CPoint CPoint::operator +(const CPoint& p) const
+{
+    return CPoint(x()+p.x(), y()+p.y(), _epsilon);
 }
 
 bool CPoint::operator ==(const CPoint &p) const
@@ -285,6 +297,15 @@ bool CPoint::operator ==(const CPoint &p) const
 bool CPoint::operator !=(const CPoint &p) const
 {
     return !isEq(p);
+}
+
+CPoint& CPoint::operator =(const CPoint& p)
+{
+    _x = p.x();
+    _y = p.y();
+    _epsilon = p.epsilon();
+    _empty = p.isEmpty();
+    return *this;
 }
 
 CPoint::operator QPointF() const

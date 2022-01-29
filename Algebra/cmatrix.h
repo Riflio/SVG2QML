@@ -3,7 +3,7 @@
 
 #include <QHash>
 #include <QSize>
-#include <QMatrix>
+
 /**
 * @brief Матрица и действия над ней
 */
@@ -37,8 +37,6 @@ public:
     CMatrix & multiplication(double n);
     CMatrix clon();
     CMatrix apply(const CMatrix & m) const;
-
-    QMatrix toQMatrix();
 
     bool isDefault() const;
 

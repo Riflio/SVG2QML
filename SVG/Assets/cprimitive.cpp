@@ -353,7 +353,7 @@ void CPrimitive::needUpdate()
     if ( upItm!=nullptr ) upItm->needUpdate();
 }
 
-CMatrix CPrimitive::trandform() const
+CMatrix CPrimitive::transform() const
 {
     return _transformMatrix;
 }

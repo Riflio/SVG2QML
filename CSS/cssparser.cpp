@@ -1,6 +1,5 @@
 #include "cssparser.h"
-#include <QRegExp>
-#include <QDebug>
+#include <QRegularExpression>
 
 using namespace CSS;
 CssParser::CssParser(QObject *parent) : QObject(parent)
@@ -16,17 +15,18 @@ CssParser::CssParser(QObject *parent) : QObject(parent)
 bool CssParser::parse(QString styles)
 {
     //-- Удалим всё лишнее, а то регулярка выростает шибко
-    styles = styles.remove(QRegExp("(\\n|\\t)"));
+    styles = styles.remove(QRegularExpression("(\\n|\\t)"));
 
-    QRegExp rxStyles("(?:\\}|^)?(.+)\\{(.+)\\}");
-    rxStyles.setMinimal(true);
+    QRegularExpression rxStyles("(?:\\}|^)?(.+)\\{(.+)\\}");
+    rxStyles.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
 
-    int posStyles = 0;
-    while ( (posStyles=rxStyles.indexIn(styles, posStyles))!=-1 ) {
-        posStyles+= rxStyles.matchedLength();
+    QRegularExpressionMatchIterator i = rxStyles.globalMatch(styles);
 
-        QStringList tokens = rxStyles.cap(1).split(',');
-        QString tokenStyles = rxStyles.cap(2);
+    while ( i.hasNext() ) {
+        QRegularExpressionMatch match = i.next();
+
+        QStringList tokens = match.captured(1).split(',');
+        QString tokenStyles = match.captured(2);
 
         foreach (QString token, tokens) {
             Block block(tokenStyles);

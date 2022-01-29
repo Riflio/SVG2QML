@@ -8,9 +8,7 @@
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc, argv);
-
 
     QSurfaceFormat format;
     format.setSamples(8);
@@ -27,21 +25,8 @@ int main(int argc, char *argv[])
     parser.process(app);
     const QStringList args = parser.positionalArguments();
 
-    QString source = "";
-    QString dest = "";
-
-    if ( args.count()>1 ) {
-        source = args[0];
-        dest = args[1];
-    } else {
-        #ifdef Q_OS_WIN
-            source = "Z:/SVG2QML/tests/test_bezier1.svg";
-            dest = "Z:/SVG2QML/tests/test1_QML.qml";
-        #else
-            source = "/home/pavelk/Projects/SVG2QML/SVG2QML/examples/buttons1.svg";
-            dest = "/home/pavelk/Projects/SVG2QML/SVG2QML/examples/buttons1.qml";
-        #endif
-    }
+    QString source = (args.count()>0)? args[0] : "";
+    QString dest = (args.count()>1)? args[1] : "file:./tmp.qml";
 
     AppCore * appCore = new AppCore(nullptr);
 
@@ -49,16 +34,18 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("appCore", QVariant::fromValue(appCore));
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
+    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated, &app, [url](QObject *obj, const QUrl &objUrl) {
+        if (!obj && url == objUrl) { QCoreApplication::exit(-1); }
     }, Qt::QueuedConnection);
+
+    engine.rootContext()->setContextProperty("appCore", appCore);
+
     engine.load(url);
 
-    //-- GO GO GO
-    appCore->go(source, dest);
-
+    //-- Create
+    if ( !source.isEmpty() ) {
+        appCore->svg2qml(source, dest);
+    }
 
     return app.exec();
 }

@@ -11,9 +11,6 @@ public:
 
     struct TSettings {
         QString rootName = "svg2qml";
-        QString versionQtQuick = "2.12";
-        QString versionQtQuickShapes = "1.12";
-        QString versionQtGraphicalEffects = "1.12";
         bool enableScale = false; //-- Использовать или нет свойство scale
     };
 
@@ -25,6 +22,9 @@ public:
 signals:
 
 private:
+    QTextStream _qml;
+    int _lvl;
+
     TSettings _settings;
     CPrimitive * _rootItm;
     CDefs _defs;
@@ -34,23 +34,30 @@ private:
 
     QString primitiveToPathCommands(CPrimitive * p, double offset=0);
 
-    bool makeFill(CPrimitive * itm, int &lvl, QTextStream &qml, bool isSimple);
+    bool makeFill(CPrimitive * itm, bool isSimple);
 
-    bool makeOpacity(CPrimitive * itm, int &lvl, QTextStream &qml);
+    bool makeOpacity(CPrimitive * itm);
 
-    void makeFillGradient(CPrimitive * itm, FGradient * gr, int &lvl, QTextStream &qml, CDef::TDefType type);
-    void makeFillGradientTransform(CPrimitive * itm, FGradient * gr, int &lvl, QTextStream &qml, CDef::TDefType type);
-    void makeRadialGradient(FRadialGradient * gr, int &lvl, QTextStream &qml);
-    void makeLinearGradient(FLinearGradient * gr, int &lvl, QTextStream &qml);
-    void makeGradientStops(FGradient * gr, int &lvl, QTextStream &qml);
+    void makeFillGradient(CPrimitive * itm, FGradient * gr, CDef::TDefType type);
+    void makeFillGradientTransform(CPrimitive * itm, FGradient * gr, CDef::TDefType type);
+    void makeRadialGradient(FRadialGradient * gr);
+    void makeLinearGradient(FLinearGradient * gr);
+    void makeGradientStops(FGradient * gr);
 
-    void makeStroke(CPrimitive * itm, int &lvl, QTextStream &qml);
+    void makeStroke(CPrimitive * itm);
 
-    void makeElement(CPrimitive * el, int &lvl, QTextStream &qml, bool firstInline=false);
+    void makeElement(CPrimitive * el, bool visible=true, bool layerEnabled=false);
 
-    void makeTransform(const CMatrix &m, int &lvl, QTextStream &qml);
+    void makeTransform(const CMatrix &m);
 
-    void makeID(CPrimitive * itm, int &lvl, QTextStream &qml);
+    void makeID(CPrimitive * itm);
+
+    void writeStartLvl(QString propName, QString elementName);
+    void writeStartLvl(QString elementName);
+    void writeEndLvl();
+    void writePropVal(QString name, QVariant val, bool quoted=false);
+    void writePropThinkLinesVal(QString name, QVariant valThink, QVariant val, bool quoted=false);
+    void writePropElVal(QString name, QString elementName, QVariant val);
 };
 
 #endif // QMLGENERATOR_H

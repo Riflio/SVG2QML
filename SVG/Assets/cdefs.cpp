@@ -13,5 +13,5 @@ CDef *CDefs::get(const QUrl &link) const
 
 bool CDefs::isCDefLink(const QUrl &link)
 {
- return (link.toString().left(1)=="#");
+    return (link.toString().left(1)=="#");
 }

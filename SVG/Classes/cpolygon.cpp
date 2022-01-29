@@ -37,7 +37,8 @@ void CPolygon::addPoint(const CPoint &p)
 
 void CPolygon::cpaint(QPainter *painter, const CBoundingBox &area)
 {
-    if ( _points.count()==0 ) return;
+    Q_UNUSED(area);
+    if ( _points.count()==0 ) { return; }
     QPainterPath path;
 
     path.moveTo(_points.p1().x(), _points.p1().y() );
@@ -97,7 +98,7 @@ void CPolygon::close()
 
 bool CPolygon::toPath()
 {
-    if ( _points.count()==0 ) return false;
+    if ( _points.count()==0 ) { return false; }
 
     CPath * path = new CPath();
 
@@ -260,9 +261,7 @@ bool CPolygon::intersect(const CPolygon &other) const
 
             CPoint p = CSegment(b1, b2).intersect(CSegment(a1, a2), false);
 
-            if( !p.isEmpty() ) {
-                return true;
-            }
+            if( !p.isEmpty() ) { return true; }
         }
     }
 
@@ -276,7 +275,7 @@ bool CPolygon::intersect(const CPolygon &other) const
 */
 bool CPolygon::inside(const CPolygon &other) const
 {
-    if ( intersect(other) ) return false;
+    if ( intersect(other) ) { return false; }
     return (other.pointInPolygon(points()[0]));
 }
 
@@ -418,13 +417,13 @@ bool CPolygon::isEq(const CPolygon &other) const
     CPoints p1 = points();
     CPoints p2 = other.points();
 
-    if ( p1.count()!=p2.count() ) return false;
+    if ( p1.count()!=p2.count() ) { return false; }
 
     std::sort(p1.begin(), p1.end());
     std::sort(p2.begin(), p2.end());
 
     for (int i=0; i<p1.count(); ++i) {
-        if ( p1[i]!=p2[i] ) return false;
+        if ( p1[i]!=p2[i] ) { return false; }
     }
 
     return true;

@@ -12,8 +12,6 @@
 /**
 * @brief Точка и действия над ней
 */
-
-
 class CPoint
 {
 public:
@@ -67,16 +65,16 @@ public:
 
     QString toString() const;
 
-    CPoint operator* (double v) const;
-
-    friend QDebug operator<<(QDebug dbg, const CPoint & p);
-
-    friend QDataStream& operator <<(QDataStream &dataStream, const CPoint &p);
-
-    friend bool operator<(const CPoint &p1, const CPoint& p2);
-
+    CPoint operator *(double v) const;
+    CPoint operator -(const CPoint &p) const;
+    CPoint operator +(const CPoint &p) const;
     bool operator ==(const CPoint &p) const;
     bool operator !=(const CPoint &p) const;
+    CPoint & operator =(const CPoint &p);
+
+    friend QDebug operator<<(QDebug dbg, const CPoint & p);
+    friend QDataStream& operator <<(QDataStream &dataStream, const CPoint &p);
+    friend bool operator<(const CPoint &p1, const CPoint& p2);
 
     operator QPointF() const;
 

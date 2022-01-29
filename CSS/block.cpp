@@ -1,8 +1,7 @@
 #include "block.h"
 
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QColor>
-#include <QDebug>
 
 using namespace CSS;
 
@@ -13,14 +12,12 @@ Block::Block(QString block)
 
 bool Block::parse()
 {
+    QRegularExpressionMatchIterator rxStyles = QRegularExpression("([a-zA-Z-]+):([^;]+)").globalMatch(_block); //-- Парсим стили (ключ-значение разделяем по ";" )
 
-    QRegExp rxStyles("([a-zA-Z-]+):([^;]+)"); //-- Парсим стили (ключ-значение разделяем по ";" )
-
-    int posStyles = 0;
-    while (( posStyles = rxStyles.indexIn(_block, posStyles)) != -1) {
-        posStyles+= rxStyles.matchedLength();
-        QString val = rxStyles.cap(2);        
-        set(rxStyles.cap(1), val);
+    while ( rxStyles.hasNext() ) {
+        QRegularExpressionMatch match = rxStyles.next();
+        QString val = match.captured(2);
+        set(match.captured(1), val);
     }
 
     return true;

@@ -19,6 +19,7 @@ CLine::CLine(const CLine &other): CPrimitive(other)
 
 void CLine::cpaint(QPainter *painter, const CBoundingBox &area)
 {
+    Q_UNUSED(area);
     QPainterPath path;
 
     path.moveTo(_points.p1().x(), _points.p1().y());

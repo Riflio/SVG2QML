@@ -1,7 +1,5 @@
 #include "style.h"
-
-#include <QRegExp>
-#include <QDebug>
+#include <QRegularExpression>
 
 using namespace CSS;
 
@@ -13,9 +11,8 @@ Style::Style()
 void Style::set(QString styleName, QString value)
 {
     //-- Известные для Qt типы сразу парсим в нативные значения
-
-    QRegExp rxURL("url\\((.+)\\)"); //-- Для url()
-    QRegExp rxMeasureUnit("([0-9]+(\\.[0-9]+)?)(px|%)?"); //-- Число с единицами измерения
+    QRegularExpressionMatch rxURL = QRegularExpression("url\\((.+)\\)").match(value); //-- Для url()
+    QRegularExpressionMatchIterator rxMeasureUnit = QRegularExpression("([0-9]+(\\.[0-9]+)?)(px|%)?").globalMatch(value); //-- Число с единицами измерения
     QVariant vr;
 
     QColor color = parseColor(value);
@@ -23,20 +20,19 @@ void Style::set(QString styleName, QString value)
     if ( color.isValid() ) {
         vr = QVariant::fromValue(color);
     } else
-    if ( rxURL.indexIn(value)>-1 ) { //-- URL
-        vr = QVariant::fromValue(QUrl(rxURL.cap(1)));
+    if ( rxURL.hasMatch() ) { //-- URL
+        vr = QVariant::fromValue(QUrl(rxURL.captured(1)));
     } else
-    if ( rxMeasureUnit.indexIn(value, 0)>-1 ) { //-- Число с единицами измерения
+    if ( rxMeasureUnit.hasNext() ) { //-- Число с единицами измерения
 
-        QList<MeasureUnit> muList;
-        int muPos = 0;
-        while ( (muPos=rxMeasureUnit.indexIn(value, muPos))>-1 ) {
-            muPos += rxMeasureUnit.matchedLength();
+        QList<MeasureUnit> muList;        
+        while ( rxMeasureUnit.hasNext() ) {
+            QRegularExpressionMatch match = rxMeasureUnit.next();
 
             MeasureUnit mu;
-            mu.setVal(rxMeasureUnit.cap(1).toDouble());
-            if ( rxMeasureUnit.cap(3)=="px" ) { mu.setType(MeasureUnit::MU_PX); } else
-            if ( rxMeasureUnit.cap(3)=="%" ) { mu.setType(MeasureUnit::MU_PERCENT); }
+            mu.setVal(match.captured(1).toDouble());
+            if ( match.captured(3)=="px" ) { mu.setType(MeasureUnit::MU_PX); }
+            else if ( match.captured(3)=="%" ) { mu.setType(MeasureUnit::MU_PERCENT); }
             else { mu.setType(MeasureUnit::MU_PT); }
             muList.append(mu);
         }
@@ -46,8 +42,7 @@ void Style::set(QString styleName, QString value)
             vr = QVariant::fromValue(muList);
         }
 
-    } else
-    { //-- Ничего не подходит, ставим как есть
+    } else { //-- Ничего не подходит, ставим как есть
         vr = value;
     }
 
@@ -71,7 +66,7 @@ bool Style::has(const QString &key) const
 */
 bool Style::unite(const Style &other)
 {
-    _styles = _styles.unite(other._styles);
+    _styles.insert(other._styles);
     return true;
 }
 
@@ -95,20 +90,20 @@ QString Style::toString() const
 */
 QColor Style::parseColor(QString value)
 {
-    QRegExp rxColorPercent("rgb\\(([0-9\\.]+)(%?),([0-9\\.]+)(%?),([0-9\\.]+)(%?)\\)"); //-- Регулярка для цвета в формате rgb(a,b,c) или rgb(a%,b%,c%)
-    QRegExp rxColorHex("(#[0-9a-fA-F]{3,6})"); //-- Регулярка для цвета в формате hex
+    QRegularExpressionMatch rxColorPercent = QRegularExpression("rgb\\(([0-9\\.]+)(%?),([0-9\\.]+)(%?),([0-9\\.]+)(%?)\\)").match(value); //-- Регулярка для цвета в формате rgb(a,b,c) или rgb(a%,b%,c%)
+    QRegularExpressionMatch rxColorHex = QRegularExpression("(#[0-9a-fA-F]{3,6})").match(value); //-- Регулярка для цвета в формате hex
 
     QColor color;
 
-    if ( rxColorPercent.indexIn(value)>-1 ) { //-- Проверяем, не цвет ли это в rgb
+    if ( rxColorPercent.hasMatch() ) { //-- Проверяем, не цвет ли это в rgb
         color = QColor(
-            (rxColorPercent.cap(2)=="%")? rxColorPercent.cap(1).toDouble()*2.55 : rxColorPercent.cap(1).toInt(), //-- Если есть проценты, то переводим с лимитом в 255
-            (rxColorPercent.cap(4)=="%")? rxColorPercent.cap(3).toDouble()*2.55 : rxColorPercent.cap(3).toInt(),
-            (rxColorPercent.cap(6)=="%")? rxColorPercent.cap(5).toDouble()*2.55 : rxColorPercent.cap(5).toInt()
+            (rxColorPercent.captured(2)=="%")? rxColorPercent.captured(1).toDouble()*2.55 : rxColorPercent.captured(1).toInt(), //-- Если есть проценты, то переводим с лимитом в 255
+            (rxColorPercent.captured(4)=="%")? rxColorPercent.captured(3).toDouble()*2.55 : rxColorPercent.captured(3).toInt(),
+            (rxColorPercent.captured(6)=="%")? rxColorPercent.captured(5).toDouble()*2.55 : rxColorPercent.captured(5).toInt()
         );
     } else
-    if ( rxColorHex.indexIn(value)>-1 ) { //-- Или hex
-        color = QColor(rxColorHex.cap(1));
+    if ( rxColorHex.hasMatch() ) { //-- Или hex
+        color = QColor(rxColorHex.captured(1));
     }
 
     return color;

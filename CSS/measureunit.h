@@ -18,8 +18,8 @@ public:
         MU_PERCENT
     };
 
-    MeasureUnit();    
-    MeasureUnit(const MeasureUnit&other);
+    MeasureUnit();
+    MeasureUnit(const MeasureUnit &other);
     MeasureUnit(double val, TMeasureUnitType type = MU_PT);
     ~MeasureUnit();
 
@@ -30,6 +30,7 @@ public:
     TMeasureUnitType type() const;
 
     operator QString() const;
+    MeasureUnit & operator =(const MeasureUnit &other);
 
     int asPx() const;
 

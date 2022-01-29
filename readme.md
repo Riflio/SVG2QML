@@ -8,6 +8,12 @@ Convert SVG file to native QML file.
 
 See [Original SVG file](/examples/buttons1.svg) and [Converted QML file](/examples/buttons1.qml)
 
+## Changelog
+Version 1.1
+- Migrated to Qt 6 (6.2.0)
+- Support quadratic Bezier (path qQ)
+- Added Drag&Drop area for files to convert
+
 ## Поддерживаемые элементы:
 
 В скобках указаны поддерживаемые индивидуальные параметры. 
@@ -73,7 +79,7 @@ See [Original SVG file](/examples/buttons1.svg) and [Converted QML file](/exampl
 
 ### Зависимости
 
- - Qt >= 5.12, thats all =)
+ - Qt >= 6.2.0, thats all =)
 
 License
 ----

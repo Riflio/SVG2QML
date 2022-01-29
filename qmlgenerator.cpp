@@ -1,4 +1,5 @@
 #include "qmlgenerator.h"
+#include <QRegularExpression>
 #include <QDebug>
 
 QMLGenerator::QMLGenerator(QObject *parent) : SVGGenerator(parent)
@@ -18,30 +19,26 @@ QMLGenerator::TSettings QMLGenerator::settings() const
 
 SVGGenerator::GenerateStatus QMLGenerator::generateQML(QIODevice *device, CPrimitive *rootItm, const CDefs &defs)
 {
-    if ( !device->isOpen() && !device->open(QIODevice::WriteOnly|QIODevice::Text) ) {
-        qWarning()<<"Device not opened!";
-        return GS_NOFILE;
-    }
+    if ( !device->isOpen() ) { qWarning()<<"Device not opened!"; return GS_NOFILE; }
 
     _rootItm = rootItm;
     _defs = defs;
 
-    int lvl = 0; //-- Для отступов
-    QTextStream qml(device);    
+    _lvl = 0; //-- Для отступов
+    _qml.setDevice(device);
 
-    qml<<"import QtQuick "<<_settings.versionQtQuick<<"\n";
-    qml<<"import QtQuick.Shapes "<<_settings.versionQtQuickShapes<<"\n";
-    qml<<"import QtGraphicalEffects "<<_settings.versionQtGraphicalEffects<<" as GE"<<"\n"; //-- AS т.к. из QtGraphicalEffects совпадают названия градиентов
-    qml<<"\n";
+    _qml<<"import QtQuick "<<Qt::endl;
+    _qml<<"import QtQuick.Shapes"<<Qt::endl;
+    _qml<<Qt::endl;
 
-    qml<<tab(lvl++)<<"Item {"<<"\n";
-    qml<<tab(lvl)<<"id: "<<_settings.rootName<<"\n";
-    qml<<tab(lvl)<<"property var scaleShape: "<<"Qt.size(1, 1)"<<"\n";
-    qml<<tab(lvl)<<"property bool thinkLines: "<<"false"<<"\n";
+    writeStartLvl("Item");
+        writePropVal("id", _settings.rootName);
+        writePropVal("property var scaleShape", "Qt.size(1, 1)");
+        writePropVal("property bool thinkLines", false);
 
-    makeElement(rootItm, lvl, qml);
+        makeElement(rootItm);
 
-    qml<<tab(--lvl)<<"}"<<"\n";
+    writeEndLvl();
 
     return GS_OK;
 }
@@ -73,8 +70,9 @@ QString QMLGenerator::sanitizeID(QString id)
     id = id.replace('-', '_').replace(' ', '_');
     id.replace(0, 1, id.left(1).toLower());
 
-    QRegExp rx("([a-zA-Z0-9_])+");
-    if ( !rx.exactMatch(id) ) return "";
+    QRegularExpressionMatch rx = QRegularExpression(QRegularExpression::anchoredPattern("([a-zA-Z0-9_])+")).match(id);
+
+    if ( !rx.hasMatch() ) { return ""; }
 
     return id;
 }
@@ -146,27 +144,25 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset)
 /**
 * @brief Разбираемся заливкой
 * @param itm
-* @param lvl
-* @param qml
 * @param isSimple - если просо цвет или градиент без трансформации
 * @return
 */
-bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, bool isSimple)
+bool QMLGenerator::makeFill(CPrimitive *itm, bool isSimple)
 {
     if ( !itm->styles().has("fill") ) {
-        qml<<tab(lvl)<<"fillColor: "<<"("<<_settings.rootName<<".thinkLines)? \"transparent\" : "<<"\"transparent\""<<"\n";
+        writePropThinkLinesVal("fillColor", "transparent", "#000000", true);
         return true;
     }
 
     QVariant fill = itm->styles().get("fill");
 
-    if ( fill.type()==QVariant::Color ) {
+    if ( fill.typeId()==QMetaType::QColor ) {
         QColor color = fill.value<QColor>();
         if ( itm->styles().has("fill-opacity") ) { color.setAlphaF(itm->styles().get("fill-opacity").value<CSS::MeasureUnit>().val());  }
-        qml<<tab(lvl)<<"fillColor: "<<"("<<_settings.rootName<<".thinkLines)? \"transparent\" : "<<"\""<<color.name(QColor::HexArgb)<<"\""<<"\n";
+        writePropThinkLinesVal("fillColor", "transparent", color.name(QColor::HexArgb), true);
         return true;
     } else
-    if ( fill.type()==QVariant::Url ) {
+    if ( fill.typeId()==QMetaType::QUrl ) {
         if ( CDefs::isCDefLink(fill.toUrl()) ) {
             CDef * def = _defs.get(fill.toUrl());
 
@@ -178,14 +174,14 @@ bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, bool is
             if ( def->defType()==CDef::DF_LINEARGRADIENT || def->defType()==CDef::DF_RADIALGRADIENT) {
                 FGradient * gr = dynamic_cast<FGradient*>(def);
                 if ( gr->transform().isDefault() ) {  //-- Если нет трансформаций, то выводим как обычно
-                    makeFillGradient(itm, gr, lvl, qml, def->defType());
+                    makeFillGradient(itm, gr, def->defType());
                     return true;
                 } else { //-- Есть трансформации - придётся мучаться
                     if ( isSimple ) { //-- Если режим простая заливка, то выведем просто заливку цветом
-                        qml<<tab(lvl)<<"fillColor: "<<"\""<<gr->stops().last().color.name(QColor::HexArgb)<<"\""<<"\n";
+                        writePropVal("fillColor", gr->stops().last().color.name(QColor::HexArgb), true);
                         return false;
                     } else {
-                        makeFillGradientTransform(itm, gr, lvl, qml, def->defType());
+                        makeFillGradientTransform(itm, gr, def->defType());
                         return true;
                     }
                 }
@@ -196,9 +192,9 @@ bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, bool is
             qWarning()<<"Unsupported fill value url"<<fill.toString();
         }
     } else
-    if ( fill.type()==QVariant::String ) {
-        if ( fill.toString()=="none" ) {
-            qml<<tab(lvl)<<"fillColor: "<<"\"transparent\""<<"\n";
+    if ( fill.typeId()==QMetaType::QString ) {
+        if ( fill.toString()=="none" ) {            
+            writePropVal("fillColor", "transparent", true);
             return true;
         }
     } else {
@@ -211,15 +207,13 @@ bool QMLGenerator::makeFill(CPrimitive *itm, int &lvl, QTextStream &qml, bool is
 /**
 * @brief Разбираемся с прозрачностью
 * @param itm
-* @param lvl
-* @param qml
 * @return
 */
-bool QMLGenerator::makeOpacity(CPrimitive *itm, int &lvl, QTextStream &qml)
+bool QMLGenerator::makeOpacity(CPrimitive *itm)
 {
     if ( itm->styles().has("opacity") ) {
         double opacity = itm->styles().get("opacity").value<CSS::MeasureUnit>().val();
-        qml<<tab(lvl)<<"opacity: "<<opacity<<"\n";
+        _qml<<tab(_lvl)<<"opacity: "<<opacity<<Qt::endl;
     }
     return true;
 }
@@ -228,15 +222,13 @@ bool QMLGenerator::makeOpacity(CPrimitive *itm, int &lvl, QTextStream &qml)
 * @brief Выводим градиент без трансформаций
 * @param itm
 * @param gr
-* @param lvl
-* @param qml
 * @param rootID
 */
-void QMLGenerator::makeFillGradient(CPrimitive *itm, FGradient *gr, int &lvl, QTextStream &qml, CDef::TDefType type)
+void QMLGenerator::makeFillGradient(CPrimitive *itm, FGradient *gr, CDef::TDefType type)
 {
     Q_UNUSED(itm);
-    if ( type==CDef::DF_LINEARGRADIENT ) { makeLinearGradient(dynamic_cast<FLinearGradient*>(gr), lvl, qml); } else
-    if ( type==CDef::DF_RADIALGRADIENT ) { makeRadialGradient(dynamic_cast<FRadialGradient*>(gr), lvl, qml); }
+    if ( type==CDef::DF_LINEARGRADIENT ) { makeLinearGradient(dynamic_cast<FLinearGradient*>(gr)); } else
+    if ( type==CDef::DF_RADIALGRADIENT ) { makeRadialGradient(dynamic_cast<FRadialGradient*>(gr)); }
 }
 
 /**
@@ -246,115 +238,118 @@ void QMLGenerator::makeFillGradient(CPrimitive *itm, FGradient *gr, int &lvl, QT
 * @param qml
 * @param rootID
 */
-void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, int &lvl, QTextStream &qml, CDef::TDefType type)
+void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDef::TDefType type)
 {
     //-- Внутрь основной засовываем итем, внутрь такую же фигуру чисто с заливкой градиентом, к итему ещё применяем маску, что бы градиент не вылезал за его пределы
-    qml<<tab(lvl++)<<"Item {"<<"\n";
-        qml<<tab(lvl)<<"width: "<<_settings.rootName<<".width"<<"\n";
-        qml<<tab(lvl)<<"height: "<<_settings.rootName<<".height"<<"\n";
-        qml<<tab(lvl++)<<"Shape {"<<"\n";
-            qml<<tab(lvl)<<"width: "<<_settings.rootName<<".width"<<"\n";
-            qml<<tab(lvl)<<"height: "<<_settings.rootName<<".height"<<"\n";
+    writeStartLvl("Item");
+        writePropElVal("width", _settings.rootName, "width");
+        writePropElVal("height", _settings.rootName, "height");
+        writeStartLvl("Shape");
+            writePropElVal("width", _settings.rootName, "width");
+            writePropElVal("height", _settings.rootName, "height");
 
             //-- Path
-            qml<<tab(lvl++)<<"ShapePath {"<<"\n";
-                if ( _settings.enableScale ) qml<<tab(lvl)<<"scale: "<<_settings.rootName<<".scaleShape"<<"\n";
+            writeStartLvl("ShapePath");
+                if ( _settings.enableScale ) { writePropElVal("scale", _settings.rootName, "scaleShape"); }
                 QString pathCommands = primitiveToPathCommands(itm);
 
-                qml<<tab(lvl)<<"PathSvg {"<<"\n";
-                    qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommands)<<"\n";
-                qml<<tab(lvl)<<"}"<<"\n";
+                writeStartLvl("PathSvg");
+                    writePropVal("path", pathCommands, true);
+                writeEndLvl();
 
-                qml<<tab(lvl)<<"strokeWidth: "<<"0"<<"\n";
-                qml<<tab(lvl)<<"strokeColor: "<<"\"transparent\""<<"\n";
+                writePropVal("strokeWidth", 0);
+                writePropVal("strokeColor", "transparent", true);
 
-                //-- Сам градиент
-                makeFillGradient(itm, gr, lvl, qml, type);
+                makeFillGradient(itm, gr, type);
 
-            qml<<tab(--lvl)<<"}"<<"\n";
+            writeEndLvl();
 
             //-- Трансформации
-            makeTransform(gr->transform(), lvl, qml);
-        qml<<tab(--lvl)<<"}"<<"\n";
+            makeTransform(gr->transform());
+        writeEndLvl();
 
         //-- Ещё и clipPath придётся сделать, что бы фигура с внутренним градиентом не вылезала шибко далеко, но контур придётся сделать меньше на половину ширины заливки
-        qml<<tab(lvl)<<"layer.enabled: "<<"true"<<"\n";
-        qml<<tab(lvl++)<<"layer.effect: "<<"GE.OpacityMask {"<<"\n";
-            qml<<tab(lvl++)<<"maskSource: "<<"Shape {"<<"\n";
-                qml<<tab(lvl)<<"width: "<<_settings.rootName<<".width"<<"\n";
-                qml<<tab(lvl)<<"height: "<<_settings.rootName<<".height"<<"\n";
-                qml<<tab(lvl++)<<"ShapePath {"<<"\n";
-                    if ( _settings.enableScale ) qml<<tab(lvl)<<"scale: "<<_settings.rootName<<".scaleShape"<<"\n";
-                    qml<<tab(lvl)<<"PathSvg {"<<"\n";
-                        qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommands)<<"\n";
-                    qml<<tab(lvl)<<"}"<<"\n";
-                    qml<<tab(lvl)<<"fillColor: "<<"\"#000000\""<<"\n";
-                    qml<<tab(lvl)<<"strokeWidth: "<<"0"<<"\n";
-                    qml<<tab(lvl)<<"strokeColor: "<<"\"transparent\""<<"\n";
-                qml<<tab(--lvl)<<"}"<<"\n";
-            qml<<tab(--lvl)<<"}"<<"\n";
-        qml<<tab(--lvl)<<"}"<<"\n";
-    qml<<tab(--lvl)<<"}"<<"\n";
+         writePropVal("layer.enabled", true);
+         writeStartLvl("layer.effect", "ShaderEffect");
+            QString shapeGrID = QString("%1_grcl").arg(sanitizeID(itm->ID()));
+            writeStartLvl("Shape");
+                writePropVal("id", shapeGrID);
+                writePropVal("visible", false);
+                writePropVal("layer.enabled", true);
+                writePropElVal("width", _settings.rootName, "width");
+                writePropElVal("height", _settings.rootName, "height");
+
+                writeStartLvl("ShapePath");
+                    if ( _settings.enableScale ) { writePropElVal("scale", _settings.rootName, "scaleShape"); }
+                    writeStartLvl("PathSvg");
+                        writePropVal("path", pathCommands, true);
+                    writeEndLvl();
+                    writePropVal("fillColor", "#000000", true);
+                    writePropVal("strokeWidth", 0);
+                    writePropVal("strokeColor", "transparent", true);
+                writeEndLvl();
+            writeEndLvl();
+
+            writePropVal("fragmentShader", "qrc:/mask.frag.qsb", true);
+            writePropVal("property var maskSource", shapeGrID);
+
+        writeEndLvl();
+    writeEndLvl();
 }
 
 /**
 * @brief Делаем заливку радиальным градиентом
 * @param gr
-* @param lvl
-* @param qml
-* @param rootID
 */
-void QMLGenerator::makeRadialGradient(FRadialGradient *gr, int &lvl, QTextStream &qml)
+void QMLGenerator::makeRadialGradient(FRadialGradient *gr)
 {
-    qml<<tab(lvl++)<<"fillGradient: "<<" RadialGradient {"<<"\n";
-        qml<<tab(lvl)<<"centerX: "<<gr->centerPoint().x()<<"; "<<"centerY: "<<gr->centerPoint().y()<<";"<<"\n";
-        qml<<tab(lvl);
-        qml<<"focalX: "<<((gr->focalPoint().x()==0)? "centerX" : QString::number(gr->focalPoint().x()) )<<"; ";
-        qml<<"focalY: "<<((gr->focalPoint().y()==0)? "centerY" : QString::number(gr->focalPoint().y()))<<";"<<"\n";
-        qml<<tab(lvl)<<"centerRadius: "<<gr->radius()<<"\n";
-        qml<<tab(lvl)<<"focalRadius: "<<gr->focalRadius()<<"\n";
-        makeGradientStops(gr, lvl, qml);
-        qml<<tab(--lvl)<<"}"<<"\n";
+    writeStartLvl("fillGradient: RadialGradient");
+        writePropVal("centerX", gr->centerPoint().x());
+        writePropVal("centerY", gr->centerPoint().y());
+        writePropVal("focalX", (gr->focalPoint().x()==0)? "centerX" : QString::number(gr->focalPoint().x()));
+        writePropVal("focalY", (gr->focalPoint().y()==0)? "centerY" : QString::number(gr->focalPoint().y()));
+        writePropVal("centerRadius", gr->radius());
+        writePropVal("focalRadius", gr->focalRadius());
+        makeGradientStops(gr);
+    writeEndLvl();
 }
 
 /**
 * @brief Делаем заливку линейным градиентом
 * @param gr
-* @param lvl
-* @param qml
 * @param rootID
 */
-void QMLGenerator::makeLinearGradient(FLinearGradient *gr, int &lvl, QTextStream &qml)
+void QMLGenerator::makeLinearGradient(FLinearGradient *gr)
 {
-    qml<<tab(lvl++)<<"fillGradient: "<<"LinearGradient {"<<"\n";
-        qml<<tab(lvl)<<"x1:"<<gr->startPoint().x()<<"; "<<"y1:"<<gr->startPoint().y()<<"\n";
-        qml<<tab(lvl)<<"x2:"<<gr->endPoint().x()<<"; "<<"y2:"<<gr->endPoint().y()<<"\n";
-        makeGradientStops(gr, lvl, qml);
-    qml<<tab(--lvl)<<"}"<<"\n";
+    writeStartLvl("fillGradient: LinearGradient");
+        writePropVal("x1", gr->startPoint().x());
+        writePropVal("y1", gr->startPoint().y());
+        writePropVal("x2", gr->endPoint().x());
+        writePropVal("y2", gr->endPoint().y());
+        makeGradientStops(gr);
+    writeEndLvl();
 }
 
 /**
 * @brief Разбираемся с обводкой
 * @param itm
-* @param lvl
-* @param qml
 */
-void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
+void QMLGenerator::makeStroke(CPrimitive *itm)
 {
     if ( itm->styles().has("stroke") ) {
         QVariant stroke = itm->styles().get("stroke");
-        if ( stroke.type()==QVariant::Color ) {
+        if ( stroke.typeId()==QMetaType::QColor ) {
             QColor color = stroke.value<QColor>();
             if ( itm->styles().has("stroke-opacity") ) { color.setAlphaF(itm->styles().get("stroke-opacity").value<CSS::MeasureUnit>().val()); }
-            qml<<tab(lvl)<<"strokeColor: "<<"("<<_settings.rootName<<".thinkLines)? \"black\" : "<<"\""<<color.name(QColor::HexArgb)<<"\""<<"\n";
+            writePropThinkLinesVal("strokeColor", "#000000", color.name(QColor::HexArgb), true);
         } else
-        if ( stroke.toString()=="none" ) {
-            qml<<tab(lvl)<<"strokeColor: "<<"("<<_settings.rootName<<".thinkLines)? \"black\"  : "<< "\"transparent\""<<"\n";
+        if ( stroke.toString()=="none" || stroke.toString().isEmpty() ) {
+            writePropThinkLinesVal("strokeColor", "#000000", "transparent", true);
         } else {
-            qml<<tab(lvl)<<"strokeColor: "<<"("<<_settings.rootName<<".thinkLines)? \"black\"  : "<< "\""<<stroke.toString()<<"\""<<"\n";
+            writePropThinkLinesVal("strokeColor", "#000000", stroke.toString(), true);
         }
     } else {
-        qml<<tab(lvl)<<"strokeColor: "<<"("<<_settings.rootName<<".thinkLines)? \"black\" : "<<"\"transparent\""<<"\n";
+        writePropThinkLinesVal("strokeColor", "#000000", "transparent", true);
     }
 
     if ( itm->styles().has("stroke-width") ) {
@@ -364,7 +359,7 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
             CSS::MeasureUnit mu = strokeWidth.value<CSS::MeasureUnit>();
 
             if ( mu.type()==CSS::MeasureUnit::MU_PX ||  mu.type()==CSS::MeasureUnit::MU_PT) {
-                qml<<tab(lvl)<<"strokeWidth: "<<"("<<_settings.rootName<<".thinkLines)? 1 : "<<mu.asPx()<<"\n";
+                writePropThinkLinesVal("strokeWidth", 1, mu.asPx());
             } else {
                 qWarning()<<"Unsupported measure unit for stroke-width:"<<mu;
             }
@@ -373,19 +368,19 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
             qWarning()<<"Unsupported stroke-width value"<<strokeWidth.toString();
         }
     } else {
-         qml<<tab(lvl)<<"strokeWidth: "<<"("<<_settings.rootName<<".thinkLines)? 1 : 0"<<"\n";
+         writePropThinkLinesVal("strokeWidth", 1, 0);
     }
 
     if ( itm->styles().has("stroke-linejoin") ) {
         QString linejoin = itm->styles().get("stroke-linejoin").toString();
         if ( linejoin=="bevel" ) {
-            qml<<tab(lvl)<<"joinStyle: "<<"ShapePath.BevelJoin"<<"\n";
+            writePropVal("joinStyle", "ShapePath.BevelJoin");
         } else
         if ( linejoin=="miter" ) {
-            qml<<tab(lvl)<<"joinStyle: "<<"ShapePath.MiterJoin"<<"\n";
+            writePropVal("joinStyle", "ShapePath.MiterJoin");
         } else
         if ( linejoin=="round" ) {
-            qml<<tab(lvl)<<"joinStyle: "<<"ShapePath.RoundJoin"<<"\n";
+            writePropVal("joinStyle", "ShapePath.RoundJoin");
         } else {
             qWarning()<<"Unsupported stroke-linejoin type:"<<linejoin;
         }
@@ -394,13 +389,13 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
     if ( itm->styles().has("stroke-linecap") ) {
         QString linecap = itm->styles().get("stroke-linecap").toString();
         if ( linecap=="butt" ) {
-            qml<<tab(lvl)<<"capStyle: "<<"ShapePath.FlatCap"<<"\n";
+            writePropVal("capStyle", "ShapePath.FlatCap");
         } else
         if ( linecap=="round" ) {
-            qml<<tab(lvl)<<"capStyle: "<<"ShapePath.RoundCap"<<"\n";
+            writePropVal("capStyle", "ShapePath.RoundCap");
         } else
         if ( linecap=="square" ) {
-            qml<<tab(lvl)<<"capStyle: "<<"ShapePath.SquareCap"<<"\n";
+            writePropVal("capStyle", "ShapePath.SquareCap");
         } else {
             qWarning()<<"Not supported stroke-linecap type:"<<linecap;
         }
@@ -408,7 +403,7 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
 
     if ( itm->styles().has("stroke-miterlimit") ) {
         double miterLimit = itm->styles().get("stroke-miterlimit").value<CSS::MeasureUnit>().val();
-        qml<<tab(lvl)<<"miterLimit: "<<miterLimit<<"\n";
+        writePropVal("miterLimit", miterLimit);
     }
 
     if ( itm->styles().has("stroke-dasharray") ) {
@@ -416,8 +411,8 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
         if ( dashList.count()>0 ) {
             QStringList dashListStr;
             foreach (CSS::MeasureUnit mu, dashList) { dashListStr<<QString::number(mu.val()); }
-            qml<<tab(lvl)<<"strokeStyle: "<<"ShapePath.DashLine"<<"\n";
-            qml<<tab(lvl)<<"dashPattern: "<<"["<<dashListStr.join(", ")<<"]"<<"\n";
+            writePropVal("strokeStyle", "ShapePath.DashLine");
+            writePropVal("dashPattern", QString("[%1]").arg(dashListStr.join(", ")));
         }
     }
 
@@ -426,23 +421,21 @@ void QMLGenerator::makeStroke(CPrimitive *itm, int &lvl, QTextStream &qml)
 /**
 * @brief Выводим стопы градиента
 * @param gr
-* @param lvl
-* @param qml
 */
-void QMLGenerator::makeGradientStops(FGradient *gr, int &lvl, QTextStream &qml)
+void QMLGenerator::makeGradientStops(FGradient *gr)
 {
     foreach(FGradient::TGradientStop gs, gr->stops()) {
-        qml<<tab(lvl)<<"GradientStop { position: "<<gs.position<<"; color: "<<"("<<_settings.rootName<<".thinkLines)? \"transparent\" : "<<"\""<<gs.color.name(QColor::HexArgb)<<"\"; } "<<"\n";
+        _qml<<tab(_lvl)<<"GradientStop { position: "<<gs.position<<"; color: "<<"("<<_settings.rootName<<".thinkLines)? \"transparent\" : "<<"\""<<gs.color.name(QColor::HexArgb)<<"\"; } "<<Qt::endl;
     }
 }
 
 /**
 * @brief Создаём из CPrimitive
 * @param itm
-* @param lvl
-* @param qml
+* @param visible
+* @param layerEnabled
 */
-void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, bool firstInline)
+void QMLGenerator::makeElement(CPrimitive *el, bool visible, bool layerEnabled)
 {
     //-- Что из элементов поддерживаем пока что
     QList<int> supportedTypes = {CPrimitive::PT_PATH, CPrimitive::PT_CIRCLE, CPrimitive::PT_RECT,
@@ -457,12 +450,13 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, bool 
         if ( (i.type()&CNodeInterfaceIterator::IT_STARTLEVEL) ) {
             CPrimitive * level = i.level<CPrimitive*>();
 
-            if ( level->type()==CPrimitive::PT_GROUP ) {
-                qml<<tab((firstInline)?0:lvl)<<"Item {"<<"\n";
-                lvl++;
-                makeID(level, lvl, qml);
-                qml<<tab(lvl)<<"width: "<<_settings.rootName<<".width"<<"\n";
-                qml<<tab(lvl)<<"height: "<<_settings.rootName<<".height"<<"\n";
+            if ( level->type()==CPrimitive::PT_GROUP ) {                
+                writeStartLvl("Item");
+                    makeID(level);
+                    if ( !visible ) { writePropVal("visible", false); }
+                    if ( layerEnabled ) {  writePropVal("layer.enabled", true); }
+                    writePropElVal("width", _settings.rootName, "width");
+                    writePropElVal("height", _settings.rootName, "height");
             }                        
         }
 
@@ -475,26 +469,26 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, bool 
 
                 if ( pathCommnads.isEmpty() ) { continue; }
 
-                qml<<tab(lvl)<<"Shape {"<<"\n";
-                    makeID(p, ++lvl, qml);
-                    qml<<tab(lvl)<<"width: "<<_settings.rootName<<".width"<<"\n";
-                    qml<<tab(lvl)<<"height: "<<_settings.rootName<<".height"<<"\n";
+                writeStartLvl("Shape");
+                    makeID(p);
+                    writePropElVal("width", _settings.rootName, "width");
+                    writePropElVal("height", _settings.rootName, "height");
 
                     //-- Path
-                    qml<<tab(lvl++)<<"ShapePath {"<<"\n";
-                        if ( _settings.enableScale ) qml<<tab(lvl)<<"scale: "<<_settings.rootName<<".scaleShape"<<"\n";
+                    _qml<<tab(_lvl++)<<"ShapePath {"<<Qt::endl;
+                        if ( _settings.enableScale ) { writePropElVal("scale", _settings.rootName, "scaleShape"); }
 
-                        qml<<tab(lvl)<<"PathSvg {"<<"\n";
-                            qml<<tab(lvl+1)<<QString("path: \"%1\"").arg(pathCommnads)<<"\n";
-                        qml<<tab(lvl)<<"}"<<"\n";
+                        writeStartLvl("PathSvg");
+                            writePropVal("path", pathCommnads, true);
+                        writeEndLvl();
 
                         //-- Styles
-                        makeStroke(p, lvl, qml);
-                        bool simpleFilled = makeFill(p, lvl, qml, true);
+                        makeStroke(p);
+                        bool simpleFilled = makeFill(p, true);
 
-                    qml<<tab(--lvl)<<"}"<<"\n";
+                    writeEndLvl();
 
-                    if ( !simpleFilled ) { makeFill(p, lvl, qml, false); }
+                    if ( !simpleFilled ) { makeFill(p, false); }
 
                     //-- Clip path
                     if ( p->styles().has("clip-path") ) {
@@ -506,18 +500,18 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, bool 
                         }
 
                         FClipPath * cp = static_cast<FClipPath*>(def);
-
-                        qml<<tab(lvl)<<"layer.enabled: "<<"true"<<"\n";
-                        qml<<tab(lvl++)<<"layer.effect: "<<"GE.OpacityMask {"<<"\n";
-                            qml<<tab(lvl)<<"maskSource: ";
-                                makeElement(cp->clipPath, lvl, qml, true);
-                        qml<<tab(--lvl)<<"}"<<"\n";
+                        writePropVal("layer.enabled", true);
+                        writeStartLvl("layer.effect", "ShaderEffect");
+                            writePropVal("fragmentShader", "qrc:/mask.frag.qsb", true);
+                            makeElement(cp->clipPath, false, true);
+                            writePropVal("property var maskSource", cp->clipPath->ID());
+                        writeEndLvl();
                     }
 
                     //-- Прозрачность
-                    makeOpacity(p, lvl, qml);
+                    makeOpacity(p);
 
-                qml<<tab(--lvl)<<"}"<<"\n";
+                writeEndLvl();
 
                 i.nextLevel();
                 continue;
@@ -529,8 +523,7 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, bool 
         if ( (i.type()&CNodeInterfaceIterator::IT_ENDLEVEL) ) {
             CPrimitive * level = i.level<CPrimitive*>();
             if ( level->type()==CPrimitive::PT_GROUP) {
-                qml<<tab(--lvl)<<"}"<<"\n";
-
+               writeEndLvl();
             }
         }
 
@@ -540,32 +533,108 @@ void QMLGenerator::makeElement(CPrimitive *el, int &lvl, QTextStream &qml, bool 
 /**
 * @brief Выводим матрицу трансформации
 * @param m
-* @param lvl
-* @param qml
 */
-void QMLGenerator::makeTransform(const CMatrix &m, int &lvl, QTextStream &qml)
+void QMLGenerator::makeTransform(const CMatrix &m)
 {
-    qml<<tab(lvl)<<"transform: "<<"Matrix4x4 {"<<"matrix: Qt.matrix4x4("
+    _qml<<tab(_lvl)<<"transform: "<<"Matrix4x4 {"<<"matrix: Qt.matrix4x4("
         <<m.getAt(0,0)<<", "<<m.getAt(0,1)<<", "<<"0"<<", "<<m.getAt(0,2)<<", "
         <<m.getAt(1,0)<<", "<<m.getAt(1,1)<<", "<<"0"<<", "<<m.getAt(1,2)<<", "
         <<"0, 0, 1, 0, "
         <<"0, 0, 0, 1"
-    <<"); }"<<"\n";
+    <<"); }"<<Qt::endl;
 }
 
 /**
 * @brief Выводим id шник
 * @param itm
-* @param lvl
-* @param qml
 */
-void QMLGenerator::makeID(CPrimitive *itm, int &lvl, QTextStream &qml)
+void QMLGenerator::makeID(CPrimitive *itm)
 {
     QString id = sanitizeID(itm->ID());
-    if ( id.isEmpty() ) return;
-
-    qml<<tab(lvl)<<QString("id: %1").arg(id)<<"\n";
+    if ( id.isEmpty() ) { return; }
+    writePropVal("id", id);
 }
+
+/**
+* @brief propName: elementName {
+* @param propName
+* @param elementName
+*/
+void QMLGenerator::writeStartLvl(QString propName, QString elementName)
+{
+    _qml<<tab(_lvl)<<propName<<": "<<elementName<<" {"<<Qt::endl;
+    _lvl++;
+}
+
+/**
+* @brief elementName {
+* @param elementName
+*/
+void QMLGenerator::writeStartLvl(QString elementName)
+{
+    _qml<<tab(_lvl)<<elementName<<" {"<<Qt::endl;
+    _lvl++;
+}
+
+/**
+* @brief }
+*/
+void QMLGenerator::writeEndLvl()
+{
+    _lvl--;
+    _qml<<tab(_lvl)<<"}"<<Qt::endl;
+}
+
+/**
+* @brief name: val |  name: "val"
+* @param name
+* @param val
+* @param quoted
+*/
+void QMLGenerator::writePropVal(QString name, QVariant val, bool quoted)
+{
+    _qml<<tab(_lvl)<<name<<": ";
+
+    if ( quoted ) {
+        _qml<<"\""<<val.toString()<<"\"";
+    } else {
+       _qml<<val.toString();
+    }
+    _qml<<Qt::endl;
+}
+
+/**
+* @brief name: (root.thinkLines)? valThink : val | name: (root.thinkLines)? "valThink" : "val"
+* @param name
+* @param valThink
+* @param val
+* @param quoted
+*/
+void QMLGenerator::writePropThinkLinesVal(QString name, QVariant valThink, QVariant val, bool quoted)
+{
+    _qml<<tab(_lvl)<<name<<": ";
+
+    if ( quoted ) {
+        _qml<<"("<<_settings.rootName<<".thinkLines)? \""<<valThink.toString()<<"\" : \""<<val.toString()<<"\"";
+    } else {
+        _qml<<"("<<_settings.rootName<<".thinkLines)? "<<valThink.toString()<<" : "<<val.toString();
+    }
+    _qml<<Qt::endl;
+}
+
+/**
+* @brief name: elementName.val
+* @param name
+* @param elementName
+* @param val
+*/
+void QMLGenerator::writePropElVal(QString name, QString elementName, QVariant val)
+{
+    _qml<<tab(_lvl)<<name<<": ";
+    _qml<<elementName<<"."<<val.toString();
+    _qml<<Qt::endl;
+}
+
 
 
 

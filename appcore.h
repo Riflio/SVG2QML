@@ -11,25 +11,31 @@
 class AppCore : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString generateQMLPath READ generatedQMLPath NOTIFY generateQMLPathChanged)
+    Q_PROPERTY(QUrl generateQMLPath READ generatedQMLPath NOTIFY generateQMLPathChanged)
+    Q_PROPERTY(QString version READ version NOTIFY versionChanged)
 
 public:
     explicit AppCore(QObject *parent = nullptr);
 
-    void go(QString source, QString dest);
+    QUrl generatedQMLPath() const;
 
-    QString generatedQMLPath() const;
+    QString version() const { return "1.1"; }
 
 signals:
     void generateQMLPathChanged();
+    void versionChanged();
 
 public slots:
+    bool parse(QUrl source);
+    bool generate(QUrl dest);
+    bool svg2qml(QUrl source, QUrl dest);
 
 private:
     SVGParser * _parser;
     QMLGenerator * _qmlGenerator;
 
-    QString _generatedQMLPath;
+    QUrl _generatedQMLPath;
+
 };
 
 #endif // APPCORE_H

@@ -101,7 +101,7 @@ public:
 
     void needUpdate();
 
-    CMatrix trandform() const;
+    CMatrix transform() const;
     void setTransform(const CMatrix &matrix);
 
 protected:

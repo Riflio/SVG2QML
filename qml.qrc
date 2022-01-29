@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
-        <file>GeneratedQML.qml</file>
-        <file>CompareQML.qml</file>
+        <file>WDropArea.qml</file>
+        <file>mask.frag.qsb</file>
     </qresource>
 </RCC>

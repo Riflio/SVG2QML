@@ -17,14 +17,14 @@ CImage::CImage(CPoint topLeft, QString imgType, QString encoding, QByteArray dat
 */
 void CImage::cpaint(QPainter *painter, const CBoundingBox &area)
 {
-
+    Q_UNUSED(area);
     qDebug()<<"Draw IMAGE";
     QImage image;
 
     if ( (_imgType=="image/jpeg") && (!image.loadFromData(QByteArray::fromBase64(_data), "jpg")) ) return;
 
     CMatrix resultMatrix;
-    CMatrix mScale(3,3);
+    CMatrix mScale(3, 3);
     //mScale.scale(scale, scale);
 
 
@@ -33,15 +33,17 @@ void CImage::cpaint(QPainter *painter, const CBoundingBox &area)
     resultMatrix.setAt(0,2, points().p1().x());
     resultMatrix.setAt(1,2, points().p1().y());
 
-    //qDebug()<<"IMAGE RESULT MATRIX"<<resultMatrix;
-
     //--Фиксим поворот не в ту сторону
     resultMatrix.setAt(0,1, -1 * resultMatrix.getAt(0,1));
     resultMatrix.setAt(1,0, -1 * resultMatrix.getAt(1,0));
 
     painter->save();
 
-    painter->setTransform(QTransform(resultMatrix.toQMatrix()), false);
+    painter->setTransform(QTransform(
+        resultMatrix.getAt(0,0), resultMatrix.getAt(1,0), resultMatrix.getAt(2,0),
+        resultMatrix.getAt(0,1), resultMatrix.getAt(1,1), resultMatrix.getAt(2,1),
+        resultMatrix.getAt(0,2), resultMatrix.getAt(1,2), resultMatrix.getAt(2,2)
+    ), false);
     painter->drawImage(0,0, image);
 
     painter->restore();

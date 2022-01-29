@@ -6,14 +6,26 @@ CBezier::CBezier()
 }
 
 /**
-* @brief Кривая Безье
-* @param s - начальная точка
-* @param a1 - первый якорь
-* @param a2 - второй якорь
-* @param e - конечная точка
+* @brief Cubic Bezier Curve
+* @param s - start point
+* @param a1 - anchor 1
+* @param a2 - anchor 2
+* @param e - end point
 */
-CBezier::CBezier(CPoint s, CPoint a1, CPoint a2, CPoint e):
+CBezier::CBezier(const CPoint &s, const CPoint &a1, const CPoint &a2, const CPoint &e):
     CPrimitive(PT_BEZIER, s, a1, a2, e)
+{
+
+}
+
+/**
+* @brief Quadratic Bezier curver
+* @param s - start point
+* @param a - anchor
+* @param e - end point
+*/
+CBezier::CBezier(const CPoint &s, const CPoint &a, const CPoint &e):
+    CPrimitive(PT_BEZIER, s, (s+(a-s)*(2.0/3.0)), (e+(a-e)*(2.0/3.0)), e)
 {
 
 }
@@ -30,8 +42,23 @@ CBezier::CBezier(const CPoints &points):
 
 }
 
+CBezier& CBezier::operator =(const CBezier& b)
+{
+    _type = b.type();
+    _points = b.points();
+    _styles = b.styles();
+    _id = b.ID();
+    _class = b.classSVG();
+    _transformMatrix = b.transform();
+    _title = b.title();
+    _descr = b.descr();
+    _bbox = b.getBBox();
+    return *this;
+}
+
 void CBezier::cpaint(QPainter *painter, const CBoundingBox &area)
 {
+    Q_UNUSED(area);
     QPainterPath path;
 
     const CPoint &p1 =  _points.p1();
@@ -231,7 +258,8 @@ QList<CBezier *> CBezier::makeOffset(double d) const
 */
 bool CBezier::direction()
 {
- //TODO: Вычисляем направление по/против часовой
+    //TODO: Вычисляем направление по/против часовой
+    return false;
 }
 
 /**

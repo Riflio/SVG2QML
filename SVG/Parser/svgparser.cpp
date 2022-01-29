@@ -1,6 +1,6 @@
 #include "svgparser.h"
+#include <QRegularExpression>
 #include <QDebug>
-#include <QRegExp>
 
 SVGParser::SVGParser(QObject *parent) : QObject(parent)
 {
@@ -24,12 +24,9 @@ CDefs SVGParser::defs() const
 */
 SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
 {
-    if ( !device->isOpen() && !device->open(QIODevice::ReadOnly|QIODevice::Text) ) {
-        qWarning()<<"Device not opened!";
-        return PS_NOFILE;
-    }
+    if ( !device->isOpen() && !device->open(QIODevice::ReadOnly|QIODevice::Text) ) { qWarning()<<"Device not opened!"; return PS_NOFILE; }
 
-    _globalMatrix = CMatrix(3,3);
+    _globalMatrix = CMatrix(3, 3);
 
     _cssParser = new CSS::CssParser(this); //-- Парсер стилей
 
@@ -179,22 +176,23 @@ CMatrix SVGParser::parseTransform(QXmlStreamReader * xml, QString attrName)
     CMatrix matrix(3, 3);
 
     QString transform = xml->attributes().value(attrName).toString();
-    if ( transform.isEmpty() ) return matrix;
+    if ( transform.isEmpty() ) { return matrix; }
 
-    QRegExp rxTransform("(\\w*)(?:[ ]+)?\\((.*)\\)"); //-- Получаем тип трансформации и её параметры
-    QRegExp rxTransformParams(RX_PARAMS); //-- Разбираем параметры на отдельные
 
-    rxTransform.setMinimal(true);
+    QRegularExpression rxTransform("(\\w*)(?:[ ]+)?\\((.+)\\)"); //-- Получаем тип трансформации и её параметры
+    rxTransform.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
+    QRegularExpressionMatchIterator rxTransformIter =  rxTransform.globalMatch(transform);
 
-    if (rxTransform.indexIn(transform, 0)==-1) throw 33;
+    QRegularExpression rxTransformParams(RX_PARAMS); //-- Разбираем параметры на отдельные
+
+    if ( !rxTransformIter.hasNext() ) { throw 33; }
 
     typedef  QPair<QString, QString> TCommand;
     QList<TCommand> commandsList;
 
-    int posCommand = 0;
-    while ( ( posCommand = rxTransform.indexIn(transform, posCommand))!=-1  ) {
-        posCommand += rxTransform.matchedLength();
-        commandsList.append(TCommand(rxTransform.cap(1).toLower(), rxTransform.cap(2)));
+    while ( rxTransformIter.hasNext()  ) {
+        QRegularExpressionMatch match = rxTransformIter.next();
+        commandsList.append(TCommand(match.captured(1).toLower(), match.captured(2)));
     }
 
     foreach ( TCommand command, commandsList) {
@@ -202,26 +200,27 @@ CMatrix SVGParser::parseTransform(QXmlStreamReader * xml, QString attrName)
         QString paramsStr = command.second;
 
         QList<double> params;
-        int posParams = 0;
-        while ( (posParams = rxTransformParams.indexIn(paramsStr, posParams))!=-1 ) {
-            params.append(rxTransformParams.cap(1).toDouble());
-            posParams += rxTransformParams.matchedLength();
+
+        QRegularExpressionMatchIterator rxTransformParamsIter = rxTransformParams.globalMatch(paramsStr);
+        while ( rxTransformParamsIter.hasNext() ) {
+            QRegularExpressionMatch match = rxTransformParamsIter.next();
+            params.append(match.captured(1).toDouble());
         }
 
         if ( commandStr=="matrix" ) { //-- Готовая матрица
-            if ( params.count()!=6 ) throw 23;
+            if ( params.count()!=6 ) { throw 23; }
             matrix.set(2, 3, params, CMatrix::SET_BY_COLS);
         } else
         if ( commandStr=="translate" ) {
-            if ( params.count()!=2 ) throw 23;
+            if ( params.count()!=2 ) { throw 23; }
             matrix.translate(params[0], params[1]);
         } else
         if ( commandStr=="rotate" ) {
-            if ( params.count()!=1 ) throw 23;
+            if ( params.count()!=1 ) { throw 23; }
             matrix.rotate(params[0]);
         } else
         if ( commandStr=="scale" ) {
-            if ( (params.count()==0) || (params.count()>2) ) throw 23;
+            if ( (params.count()==0) || (params.count()>2) ) { throw 23; }
             if ( params.count()==1 ) { params.append(params[0]); }
             matrix.scale(params[0], params[1]);
         } else {
@@ -231,8 +230,6 @@ CMatrix SVGParser::parseTransform(QXmlStreamReader * xml, QString attrName)
     }
 
     return matrix;
-
-
 }
 
 /**
@@ -273,24 +270,21 @@ CPrimitive *SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
 
     CPoint openPathCoords(0,0); //-- Запоминаем в каких координатах открыли путь, что бы потом можно было закрыть
 
-    QString allowedCommands = "mcslvhvazMCSLVHAZ";
+    QString allowedCommands = "mcslvhvaqzMCSLVHAQZ";
 
-    QRegExp rxCommands(QString("([%1])([^%1]*)").arg(allowedCommands)); //-- Ищем команды и берём их параметры
+    QRegularExpressionMatchIterator rxCommands = QRegularExpression(QString("([%1])([^%1]*)").arg(allowedCommands)).globalMatch(pathD); //-- Ищем команды и берём их параметры
 
     QList<CPoint> prevPoints; //-- Запоминаем список точек от предыдущей команды, т.к. они могут потребоваться для текущей
 
-    int posCommands = 0;
-
     CPoint lastPoint(0,0); //-- Крайняя точка крайнего перемещения, нужна для всех относительных команд
 
-    while (( posCommands = rxCommands.indexIn(pathD, posCommands)) != -1) {
-        posCommands+= rxCommands.matchedLength();
+    while ( rxCommands.hasNext() ) {
+        QRegularExpressionMatch rxCommand = rxCommands.next();
 
-        QString command = rxCommands.cap(1);
-        //qInfo()<<command;
+        QString command = rxCommand.captured(1);
 
         //-- Парсим все параметры команды в один список       
-        QList<double> params = parseParams(rxCommands.cap(2));
+        QList<double> params = parseParams(rxCommand.captured(2));
 
         //-- Если текущий путь уже закрыт, значит дальше создаём составной путь
         if ( path->isClosed() ) {
@@ -302,7 +296,7 @@ CPrimitive *SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
 
         //-- Ну и погнали парсить сами команды
         if ( (command=="M")||(command=="m") ) { //-- Перенос пера абсолютный/относительный
-            if ( params.count()%2!=0 ) throw 45; //-- Должно быть кратно 2
+            if ( params.count()%2!=0 ) { throw 45; } //-- Должно быть кратно 2
             for (int pi=0;  pi<params.count(); pi+=2) {
                 CPoint p1(params[pi], params[pi+1]);
 
@@ -325,10 +319,10 @@ CPrimitive *SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
                 _globalCoords = p1;
             }
         } else
-        if ( (command=="C") || (command=="c") ) { //-- Кривая безье кубическая
-            if (params.count()%6!=0) throw 45; //-- Должно быть кратно 6
+        if ( (command=="C") || (command=="c") ) { //-- Cubic Bezier
+            if (params.count()%6!=0) { throw 45; } //-- Должно быть кратно 6
 
-            if (openPathCoords.isZero()) openPathCoords = lastPoint;
+            if ( openPathCoords.isZero() ) { openPathCoords = lastPoint; }
             for (int pi=0;  pi<params.count(); pi+=6) {
                 CPoint p1(_globalCoords);
                 CPoint p2(params[0+pi], params[1+pi]);
@@ -351,8 +345,32 @@ CPrimitive *SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
             }
 
         } else
-        if ( (command=="S") || (command=="s") ) { //-- Кривая безье кубическая с началом у конца предыдущей
-            if ( params.count()%4!=0 ) throw 45; //-- Должно быть кратно 4
+        if ( (command=="Q") || (command=="q") ) { //-- Quadratic Bezier
+            if ( params.count()%4!=0 ) { throw 45; } //-- Должно быть кратно 7 параметрам
+
+            if ( openPathCoords.isZero() ) { openPathCoords = lastPoint; }
+            for (int pi=0;  pi<params.count(); pi+=4) {
+                CPoint p1(_globalCoords);
+                CPoint p2(params[0+pi], params[1+pi]);
+                CPoint p3(params[2+pi], params[3+pi]);
+                if ( command=="q" ) {
+                    p2.add(lastPoint);
+                    p3.add(lastPoint);
+                }
+                lastPoint = p3;
+
+                prevPoints.clear();
+                prevPoints<<p1<<p2<<p3;
+
+                CBezier * bezier = new CBezier(p1, p2, p3);
+                bezier->setStyles(style);
+                CNodeInterface::addNext(path, bezier);
+                _globalCoords = p3;
+            }
+
+        } else
+        if ( (command=="S") || (command=="s") ) { //-- Cubic Bezier with start on end prev
+            if ( params.count()%4!=0 ) { throw 45; } //-- Должно быть кратно 4
             if ( openPathCoords.isZero() ) openPathCoords = lastPoint;
 
             for (int pi=0; pi<params.count(); pi+=4) {
@@ -361,7 +379,7 @@ CPrimitive *SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
                 CPoint p3(params[0+pi], params[1+pi]);
                 CPoint p4(params[2+pi], params[3+pi]);
                 p2.reflectP(p1); //-- Отражаем контрол относительно стартовой точки
-                if (command=="s") {
+                if ( command=="s" ) {
                     p3.add(lastPoint);
                     p4.add(lastPoint);
                 }
@@ -378,7 +396,7 @@ CPrimitive *SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
             }
         } else
         if ( (command=="L") || (command=="l") ) { //-- Линия
-            if ( params.count()%2!=0 ) throw 45; //-- Должно быть кратно 2
+            if ( params.count()%2!=0 ) { throw 45; } //-- Должно быть кратно 2
 
             for (int pi=0; pi<params.count(); pi+=2) {
                 CPoint p(params[pi], params[pi+1]);
@@ -399,7 +417,7 @@ CPrimitive *SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
             }
         } else
         if ( (command=="H") || (command=="h") ) { //-- Горизонтальная линия
-            if ( params.count()==0 ) throw 45; //-- Хотя бы один параметр должен быть
+            if ( params.count()==0 ) { throw 45; } //-- Хотя бы один параметр должен быть
             for (int pi=0; pi<params.count(); ++pi) {
                 CPoint p(params[pi], lastPoint.y());
                 if (command=="h") {
@@ -418,7 +436,7 @@ CPrimitive *SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
             }
         } else
         if ( (command=="V") || (command=="v") ) { //-- Вертикальная линия
-            if ( params.count()==0 ) throw 45; //-- Хотя бы один параметр должен быть
+            if ( params.count()==0 ) { throw 45; } //-- Хотя бы один параметр должен быть
             for (int pi=0; pi<params.count(); ++pi) {
                 CPoint p(lastPoint.x(), params[pi]);
                 if ( command=="v" ) {
@@ -437,7 +455,7 @@ CPrimitive *SVGParser::parsePath(CNodeInterface *level, QXmlStreamReader * xml)
             }
         } else
         if ( (command=="A") || (command=="a") ) {
-            if ( params.count()%7!=0 ) throw 45; //-- Должно быть кратно 7 параметрам
+            if ( params.count()%7!=0 ) { throw 45; } //-- Должно быть кратно 7 параметрам
             if ( openPathCoords.isZero() ) openPathCoords = lastPoint;
 
             for (int pi=0; pi<params.count(); pi+=7) {
@@ -569,9 +587,12 @@ CSS::Style SVGParser::parseStyle(QXmlStreamReader * xml)
 CPrimitive * SVGParser::parseClipPath(CNodeInterface **level, QXmlStreamReader *xml)
 {
     FClipPath * clipPath = new FClipPath();
+
    _defs[xml->attributes().value("id").toString()] = clipPath;
 
    *level = clipPath->clipPath;
+
+   parseBaseAttributes(clipPath->clipPath, xml);
 
    //-- Дальше парсится как обычно, но добавляется тупо к clipPath->clipPath, т.к. в clipPath могут быть и примитивы и хз что ещё.
 
@@ -672,7 +693,7 @@ bool SVGParser::parseGradientStops(FGradient *gradient, QXmlStreamReader *xml)
 
         if ( xml->tokenType()==QXmlStreamReader::StartElement ) {
 
-            if ( xml->name()=="stop" ) {
+            if ( xml->name().compare(QLatin1String("stop"))==0 )  {
                 FGradient::TGradientStop gs;
 
                 CSS::Style style = parseStyle(xml);
@@ -703,18 +724,20 @@ bool SVGParser::parseGradientStops(FGradient *gradient, QXmlStreamReader *xml)
 }
 
 /**
-* @brief Отвечаем, имеет ли элемент ссылку на CDef и отдаём, если да
+* @brief Отвечаем имеет ли элемент ссылку на CDef и отдаём, если да
 * @param xml
 * @return
 */
 CDef *SVGParser::hasLink(QXmlStreamReader *xml)
 {
-    if ( !xml->attributes().hasAttribute("xlink:href") ) return nullptr;
-    QString link = xml->attributes().value("xlink:href").toString();
-    if ( link.isEmpty() ) return nullptr;
+    QString link = "";
+
+    if ( xml->attributes().hasAttribute("href") ) { link = xml->attributes().value("href").toString(); }
+    else if ( xml->attributes().hasAttribute("xlink:href") )  { link = xml->attributes().value("xlink:href").toString(); }
+
+    if ( link.isEmpty() ) { return nullptr; }
 
     CDef * def = _defs.get(QUrl(link));
-
     return def;
 }
 
@@ -726,8 +749,8 @@ CDef *SVGParser::hasLink(QXmlStreamReader *xml)
 void SVGParser::parseBaseAttributes(CPrimitive *itm, QXmlStreamReader *xml)
 {
     //-- Айдишник с классом
-    if ( xml->attributes().hasAttribute("id") ) itm->setID(xml->attributes().value("id").toString());
-    if ( xml->attributes().hasAttribute("class")) itm->setClassSVG(xml->attributes().value("class").toString());
+    if ( xml->attributes().hasAttribute("id") ) { itm->setID(xml->attributes().value("id").toString()); }
+    if ( xml->attributes().hasAttribute("class")) { itm->setClassSVG(xml->attributes().value("class").toString()); }
 
     //-- Стили
     CSS::Style styles = parseStyle(xml);
@@ -779,16 +802,16 @@ CPrimitive * SVGParser::parseImage(CNodeInterface *level, QXmlStreamReader * xml
 
     CPoint p1(0, 0, 0.0001);
 
-    QRegExp rxType("data:(.+);(.+),");
+    QRegularExpressionMatch rxType = QRegularExpression("data:(.+);(.+),").match(data);
 
-    if ( rxType.indexIn(data)==-1 ) {//-- Нипонятно что это есть
+    if ( !rxType.hasMatch() ) {//-- Нипонятно что это есть
         qWarning()<<"Unknow image type!";
         return nullptr;
     }
-    data = data.remove(0, rxType.cap(0).length()); //--Убираем начало, т.к. это не часть данных
-    data = data.remove(QRegExp("(\\n|\\t| )")); //-- Убираем всё лишнее
+    data = data.remove(0, rxType.captured(0).length()); //--Убираем начало, т.к. это не часть данных
+    data = data.remove(QRegularExpression("(\\n|\\t| )")); //-- Убираем всё лишнее
 
-    CImage * image = new CImage(p1, rxType.cap(1), rxType.cap(2), data.toLocal8Bit());
+    CImage * image = new CImage(p1, rxType.captured(1), rxType.captured(2), data.toLocal8Bit());
     parseBaseAttributes(image, xml);
 
 
@@ -912,12 +935,11 @@ QList<double> SVGParser::parseParams(QString params) const
     QList<double> list;
     if ( params.isEmpty() ) return list;
 
-    QRegExp rxParams(RX_PARAMS);
-    int paramsPos = 0;
+    QRegularExpressionMatchIterator rxParams = QRegularExpression(RX_PARAMS).globalMatch(params);
 
-    while ( (paramsPos = rxParams.indexIn(params, paramsPos))!=-1 ) {
-        paramsPos += rxParams.matchedLength();
-        list.append(rxParams.cap(1).toDouble());
+    while ( rxParams.hasNext() ) {
+        QRegularExpressionMatch rxParam = rxParams.next();
+        list.append(rxParam.captured(1).toDouble());
     }
 
     return list;

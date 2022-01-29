@@ -64,3 +64,10 @@ CSS::MeasureUnit::operator QString() const
 {
     return QString("MeasureUnit(%1, %2)").arg(val()).arg(type());
 }
+
+MeasureUnit& MeasureUnit::operator =(const MeasureUnit& other)
+{
+    _val = other.val();
+    _type = other.type();
+    return *this;
+}

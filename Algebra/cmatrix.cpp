@@ -271,17 +271,6 @@ CMatrix CMatrix::apply(const CMatrix & m) const
 }
 
 /**
-* @brief Преобразовываем в QMatrix
-* @return
-*/
-QMatrix CMatrix::toQMatrix()
-{
-    QMatrix m;
-    m.setMatrix(getAt(0,0), getAt(0,1), getAt(1,0), getAt(1,1), getAt(0,2), getAt(1,2));
-    return m;
-}
-
-/**
 * @brief Отвечаем, если матрица единичная
 * @return
 */

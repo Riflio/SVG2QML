@@ -6,15 +6,14 @@
 class CBezier : public CPrimitive
 {
 public:
-
     CBezier();
-    CBezier(CPoint s, CPoint a1, CPoint a2, CPoint e);
+    CBezier(const CPoint &s, const CPoint &a1, const CPoint &a2, const CPoint &e);
+    CBezier(const CPoint &s, const CPoint &a, const CPoint &e);
     CBezier(const CBezier&other);
     CBezier(const CPoints &points);
 
     void cpaint(QPainter *painter, const CBoundingBox &area);
     void cstream(QDataStream &dataStream, double scale);
-
 
     CPoints lianirize(double tol) const;
 
@@ -34,6 +33,8 @@ public:
 
     bool isFlat(double tol) const;
     bool simple() const;
+
+    CBezier & operator =(const CBezier &b);
 
 protected:    
     struct TExtrema {
