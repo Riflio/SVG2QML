@@ -10,7 +10,7 @@
 #include "cmatrix.h"
 
 /**
-* @brief Точка и действия над ней
+* @brief The Point class
 */
 class CPoint
 {
@@ -50,7 +50,7 @@ public:
 
     double angle(const CPoint &p1, const CPoint &p2) const;
 
-    //-- Сравнение
+    //-- Compares
     bool lt(const CPoint & that) const;
     bool lte(const CPoint & that) const;
     bool gt(const CPoint & that) const;
@@ -83,7 +83,7 @@ public:
 private:
     double _x;
     double _y;
-    double _epsilon; //-- Погрешность
+    double _epsilon;
     bool _empty;
 };
 

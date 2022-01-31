@@ -12,6 +12,7 @@
 #include "Algebra/cpoint.h"
 
 #include "SVG/Classes/cdoc.h"
+#include "SVG/Classes/csvg.h"
 #include "SVG/Classes/cbezier.h"
 #include "SVG/Classes/cline.h"
 #include "SVG/Classes/cpath.h"
@@ -62,11 +63,11 @@ private:
     CDoc * _rootItem;
     QXmlStreamReader * _xml;
 
-    CPoint _globalCoords; //-- глобальные координаты
-    CMatrix _globalMatrix; //-- глобальная матрица трансформаций
+    CPoint _globalCoords; //-- Глобальные координаты
 
     CSS::CssParser * _cssParser;
 
+    CPrimitive * parseSVG(CNodeInterface **level, QXmlStreamReader * xml);
     CPrimitive * parseGroup(CNodeInterface **level, QXmlStreamReader * xml);
     CPrimitive * parsePath(CNodeInterface * level, QXmlStreamReader * xml);
     CPrimitive * parseRect(CNodeInterface * level, QXmlStreamReader * xml);

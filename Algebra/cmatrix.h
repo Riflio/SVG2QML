@@ -5,7 +5,7 @@
 #include <QSize>
 
 /**
-* @brief Матрица и действия над ней
+* @brief The Matrix class
 */
 class CMatrix {
 public:
@@ -43,9 +43,9 @@ public:
     friend QDebug operator<<(QDebug dbg, const CMatrix & m);
 
 private:
-    int _mi; //-- размер матрицы, строки
-    int _mj; //-- размер матрицы, столбцы
-    TMatrix _matrix; //-- сама матрица (одномерный массив, что бы не париться с вложенными)
+    int _mi; //-- Rows count
+    int _mj; //-- Cols count
+    TMatrix _matrix; //-- Matrix data (one-dimensional array)
 };
 
 

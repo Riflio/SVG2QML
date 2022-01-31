@@ -8,6 +8,7 @@ SOURCES += \
         Algebra/cpoint.cpp \
         Algebra/cpolynomial.cpp \
         Algebra/csegment.cpp \
+        Algebra/csize.cpp \
         Algebra/cvector2d.cpp \
         Algebra/equal.cpp \
         CSS/block.cpp \
@@ -32,6 +33,7 @@ SOURCES += \
         SVG/Classes/cpolygon.cpp \
         SVG/Classes/cpolyline.cpp \
         SVG/Classes/crect.cpp \
+        SVG/Classes/csvg.cpp \
         SVG/Classes/fclippath.cpp \
         SVG/Classes/flineargradient.cpp \
         SVG/Classes/fprimitive.cpp \
@@ -50,6 +52,7 @@ HEADERS += \
     Algebra/cpoint.h \
     Algebra/cpolynomial.h \
     Algebra/csegment.h \
+    Algebra/csize.h \
     Algebra/cvector2d.h \
     Algebra/equal.h \
     CSS/block.h \
@@ -75,6 +78,7 @@ HEADERS += \
     SVG/Classes/cpolygon.h \
     SVG/Classes/cpolyline.h \
     SVG/Classes/crect.h \
+    SVG/Classes/csvg.h \
     SVG/Classes/fclippath.h \
     SVG/Classes/flineargradient.h \
     SVG/Classes/fprimitive.h \

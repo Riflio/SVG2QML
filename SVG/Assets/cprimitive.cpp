@@ -112,7 +112,7 @@ CSS::Style CPrimitive::styles() const
 */
 const CBoundingBox &CPrimitive::getBBox() const
 {    
-    if ( !_bbox.isEmpty() ) return _bbox;
+    if ( !_bbox.isEmpty() ) { return _bbox; }
 
     _bbox.addPoints(_points);
 

@@ -102,15 +102,15 @@ CPoint & CPoint::divide(double scalar)
 }
 
 /**
-* Расстояние до другой точки
-* sw - маштаб по x
-* sh - маштаб по y
+* @brief Distance to other point
+* @param sw - scale axis X
+* @param sh - scale axis Y
 */
 double CPoint::lengthTo(const CPoint & p2, double sw, double sh) const
 {
-    double dx= (p2._x - _x) / sw;
-    double dy= (p2._y - _y) / sh;
-    return sqrt(dx*dx+dy*dy);
+    double dx = (p2._x - _x) / sw;
+    double dy = (p2._y - _y) / sh;
+    return sqrt(dx*dx + dy*dy);
 }
 
 CPoint & CPoint::add(const CPoint & p2)
@@ -129,7 +129,7 @@ CPoint & CPoint::add(double x, double y)
 
 
 /**
-* @brief Отражаем себя отсносительно себя
+* @brief Reflect by self
 * @return
 */
 CPoint & CPoint::reflect()
@@ -140,7 +140,7 @@ CPoint & CPoint::reflect()
 }
 
 /**
-* @brief Отражаем себя относительно другой точки
+* @brief Reflect relative other point
 * @param p2
 * @return
 */
@@ -155,7 +155,7 @@ CPoint & CPoint::reflectP(const CPoint & p2)
     return *this;
 }
 
-CPoint  CPoint::clon() const
+CPoint CPoint::clon() const
 {
     CPoint p2(_x, _y);
     return p2;
@@ -163,7 +163,7 @@ CPoint  CPoint::clon() const
 
 bool CPoint::isZero() const
 {
-    return ( (fabs (_x) < _epsilon) && (fabs (_y) < _epsilon) );
+    return ( (fabs(_x)<_epsilon) && (fabs(_y)<_epsilon) );
 }
 
 /**
@@ -243,7 +243,7 @@ double CPoint::angle(const CPoint &p1, const CPoint &p2) const
 }
 
 /**
-* Применяем матрицу трансформации к точке
+* @brief Apply tranform matrix
 */
 CPoint & CPoint::transform(const CMatrix & m1)
 {

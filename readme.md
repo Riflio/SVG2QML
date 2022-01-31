@@ -13,6 +13,7 @@ Version 1.1
 - Migrated to Qt 6 (6.2.0)
 - Support quadratic Bezier (path qQ)
 - Added Drag&Drop area for files to convert
+- Fix bug with transform
 
 ## Поддерживаемые элементы:
 

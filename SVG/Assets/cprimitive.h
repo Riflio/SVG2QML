@@ -23,6 +23,7 @@ class CPrimitive: public CNodeInterface
 public:
     enum PrimitiveType {
         PT_NONE,
+        PT_SVG,
         PT_BEZIER,
         PT_LINE,
         PT_PATH,
