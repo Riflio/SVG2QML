@@ -265,7 +265,9 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
             writeEndLvl();
 
             //-- Трансформации
-            makeTransform(gr->transform());
+            CMatrix m = gr->transform();
+            makeTransform(m);
+
         writeEndLvl();
 
         //-- Ещё и clipPath придётся сделать, что бы фигура с внутренним градиентом не вылезала шибко далеко, но контур придётся сделать меньше на половину ширины заливки
@@ -359,7 +361,7 @@ void QMLGenerator::makeStroke(CPrimitive *itm)
             CSS::MeasureUnit mu = strokeWidth.value<CSS::MeasureUnit>();
 
             if ( mu.type()==CSS::MeasureUnit::MU_PX ||  mu.type()==CSS::MeasureUnit::MU_PT) {
-                writePropThinkLinesVal("strokeWidth", 1, mu.asPx());
+                writePropThinkLinesVal("strokeWidth", 1, mu.asPx()); //FIXME: Scale!
             } else {
                 qWarning()<<"Unsupported measure unit for stroke-width:"<<mu;
             }
@@ -462,7 +464,7 @@ void QMLGenerator::makeElement(CPrimitive *el, bool visible, bool layerEnabled)
 
         if ( (i.type()&CNodeInterfaceIterator::IT_STARTELEMENT) ) {
 
-            if ( p->type()==CPrimitive::PT_GROUP ) continue;
+            if ( p->type()==CPrimitive::PT_GROUP || p->type()==CPrimitive::PT_SVG ) continue;
 
             if (  supportedTypes.indexOf(p->type())>-1 ) {
                 QString pathCommnads = primitiveToPathCommands(p);
