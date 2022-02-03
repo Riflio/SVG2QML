@@ -61,6 +61,8 @@ public:
     CPoint clon() const;
     double lengthTo(const CPoint & p2, double sw=1, double sh=1) const;
     bool isZero() const;
+    bool isZeroX() const;
+    bool isZeroY() const;
     bool isEmpty() const;
 
     QString toString() const;
@@ -71,6 +73,8 @@ public:
     bool operator ==(const CPoint &p) const;
     bool operator !=(const CPoint &p) const;
     CPoint & operator =(const CPoint &p);
+    CPoint & operator -=(const CPoint &p);
+    CPoint & operator +=(const CPoint &p);
 
     friend QDebug operator<<(QDebug dbg, const CPoint & p);
     friend QDataStream& operator <<(QDataStream &dataStream, const CPoint &p);

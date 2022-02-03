@@ -163,7 +163,17 @@ CPoint CPoint::clon() const
 
 bool CPoint::isZero() const
 {
-    return ( (fabs(_x)<_epsilon) && (fabs(_y)<_epsilon) );
+    return ( isZeroX() && isZeroY() );
+}
+
+bool CPoint::isZeroX() const
+{
+    return ( fabs(_x)<_epsilon );
+}
+
+bool CPoint::isZeroY() const
+{
+    return ( fabs(_y)<_epsilon );
 }
 
 /**
@@ -248,9 +258,9 @@ double CPoint::angle(const CPoint &p1, const CPoint &p2) const
 CPoint & CPoint::transform(const CMatrix & m1)
 {
     CMatrix m2(1, 3);
-    m2.setAt(0,0,_x).setAt(0,1,_y).setAt(0,2, 1);
+    m2.setAt(0, 0, _x).setAt(0, 1, _y).setAt(0, 2, 1);
     CMatrix r = m1.apply(m2);
-    set( r.getAt(0,0), r.getAt(1,0) );
+    set(r.getAt(0, 0), r.getAt(1, 0));
 
     return *this;
 }
@@ -305,6 +315,20 @@ CPoint& CPoint::operator =(const CPoint& p)
     _y = p.y();
     _epsilon = p.epsilon();
     _empty = p.isEmpty();
+    return *this;
+}
+
+CPoint& CPoint::operator -=(const CPoint& p)
+{
+    _x -= p.x();
+    _y -= p.y();
+    return *this;
+}
+
+CPoint& CPoint::operator +=(const CPoint& p)
+{
+    _x += p.x();
+    _y += p.y();
     return *this;
 }
 
