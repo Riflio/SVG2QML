@@ -35,7 +35,7 @@ public:
 
     CMatrix & multiplication(const CMatrix & m);
     CMatrix & multiplication(double n);
-    CMatrix clon();
+    CMatrix clon() const;
     CMatrix apply(const CMatrix & m) const;
 
     bool isDefault() const;

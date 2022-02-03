@@ -236,7 +236,7 @@ CMatrix &CMatrix::multiplication(double n)
 * @brief Копируем матрицу
 * @return
 */
-CMatrix CMatrix::clon()
+CMatrix CMatrix::clon() const
 {
     CMatrix m2(_mi, _mj);
 
