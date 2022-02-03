@@ -9,6 +9,9 @@ Convert SVG file to native QML file.
 See [Original SVG file](/examples/buttons1.svg) and [Converted QML file](/examples/buttons1.qml)
 
 ## Changelog
+Version 1.2
+- Reworked the creation of gradients and gradientTransform
+
 Version 1.1
 - Migrated to Qt 6 (6.2.0)
 - Support quadratic Bezier (path qQ)

@@ -52,11 +52,11 @@ private:
 
     void makeID(CPrimitive * itm);
 
-    void writeStartLvl(QString propName, QString elementName);
-    void writeStartLvl(QString elementName);
-    void writeEndLvl();
-    void writePropVal(QString name, QVariant val, bool quoted=false);
-    void writePropThinkLinesVal(QString name, QVariant valThink, QVariant val, bool quoted=false);
+    void writeStartLvlProp(QString propName, QString elementName);
+    void writeStartLvl(QString elementName, bool isInline=false);
+    void writeEndLvl(bool isInline=false);
+    void writePropVal(QString name, QVariant val, bool quoted=false, bool isInline=false);
+    void writePropThinkLinesVal(QString name, QVariant valThink, QVariant val, bool quoted=false, bool isInline=false);
     void writePropElVal(QString name, QString elementName, QVariant val);
 };
 

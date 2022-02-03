@@ -1,8 +1,8 @@
 #ifndef FLINEARGRADIENT_H
 #define FLINEARGRADIENT_H
 
-#include <QPointF>
-#include "../Assets/fgradient.h"
+#include "SVG/Assets/fgradient.h"
+#include "Algebra/cpoint.h"
 
 class FLinearGradient : public FGradient
 {
@@ -16,17 +16,19 @@ public:
     void setX2(float x);
     void setY2(float y);
 
-    void setStartPoint(float x, float y);
-    void setEndPoint(float x, float y);
+    void setStartPoint(const CPoint &s);
+    void setEndPoint(const CPoint &e);
 
-    QPointF startPoint() const;
-    QPointF endPoint() const;
+    CPoint startPoint() const;
+    CPoint &startPoint();
+    CPoint endPoint() const;
+    CPoint &endPoint();
 
     TDefType defType() const override { return DF_LINEARGRADIENT;  }
 
 private:
-    QPointF _startPoint;
-    QPointF _endPoint;
+    CPoint _startPoint;
+    CPoint _endPoint;
 
 };
 

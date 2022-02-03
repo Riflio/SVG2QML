@@ -1,8 +1,8 @@
 #ifndef FRADIALGRADIENT_H
 #define FRADIALGRADIENT_H
 
-#include <QPointF>
-#include "../Assets/fgradient.h"
+#include "SVG/Assets/fgradient.h"
+#include "Algebra/cpoint.h"
 
 class FRadialGradient: public FGradient
 {
@@ -16,11 +16,13 @@ public:
     void setFX(float x);
     void setFY(float y);
 
-    void setCenterPoint(float x, float y);
-    QPointF centerPoint() const;
+    void setCenterPoint(CPoint &cp);
+    CPoint centerPoint() const;
+    CPoint &centerPoint();
 
-    void setFocalPoint(float x, float y);
-    QPointF focalPoint() const;
+    void setFocalPoint(CPoint &fp);
+    CPoint focalPoint() const;
+    CPoint &focalPoint();
 
     void setRadius(float r);
     float radius() const;
@@ -28,11 +30,11 @@ public:
     void setFocalRadius(float r);
     float focalRadius() const;
 
-    TDefType defType() const override { return DF_RADIALGRADIENT;  }
+    TDefType defType() const override { return DF_RADIALGRADIENT; }
 
 private:
-    QPointF _centerPoint;
-    QPointF _focalPoint;
+    CPoint _centerPoint;
+    CPoint _focalPoint;
     float _radius;
     float _focalRadius;
 

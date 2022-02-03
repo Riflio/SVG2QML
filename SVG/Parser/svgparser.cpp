@@ -652,7 +652,7 @@ CPrimitive * SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamRe
 }
 
 /**
-* @brief Парсим радиальный градиент
+* @brief Parsing radial gradient
 * @param level
 * @param xml
 * @return

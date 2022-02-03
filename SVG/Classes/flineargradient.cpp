@@ -40,24 +40,32 @@ void FLinearGradient::setY2(float y)
     _endPoint.setY(y);
 }
 
-void FLinearGradient::setStartPoint(float x, float y)
+void FLinearGradient::setStartPoint(const CPoint &s)
 {
-    _startPoint.setX(x);
-    _startPoint.setY(y);
+    _startPoint = s;
 }
 
-void FLinearGradient::setEndPoint(float x, float y)
+void FLinearGradient::setEndPoint(const CPoint &e)
 {
-    _endPoint.setX(x);
-    _endPoint.setY(y);
+    _endPoint = e;
 }
 
-QPointF FLinearGradient::startPoint() const
+CPoint FLinearGradient::startPoint() const
 {
     return _startPoint;
 }
 
-QPointF FLinearGradient::endPoint() const
+CPoint& FLinearGradient::startPoint()
+{
+    return _startPoint;
+}
+
+CPoint FLinearGradient::endPoint() const
+{
+    return _endPoint;
+}
+
+CPoint& FLinearGradient::endPoint()
 {
     return _endPoint;
 }
