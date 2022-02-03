@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   id="svg1281"
+   inkscape:version="1.1.1 (1:1.1+202109281949+c3084ef5ed)"
+   sodipodi:docname="gradient_transforms.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1283"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.90583672"
+     inkscape:cx="312.41833"
+     inkscape:cy="-98.803678"
+     inkscape:window-width="1680"
+     inkscape:window-height="1034"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1278">
+    <linearGradient
+       id="linearGradient93779"
+       x1="-65.484879"
+       y1="159.12106"
+       x2="-49.033508"
+       y2="150.12106"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(7.8947662,-1.8442769e-8,4.5341522e-8,7.2743658,576.6034,-1050.0146)">
+      <stop
+         style="stop-color:#1a1a1a;stop-opacity:1"
+         offset="0"
+         id="stop93773" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1"
+         offset="1"
+         id="stop93775" />
+    </linearGradient>
+  </defs>
+  <g
+     inkscape:label="Слой 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:url(#linearGradient93779);fill-opacity:1;stroke:#ff00ff;stroke-width:8.17674;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect92940"
+       width="107.15398"
+       height="183.63155"
+       x="62.777252"
+       y="31.857542" />
+    <!-- transform="matrix(0.92416791,-0.38198649,0.47027325,0.88252086,0,0)" -->
+  </g>
+</svg>
