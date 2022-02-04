@@ -33,7 +33,7 @@ Version 1.1
 - polyline (points)
 - polygon (points)
 - ellipse (cx, cy, rx, ry)
-- path ("d" commands: "mcslvhvazMCSLVHAZ")
+- path ("d" commands: "mcsqlvhvazMCSQLVHAZ")
 - clipPath (g, rect, circle, ellipse, path)
 - linearGradient (x1, y1, x2, y2, gradientTransform)
  - stop (offset, stop-color, stop-opacity) 
@@ -72,7 +72,9 @@ Version 1.1
 Все SVG.path преобразуются в QML.Shape { QML.ShapePath { QML.PathSvg { path: "path command" }}}.<br/>
 Все SVG.clipPath преобразуются сначала в SVG.path, а за тем<br/>
 преобразуются в QML.OpacityMask { maskSource: QML.Shape { ... }  }<br/>
-Все SVG.linearGradient, SVG.radialGradient преобразуются в QML.LinearGradient и QML.RadialGradient для каждой QML.ShapePath соответственно. Если у градиентов есть gradientTransform, то будет две QML.Shape у одной заливка обычным цветом, у другой градиент и трансформация. Так же будет сделана QML.OpacityMask, что бы градиент не вылезал за пределы основной фигуры.<br/>
+Все SVG.linearGradient, SVG.radialGradient преобразуются в QML.LinearGradient и QML.RadialGradient для каждой QML.ShapePath соответственно.<br/>
+Если у градиентов есть gradientTransform, то будет две QML.Shape у одной заливка обычным цветом, у другой градиент и трансформация.<br/>
+Так же будет сделана QML.OpacityMask, что бы градиент не вылезал за пределы основной фигуры.<br/>
 
 ### Что не поддерживается
 

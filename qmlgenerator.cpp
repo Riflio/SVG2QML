@@ -90,42 +90,35 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset)
     if ( p->type()==CPrimitive::PT_CIRCLE ) {
         CCircle * circle = static_cast<CCircle*>(p);
         circle->toPath();
-        circle->applyTransform();
         tPath = static_cast<CPath*>(circle->down);
     } else
     if ( p->type()==CPrimitive::PT_PATH ) {
         CPath * path = static_cast<CPath*>(p);
-        path->applyTransform();
         tPath = path;
     } else
     if ( p->type()==CPrimitive::PT_RECT ) {
         CRect * rect = static_cast<CRect*>(p);
         rect->toPath();
-        rect->applyTransform();
         tPath = static_cast<CPath*>(rect->down);
     } else
     if ( p->type()==CPrimitive::PT_POLYLINE ) {
         CPolyline * polyline = static_cast<CPolyline*>(p);
         polyline->toPath();
-        polyline->applyTransform();
         tPath = static_cast<CPath*>(polyline->down);
     } else
     if ( p->type()==CPrimitive::PT_POLYGON ) {
         CPolygon * polygon = static_cast<CPolygon*>(p);
         polygon->toPath();
-        polygon->applyTransform();
         tPath = static_cast<CPath*>(polygon->down);
     } else
     if ( p->type()==CPrimitive::PT_LINE ) {
         CLine * line = static_cast<CLine*>(p);
         line->toPath();
-        line->applyTransform();
         tPath = static_cast<CPath*>(line->down);
     } else
     if ( p->type()==CPrimitive::PT_ELLIPSE ) {
         CEllipse * ellipse = static_cast<CEllipse*>(p);
         ellipse->toPath();
-        ellipse->applyTransform();
         tPath = static_cast<CPath*>(ellipse->down);
     } else {
         qWarning()<<"Unsupported SVG element"<<p->type();
@@ -285,16 +278,21 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
 
                     double rotation = lg->startPoint().angle(lg->startPoint()-CPoint(0,1), lg->endPoint());
 
+
+                    CMatrix transformMatrix;
+                    transformMatrix.multiplication(gr->transform());
+
                     CPoint originPoint = lg->startPoint();
-                    originPoint.transform(gr->transform());
+                    originPoint.transform(transformMatrix);
 
                     CMatrix rotM;
-
                     rotM.translate(originPoint.x(), originPoint.y());
                     rotM.rotate((rotation-M_PI_2)*180.0/M_PI);
                     rotM.translate(-originPoint.x(), -originPoint.y());
 
-                    gr->setTransform(rotM.multiplication(gr->transform()));
+                    rotM.multiplication(transformMatrix);
+
+                    gr->setTransform(rotM);
 
                     lg->setStartPoint(CPoint(lg->startPoint().x(), lg->startPoint().y()));
                     lg->setEndPoint(CPoint(lg->startPoint().x()+l, lg->startPoint().y()));
@@ -350,6 +348,7 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
                     writePropVal("strokeWidth", 0);
                     writePropVal("strokeColor", "transparent", true);
                 writeEndLvl();
+
             writeEndLvl();
 
             writePropVal("fragmentShader", "qrc:/mask.frag.qsb", true);
@@ -428,7 +427,7 @@ void QMLGenerator::makeStroke(CPrimitive *itm)
             CSS::MeasureUnit mu = strokeWidth.value<CSS::MeasureUnit>();
 
             if ( mu.type()==CSS::MeasureUnit::MU_PX ||  mu.type()==CSS::MeasureUnit::MU_PT) {
-                writePropThinkLinesVal("strokeWidth", 1, mu.asPx()); //FIXME: Scale!
+                writePropThinkLinesVal("strokeWidth", 1, mu.asPx());
             } else {
                 qWarning()<<"Unsupported measure unit for stroke-width:"<<mu;
             }
@@ -580,8 +579,9 @@ void QMLGenerator::makeElement(CPrimitive *el, bool visible, bool layerEnabled)
                         writeEndLvl();
                     }
 
-                    //-- Прозрачность
                     makeOpacity(p);
+
+                    makeTransform(p->transform());
 
                 writeEndLvl();
 
