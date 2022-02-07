@@ -67,7 +67,8 @@ public:
     virtual CPoints lianirize(double tol) const;
     virtual void move(const CPoint &m);
     virtual void del();
-    virtual CPrimitive * copy(bool nesteed=true) const;
+    virtual CPrimitive * copy() const;
+    virtual CPrimitive * copyNesteed() const;
     virtual void rotate(const CPoint &center, double angle);
     virtual void scale(double sX, double sY);
 

@@ -26,6 +26,17 @@ CArc::CArc(CPoint startPoint, double rx, double ry, double rotation, bool largeA
 
 }
 
+/**
+* @brief Copy
+* @return
+*/
+CPrimitive* CArc::copy() const
+{
+    CPrimitive * prim = new CArc(*this);
+    CNodeInterface::reset(prim);
+    return prim;
+}
+
 double CArc::rx() const
 {
     return _rx;

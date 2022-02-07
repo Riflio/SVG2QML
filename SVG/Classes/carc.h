@@ -12,13 +12,15 @@ public:
     CArc();
     CArc(CPoint startPoint, double rx, double ry, double rotation, bool largeArc, bool sweep, CPoint endPoint);
 
+    CPrimitive* copy() const override;
+
     double rx() const;
     double ry() const;
     double rotation() const;
     bool largeArcFlag() const;
     bool sweepFlag() const;
 
-    bool toPath();
+    bool toPath() override;
 
     const double TAU = M_PI*2;
 

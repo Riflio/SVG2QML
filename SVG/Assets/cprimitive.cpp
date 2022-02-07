@@ -2,9 +2,10 @@
 
 CPrimitive::CPrimitive(const CPrimitive&other)
     :CNodeInterface(other), rotation(other.rotation), offset(other.offset), marked(other.marked), source(other.source),
-      flippedX(false), flippedY(false), _type(other._type), _points(other._points), _styles(other._styles), _bbox(other._bbox), _id(other._id),
-      _transformMatrix(other._transformMatrix)
-{    
+      flippedX(other.flippedX), flippedY(other.flippedY), _type(other._type), _points(other._points), _styles(other._styles), _bbox(other._bbox), _id(other._id),
+      _class(other._class), _transformMatrix(other._transformMatrix), _title(other._title), _descr(other._descr)
+{
+
 }
 
 CPrimitive::CPrimitive():CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(PT_NONE), _id("")
@@ -182,20 +183,29 @@ void CPrimitive::del()
 }
 
 /**
-* @brief Создаём копию себя и всех на своём уровне
+* @brief Copy self
+* @return
 */
-CPrimitive * CPrimitive::copy(bool nesteed) const
+CPrimitive* CPrimitive::copy() const
 {
-    CPrimitive * meCopy = new CPrimitive(*this);
-    CNodeInterface::reset(meCopy);
+    CPrimitive * copy = new CPrimitive(*this);
+    CNodeInterface::reset(copy);
+    return copy;
+}
 
-    if ( nesteed ) {
-        for (CNodeInterface * ni=this->down; ni!=nullptr; ni=ni->next) {
-            CPrimitive * pr = static_cast<CPrimitive*>(ni);
-            CPrimitive * prCopy = pr->copy();
-            CNodeInterface::addNext(meCopy, prCopy);
-        }
+/**
+* @brief Copy nesteed
+*/
+CPrimitive * CPrimitive::copyNesteed() const
+{
+    CPrimitive * meCopy = copy();
+
+    for (CNodeInterface * ni=this->down; ni!=nullptr; ni=ni->next) {
+        CPrimitive * pr = static_cast<CPrimitive*>(ni);
+        CPrimitive * prCopy = pr->copy();
+        CNodeInterface::addNext(meCopy, prCopy);
     }
+
     return meCopy;
 }
 

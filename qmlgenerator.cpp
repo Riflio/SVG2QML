@@ -127,9 +127,12 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset, CMat
 
     if ( offset>0 ) { tPath = tPath->makeOffset(offset); }
 
-    CPrimitive * tPathCopy = tPath->copy();
+    CPrimitive * tPathCopy = tPath->copyNesteed();
 
-    tPathCopy->applyTransform(transforms);
+    if ( !transforms.isIdentity() ) {
+        tPathCopy->transform().toIdentity();
+        tPathCopy->applyTransform(transforms);
+    }
 
     QString pathCommnads = generatePath(tPathCopy);
 
@@ -356,7 +359,7 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
                     writePropVal("strokeColor", "transparent", true);
                 writeEndLvl();
 
-                //makeTransform(CMatrix::identity(3, 3).translate(bb.left(), bb.top()));
+                makeTransform(CMatrix::identity(3, 3).translate(bb.left(), bb.top()));
 
             writeEndLvl();
 
