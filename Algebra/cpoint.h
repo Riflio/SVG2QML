@@ -8,17 +8,20 @@
 
 #include "equal.h"
 #include "cmatrix.h"
+#include "cempty.h"
 
 /**
 * @brief The Point class
 */
-class CPoint
+class CPoint: public CEmpty
 {
 public:
     CPoint(double x, double y, double epsilon=Equal::EPS);
     CPoint(const CPoint & p);
     CPoint(const QPointF & p);
     CPoint();
+
+    static CPoint fromZero();
 
     double x() const;
     double y() const;
@@ -71,6 +74,7 @@ public:
     CPoint operator -(const CPoint &p) const;
     CPoint operator +(const CPoint &p) const;
     bool operator ==(const CPoint &p) const;
+    bool operator ==(const CEmptyPriv &) const;
     bool operator !=(const CPoint &p) const;
     CPoint & operator =(const CPoint &p);
     CPoint & operator -=(const CPoint &p);
@@ -88,7 +92,6 @@ private:
     double _x;
     double _y;
     double _epsilon;
-    bool _empty;
 };
 
 inline uint qHash(const CPoint &key, uint seed) {

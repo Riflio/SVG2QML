@@ -1,26 +1,31 @@
 #include "cpoint.h"
 
 CPoint::CPoint():
-    marked(false), _x(0), _y(0), _epsilon(Equal::EPS), _empty(true)
+    marked(false), _x(NAN), _y(NAN), _epsilon(Equal::EPS)
 {    
 }
 
 CPoint::CPoint(double x, double y, double epsilon):
-    marked(false), _x(x), _y(y), _epsilon(epsilon), _empty(false)
+    marked(false), _x(x), _y(y), _epsilon(epsilon)
 {
 
 }
 
 CPoint::CPoint(const CPoint & p):
-    marked(p.marked), _x(p._x), _y(p._y), _epsilon(p._epsilon), _empty(false)
+    marked(p.marked), _x(p._x), _y(p._y), _epsilon(p._epsilon)
 {
 
 }
 
 CPoint::CPoint(const QPointF & p):
-    marked(false), _x(p.x()), _y(p.y()), _epsilon(Equal::EPS), _empty(false)
+    marked(false), _x(p.x()), _y(p.y()), _epsilon(Equal::EPS)
 {
 
+}
+
+CPoint CPoint::fromZero()
+{
+    return CPoint(0.0, 0.0);
 }
 
 double CPoint::x() const
@@ -43,7 +48,6 @@ CPoint & CPoint::set(const CPoint & p2)
     _x = p2._x;
     _y = p2._y;
     _epsilon = p2._epsilon;
-    _empty = false;
     return *this;
 }
 
@@ -51,7 +55,6 @@ CPoint & CPoint::set(double x, double y)
 {
     _x = x;
     _y = y;
-    _empty = false;
     return *this;
 }
 
@@ -182,7 +185,7 @@ bool CPoint::isZeroY() const
 */
 bool CPoint::isEmpty() const
 {
-    return _empty;
+    return (_x!=_x || _y!=_y); //-- Check if NaN
 }
 
 QString CPoint::toString() const
@@ -256,12 +259,9 @@ double CPoint::angle(const CPoint &p1, const CPoint &p2) const
 * @brief Apply tranform matrix
 */
 CPoint & CPoint::transform(const CMatrix & m1)
-{
-    CMatrix m2(1, 3);
-    m2.setAt(0, 0, _x).setAt(0, 1, _y).setAt(0, 2, 1);
-    CMatrix r = m1.apply(m2);
-    set(r.getAt(0, 0), r.getAt(1, 0));
-
+{    
+    CMatrix r = m1.apply(CMatrix::initializer(1 ,3, {_x, _y, 1}));
+    set(r.getAt(0, 0), r.getAt(0, 1));
     return *this;
 }
 
@@ -279,10 +279,9 @@ CPoint CPoint::max(const CPoint & p2) const
 
 QDebug operator<<(QDebug dbg, const CPoint & p)
 {
-    dbg<<"|"<<p._x<<p._y<<"|";
-    return dbg.space();
+    dbg.nospace()<<"CPoint("<<p._x<<", "<<p._y<<")";
+    return dbg;
 }
-
 
 CPoint CPoint::operator *(double v) const
 {
@@ -304,6 +303,11 @@ bool CPoint::operator ==(const CPoint &p) const
     return isEq(p);
 }
 
+bool CPoint::operator ==(const CEmptyPriv &) const
+{
+    return isEmpty();
+}
+
 bool CPoint::operator !=(const CPoint &p) const
 {
     return !isEq(p);
@@ -314,7 +318,6 @@ CPoint& CPoint::operator =(const CPoint& p)
     _x = p.x();
     _y = p.y();
     _epsilon = p.epsilon();
-    _empty = p.isEmpty();
     return *this;
 }
 
