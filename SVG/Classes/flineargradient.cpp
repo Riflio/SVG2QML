@@ -52,20 +52,24 @@ void FLinearGradient::setEndPoint(const CPoint &e)
 
 CPoint FLinearGradient::startPoint() const
 {
+    RELDEFVAL(_startPoint);
     return _startPoint;
 }
 
 CPoint& FLinearGradient::startPoint()
 {
+    RELDEFVAL(_startPoint);
     return _startPoint;
 }
 
 CPoint FLinearGradient::endPoint() const
 {
+    RELDEFVAL(_endPoint);
     return _endPoint;
 }
 
 CPoint& FLinearGradient::endPoint()
 {
+    RELDEFVAL(_endPoint);
     return _endPoint;
 }

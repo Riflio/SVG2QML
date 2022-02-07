@@ -32,7 +32,7 @@ private:
     QString tab(int c);
     QString sanitizeID(QString id);
 
-    QString primitiveToPathCommands(CPrimitive * p, double offset=0);
+    QString primitiveToPathCommands(CPrimitive * p, double offset=0, CMatrix transforms = CMatrix::identity(3, 3));
 
     bool makeFill(CPrimitive * itm, bool isSimple);
 

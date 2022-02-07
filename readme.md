@@ -11,6 +11,8 @@ See [Original SVG file](/examples/buttons1.svg) and [Converted QML file](/exampl
 ## Changelog
 Version 1.2
 - Reworked the creation of gradients and gradientTransform
+- Separately output transform matrix
+- Defs order
 
 Version 1.1
 - Migrated to Qt 6 (6.2.0)
@@ -58,7 +60,7 @@ Version 1.1
 
 ## Problems
 
- - def element must be defined before it used in xlink:href in svg file
+
 
 ## Tips
  - In Inkscape save as "simple svg".

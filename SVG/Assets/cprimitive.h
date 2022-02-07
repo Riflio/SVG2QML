@@ -34,7 +34,8 @@ public:
         PT_RECT,
         PT_CIRCLE,
         PT_ELLIPSE,
-        PT_POLYLINE
+        PT_POLYLINE,
+        PT_DEF
     };
 
     CPrimitive(const CPrimitive&other);
@@ -70,7 +71,7 @@ public:
     virtual void rotate(const CPoint &center, double angle);
     virtual void scale(double sX, double sY);
 
-    virtual bool applyTransform(const CMatrix &matrix = CMatrix());
+    virtual bool applyTransform(const CMatrix &matrix = CMatrix::identity(3,3));
 
     virtual bool toPath();
 
@@ -113,7 +114,7 @@ protected:
     QString _id; //-- Айдишник из SVG
     QString _class; //-- Класс из SVG
 
-    CMatrix _transformMatrix;
+    CMatrix _transformMatrix = CMatrix::identity(3,3);
 
     QString _title;
     QString _descr;

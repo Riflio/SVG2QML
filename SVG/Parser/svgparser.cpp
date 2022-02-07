@@ -125,6 +125,9 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
             else {
                 qWarning()<<"Unsupported element"<<_xml->name();
             }
+
+            //if ( curItem->ID() )
+
         }
 
         //-- Detect ends elements
@@ -158,7 +161,11 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
     }
 
     //-- Переходим на самый-самый верх т.к. _rootItem будет в конце указывать на первый элемент
-    if ( _rootItem->up!=nullptr ) { _rootItem=static_cast<CDoc*>(_rootItem->up); }
+    if ( _rootItem->up!=nullptr ) { _rootItem = static_cast<CDoc*>(_rootItem->up); }
+
+    if ( _dependsCDef.count()>0 ) {
+        qWarning()<<"After parsing left unresolved hrefs: "<<_dependsCDef.keys();
+    }
 
     return PS_OK;
 }
@@ -171,7 +178,7 @@ SVGParser::ParseStatus SVGParser::parse(QIODevice * device)
 */
 CMatrix SVGParser::parseTransform(QXmlStreamReader * xml, QString attrName)
 {
-    CMatrix matrix(3, 3);
+    CMatrix matrix = CMatrix::identity(3, 3);
 
     QString transform = xml->attributes().value(attrName).toString();
     if ( transform.isEmpty() ) { return matrix; }
@@ -207,7 +214,7 @@ CMatrix SVGParser::parseTransform(QXmlStreamReader * xml, QString attrName)
 
         if ( commandStr=="matrix" ) { //-- Matrix 2x3
             if ( params.count()!=6 ) { throw 23; }
-            matrix.set(2, 3, params, CMatrix::SET_BY_COLS);
+            matrix.setBy(3, 2, params, CMatrix::SET_BY_COLS);
         } else
         if ( commandStr=="translate" ) {
             if ( params.count()!=2 ) { throw 23; }
@@ -215,7 +222,7 @@ CMatrix SVGParser::parseTransform(QXmlStreamReader * xml, QString attrName)
         } else
         if ( commandStr=="rotate" ) {
             if ( params.count()!=1 ) { throw 23; }
-            matrix.rotate(params[0]);
+            matrix.rotateD(params[0]);
         } else
         if ( commandStr=="scale" ) {
             if ( (params.count()==0) || (params.count()>2) ) { throw 23; }
@@ -621,20 +628,14 @@ CPrimitive * SVGParser::parseClipPath(CNodeInterface **level, QXmlStreamReader *
 */
 CPrimitive * SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamReader *xml)
 {
-    CDef * def = hasLink(xml);
-
-    FLinearGradient * linearGradient = nullptr;
-
-    if ( def!=nullptr ) {
-        FGradient * defGradient = dynamic_cast<FGradient*>(def);
-        if ( defGradient==nullptr ) { qWarning()<<"LinearGradient link to not FGradient."; return nullptr; }
-        linearGradient = new FLinearGradient(*defGradient);
-    } else {
-        linearGradient = new FLinearGradient();
-    }
-
-    _defs[_xml->attributes().value("id").toString()] = linearGradient;
+    FLinearGradient * linearGradient = new FLinearGradient();
     *level = linearGradient;
+
+    parseBaseAttributes(linearGradient, xml);
+
+    _defs[linearGradient->ID()] = linearGradient;
+
+    parseHREF(linearGradient, xml);
 
     CMatrix matrix = parseTransform(xml, "gradientTransform");
     linearGradient->setTransform(matrix);
@@ -646,7 +647,10 @@ CPrimitive * SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamRe
 
     bool gs = parseGradientStops(linearGradient, xml);
 
-    if ( !gs ) return nullptr;
+    if ( !gs ) { return nullptr; }
+
+
+    updateDependsHREFS(linearGradient);
 
     return nullptr;
 }
@@ -659,20 +663,14 @@ CPrimitive * SVGParser::parseLinearGradient(CNodeInterface **level, QXmlStreamRe
 */
 CPrimitive * SVGParser::parseRadialGradient(CNodeInterface **level, QXmlStreamReader *xml)
 {
-    CDef * def = hasLink(xml);
-
-    FRadialGradient * radialGradient = nullptr;
-
-    if ( def!=nullptr ) {
-        FGradient * defGradiend = dynamic_cast<FGradient*>(def);
-        if ( defGradiend==nullptr ) { qWarning()<<"RadialGradient link to not FGradient."; return nullptr; }
-        radialGradient = new FRadialGradient(*defGradiend);
-    } else {
-        radialGradient = new FRadialGradient();
-    }
-
-    _defs[_xml->attributes().value("id").toString()] = radialGradient;
+    FRadialGradient * radialGradient = new FRadialGradient();
     *level = radialGradient;
+
+    parseBaseAttributes(radialGradient, xml);
+
+    _defs[radialGradient->ID()] = radialGradient;
+
+    parseHREF(radialGradient, xml);
 
     CMatrix matrix = parseTransform(xml, "gradientTransform");
     radialGradient->setTransform(matrix);
@@ -686,7 +684,9 @@ CPrimitive * SVGParser::parseRadialGradient(CNodeInterface **level, QXmlStreamRe
 
     bool gs = parseGradientStops(radialGradient, xml);
 
-    if ( !gs ) return nullptr;
+    if ( !gs ) { return nullptr; }
+
+    updateDependsHREFS(radialGradient);
 
     return nullptr;
 }
@@ -738,24 +738,6 @@ bool SVGParser::parseGradientStops(FGradient *gradient, QXmlStreamReader *xml)
 }
 
 /**
-* @brief Отвечаем имеет ли элемент ссылку на CDef и отдаём, если да
-* @param xml
-* @return
-*/
-CDef *SVGParser::hasLink(QXmlStreamReader *xml)
-{
-    QString link = "";
-
-    if ( xml->attributes().hasAttribute("href") ) { link = xml->attributes().value("href").toString(); }
-    else if ( xml->attributes().hasAttribute("xlink:href") )  { link = xml->attributes().value("xlink:href").toString(); }
-
-    if ( link.isEmpty() ) { return nullptr; }
-
-    CDef * def = _defs.get(QUrl(link));
-    return def;
-}
-
-/**
 * @brief Разбираем базовые атрибуты элемента: id, class, style, transform
 * @param itm
 * @param xml
@@ -770,7 +752,7 @@ void SVGParser::parseBaseAttributes(CPrimitive *itm, QXmlStreamReader *xml)
     CSS::Style styles = parseStyle(xml);
     itm->setStyles(styles);
 
-    //-- Transforms
+    //-- Transforms    
     CMatrix transforms = parseTransform(xml);
 
     if ( nullptr!=itm->up ) { //-- Immediately combine with the transformation of the parent
@@ -778,6 +760,45 @@ void SVGParser::parseBaseAttributes(CPrimitive *itm, QXmlStreamReader *xml)
     }
 
     itm->setTransform(transforms);
+}
+
+/**
+* @brief Parse href attribute
+* @param el
+* @param xml
+*/
+void SVGParser::parseHREF(CDef* el, QXmlStreamReader* xml)
+{
+    QString link;
+
+    if ( xml->attributes().hasAttribute("href") ) { link = xml->attributes().value("href").toString(); }
+    else if ( xml->attributes().hasAttribute("xlink:href") )  { link = xml->attributes().value("xlink:href").toString(); }
+
+    if ( link.isEmpty() ) { return; }
+
+    CDef * def = _defs.get(QUrl(link));
+    if ( def!=nullptr ) { //-- Referenced element exists.
+        el->setRelDef(def);
+    } else { //-- Not exists, wait parsing
+        _dependsCDef[link] = el;
+    }
+}
+
+/**
+* @brief Set href rel after parsing
+* @param el
+*/
+void SVGParser::updateDependsHREFS(CDef* el)
+{
+    QString link = QString("#%1").arg(el->ID());
+    if ( !_dependsCDef.contains(link) ) { return; }
+
+    QList<CDef*> dependsEl = _dependsCDef.values(link);
+    foreach (CDef* def, dependsEl) {
+        def->setRelDef(el);
+    }
+
+    _dependsCDef.remove(link);
 }
 
 /**

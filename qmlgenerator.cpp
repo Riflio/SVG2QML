@@ -83,7 +83,7 @@ QString QMLGenerator::sanitizeID(QString id)
 * @param offset
 * @return
 */
-QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset)
+QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset, CMatrix transforms)
 {
     CPath * tPath = nullptr;
 
@@ -125,11 +125,13 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset)
         return "";
     }
 
-    if ( offset>0 ) {
-        tPath = tPath->makeOffset(offset);
-    }
+    if ( offset>0 ) { tPath = tPath->makeOffset(offset); }
 
-    QString pathCommnads = generatePath(tPath);
+    CPrimitive * tPathCopy = tPath->copy();
+
+    tPathCopy->applyTransform(transforms);
+
+    QString pathCommnads = generatePath(tPathCopy);
 
     return pathCommnads;
 }
@@ -166,7 +168,7 @@ bool QMLGenerator::makeFill(CPrimitive *itm, bool isSimple)
 
             if ( def->defType()==CDef::DF_LINEARGRADIENT || def->defType()==CDef::DF_RADIALGRADIENT) {
                 FGradient * gr = dynamic_cast<FGradient*>(def);
-                if ( gr->transform().isDefault() ) {  //-- Если нет трансформаций, то выводим как обычно
+                if ( gr->transform().isIdentity() ) {  //-- Если нет трансформаций, то выводим как обычно
                     makeFillGradient(itm, gr, def->defType());
                     return true;
                 } else { //-- Есть трансформации - придётся мучаться
@@ -250,7 +252,7 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
                     FLinearGradient * lg = dynamic_cast<FLinearGradient*>(gr);
 
                     double l = lg->startPoint().lengthTo(lg->endPoint()); //-- Gradient length
-                    double w = 100;   //-- Gradient continuation before first and after last stop points
+                    double w = 100; //-- Gradient continuation before first and after last stop points
                     double h = 100; //TODO: As max(width, height) of bouding box?
 
                     writePropVal("startX", lg->startPoint().x()-w);
@@ -276,18 +278,17 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
                         writePropVal("y", lg->startPoint().y()-h, false, true);
                     writeEndLvl(true);
 
-                    double rotation = lg->startPoint().angle(lg->startPoint()-CPoint(0,1), lg->endPoint());
+                    double rotation = lg->startPoint().angle(lg->startPoint()-CPoint(0.0,1.0), lg->endPoint());
 
-
-                    CMatrix transformMatrix;
+                    CMatrix transformMatrix = CMatrix::identity(3,3);
                     transformMatrix.multiplication(gr->transform());
 
                     CPoint originPoint = lg->startPoint();
                     originPoint.transform(transformMatrix);
 
-                    CMatrix rotM;
+                    CMatrix rotM = CMatrix::identity(3, 3);
                     rotM.translate(originPoint.x(), originPoint.y());
-                    rotM.rotate((rotation-M_PI_2)*180.0/M_PI);
+                    rotM.rotate(rotation-M_PI_2);
                     rotM.translate(-originPoint.x(), -originPoint.y());
 
                     rotM.multiplication(transformMatrix);
@@ -313,8 +314,8 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
                     writeEndLvl();
                 }
 
-                writePropVal("strokeWidth", 0);
-                writePropVal("strokeColor", "transparent", true);
+                writePropVal("strokeWidth", 2);
+                writePropVal("strokeColor", "red", true);
 
                 makeFillGradient(itm, gr, type);
 
@@ -341,7 +342,13 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
                 writeStartLvl("ShapePath");
                     if ( _settings.enableScale ) { writePropElVal("scale", _settings.rootName, "scaleShape"); }
                     writeStartLvl("PathSvg");
-                        QString pathCommands = primitiveToPathCommands(itm);
+
+                        //-- In negative coordinatese figure is not drawn, so we must first move
+                        QRectF bb = itm->getBBox();
+                        CMatrix bbTr = CMatrix::identity(3, 3).translate(-bb.left(), -bb.top());
+
+                        QString pathCommands = primitiveToPathCommands(itm, 0, bbTr);
+
                         writePropVal("path", pathCommands, true);
                     writeEndLvl();
                     writePropVal("fillColor", "#000000", true);
@@ -349,12 +356,15 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
                     writePropVal("strokeColor", "transparent", true);
                 writeEndLvl();
 
+                //makeTransform(CMatrix::identity(3, 3).translate(bb.left(), bb.top()));
+
             writeEndLvl();
 
             writePropVal("fragmentShader", "qrc:/mask.frag.qsb", true);
             writePropVal("property var maskSource", shapeGrID);
 
         writeEndLvl();
+
 
     writeEndLvl();
 }
@@ -371,8 +381,8 @@ void QMLGenerator::makeRadialGradient(FRadialGradient *gr)
     writeStartLvlProp("fillGradient", "RadialGradient");
         writePropVal("centerX", cp.x());
         writePropVal("centerY", cp.y());
-        writePropVal("focalX", (fp.isZeroX())? "centerX" : QString::number(fp.x()));
-        writePropVal("focalY", (fp.isZeroY())? "centerY" : QString::number(fp.y()));
+        writePropVal("focalX", (fp.isEmpty())? "centerX" : QString::number(fp.x()));
+        writePropVal("focalY", (fp.isEmpty())? "centerY" : QString::number(fp.y()));
         writePropVal("centerRadius", gr->radius());
         writePropVal("focalRadius", gr->focalRadius());
         makeGradientStops(gr);
@@ -609,8 +619,8 @@ void QMLGenerator::makeElement(CPrimitive *el, bool visible, bool layerEnabled)
 void QMLGenerator::makeTransform(const CMatrix &m)
 {
     _qml<<tab(_lvl)<<"transform: "<<"Matrix4x4 {"<<"matrix: Qt.matrix4x4("
-        <<m.getAt(0,0)<<", "<<m.getAt(0,1)<<", "<<"0"<<", "<<m.getAt(0,2)<<", "
-        <<m.getAt(1,0)<<", "<<m.getAt(1,1)<<", "<<"0"<<", "<<m.getAt(1,2)<<", "
+        <<m.getAt(0,0)<<", "<<m.getAt(1,0)<<", "<<"0"<<", "<<m.getAt(2,0)<<", "
+        <<m.getAt(0,1)<<", "<<m.getAt(1,1)<<", "<<"0"<<", "<<m.getAt(2,1)<<", "
         <<"0, 0, 1, 0, "
         <<"0, 0, 0, 1"
     <<"); }"<<Qt::endl;

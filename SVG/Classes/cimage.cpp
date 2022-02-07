@@ -23,8 +23,8 @@ void CImage::cpaint(QPainter *painter, const CBoundingBox &area)
 
     if ( (_imgType=="image/jpeg") && (!image.loadFromData(QByteArray::fromBase64(_data), "jpg")) ) return;
 
-    CMatrix resultMatrix;
-    CMatrix mScale(3, 3);
+    CMatrix resultMatrix = CMatrix::identity(3,3);
+    CMatrix mScale = CMatrix::identity(3,3);
     //mScale.scale(scale, scale);
 
 

@@ -26,7 +26,7 @@ public:
 
 protected:
     QList<TGradientStop> _stops;
-    CMatrix _transform;
+    CMatrix _transform = CMatrix::identity(3,3);
 
 };
 

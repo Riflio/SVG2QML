@@ -47,6 +47,7 @@ SOURCES += \
 RESOURCES += qml.qrc
 
 HEADERS += \
+    Algebra/cempty.h \
     Algebra/cintersection.h \
     Algebra/cmatrix.h \
     Algebra/cpoint.h \

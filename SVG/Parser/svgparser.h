@@ -91,10 +91,12 @@ private:
 
     CDefs _defs;
 
-    CDef * hasLink(QXmlStreamReader * xml);
-
     void parseBaseAttributes(CPrimitive * itm, QXmlStreamReader * xml);
+    void parseHREF(CDef * el, QXmlStreamReader * xml);
 
+    QMultiHash<QString, CDef*> _dependsCDef; //-- Waiting href element depend will be parsed
+
+    void updateDependsHREFS(CDef * el);
 };
 
 #endif // SVGPARSER_H

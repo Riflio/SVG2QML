@@ -2,7 +2,8 @@
 
 CPrimitive::CPrimitive(const CPrimitive&other)
     :CNodeInterface(other), rotation(other.rotation), offset(other.offset), marked(other.marked), source(other.source),
-      flippedX(false), flippedY(false), _type(other._type), _points(other._points), _styles(other._styles), _bbox(other._bbox), _id(other._id)
+      flippedX(false), flippedY(false), _type(other._type), _points(other._points), _styles(other._styles), _bbox(other._bbox), _id(other._id),
+      _transformMatrix(other._transformMatrix)
 {    
 }
 
@@ -265,7 +266,7 @@ bool CPrimitive::applyTransform(const CMatrix &matrix)
         }
     }
 
-    _transformMatrix.clear();
+    _transformMatrix.toIdentity();
     return true;
 }
 

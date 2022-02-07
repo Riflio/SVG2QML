@@ -17,7 +17,16 @@ void FGradient::addStop(const FGradient::TGradientStop &gs)
 
 QList<FGradient::TGradientStop> FGradient::stops() const
 {
-    return _stops;
+    QList<FGradient::TGradientStop> stopsList;
+
+    if ( hasRelDef() ) {
+        FGradient * rg = dynamic_cast<FGradient *>(relDef());
+        stopsList.append(rg->stops());
+    }
+
+    stopsList.append(_stops); //TODO: Combine by offset?
+
+    return stopsList;
 }
 
 void FGradient::setTransform(const CMatrix &transform)
