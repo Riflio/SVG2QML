@@ -314,8 +314,8 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
                     writeEndLvl();
                 }
 
-                writePropVal("strokeWidth", 2);
-                writePropVal("strokeColor", "red", true);
+                writePropVal("strokeWidth", 0);
+                writePropVal("strokeColor", "transparent", true);
 
                 makeFillGradient(itm, gr, type);
 
