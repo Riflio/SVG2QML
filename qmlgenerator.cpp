@@ -130,8 +130,8 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset, CMat
     CPrimitive * tPathCopy = tPath->copyNesteed();
 
     if ( !transforms.isIdentity() ) {
-        tPathCopy->transform().toIdentity();
-        tPathCopy->applyTransform(transforms);
+        //tPathCopy->transform().toIdentity();
+        //tPathCopy->applyTransform(transforms);
     }
 
     QString pathCommnads = generatePath(tPathCopy);
@@ -347,10 +347,10 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
                     writeStartLvl("PathSvg");
 
                         //-- In negative coordinatese figure is not drawn, so we must first move
-                        QRectF bb = itm->getBBox();
-                        CMatrix bbTr = CMatrix::identity(3, 3).translate(-bb.left(), -bb.top());
+                        //QRectF bb = itm->getBBox();
+                        CMatrix bbTr = CMatrix::identity(3, 3);//.translate(-bb.left(), -bb.top());
 
-                        QString pathCommands = primitiveToPathCommands(itm, 0, bbTr);
+                        QString pathCommands = primitiveToPathCommands(itm, 0);
 
                         writePropVal("path", pathCommands, true);
                     writeEndLvl();
@@ -359,7 +359,7 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
                     writePropVal("strokeColor", "transparent", true);
                 writeEndLvl();
 
-                makeTransform(CMatrix::identity(3, 3).translate(bb.left(), bb.top()));
+                //makeTransform(CMatrix::identity(3, 3).translate(bb.left(), bb.top()));
 
             writeEndLvl();
 
