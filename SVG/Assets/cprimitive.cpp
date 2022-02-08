@@ -202,7 +202,7 @@ CPrimitive * CPrimitive::copyNesteed() const
 
     for (CNodeInterface * ni=this->down; ni!=nullptr; ni=ni->next) {
         CPrimitive * pr = static_cast<CPrimitive*>(ni);
-        CPrimitive * prCopy = pr->copy();
+        CPrimitive * prCopy = pr->copyNesteed();
         CNodeInterface::addNext(meCopy, prCopy);
     }
 

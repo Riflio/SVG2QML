@@ -99,3 +99,10 @@ bool CRect::toPath()
     CNodeInterface::addNext(this, p);
     return true;
 }
+
+CPrimitive* CRect::copy() const
+{
+    CPrimitive * prim = new CRect(*this);
+    CNodeInterface::reset(prim);
+    return prim;
+}

@@ -73,3 +73,10 @@ CPoint& FLinearGradient::endPoint()
     RELDEFVAL(_endPoint);
     return _endPoint;
 }
+
+CPrimitive* FLinearGradient::copy() const
+{
+    CPrimitive * prim = new FLinearGradient(*this);
+    CNodeInterface::reset(prim);
+    return prim;
+}

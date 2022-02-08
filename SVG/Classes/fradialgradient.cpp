@@ -99,3 +99,10 @@ float FRadialGradient::focalRadius() const
     RELDEFVALN(_focalRadius);
     return _focalRadius;
 }
+
+CPrimitive* FRadialGradient::copy() const
+{
+    CPrimitive * prim = new FRadialGradient(*this);
+    CNodeInterface::reset(prim);
+    return prim;
+}

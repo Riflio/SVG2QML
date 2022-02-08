@@ -68,3 +68,10 @@ QString CImage::imageType() const
 {
     return _imgType;
 }
+
+CPrimitive* CImage::copy() const
+{
+    CPrimitive * prim = new CImage(*this);
+    CNodeInterface::reset(prim);
+    return prim;
+}

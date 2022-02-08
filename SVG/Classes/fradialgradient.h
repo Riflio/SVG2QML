@@ -32,6 +32,8 @@ public:
 
     TDefType defType() const override { return DF_RADIALGRADIENT; }
 
+    CPrimitive* copy() const override;
+
 private:
     CPoint _centerPoint;
     CPoint _focalPoint;

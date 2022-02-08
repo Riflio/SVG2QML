@@ -25,3 +25,10 @@ void CSVG::setSize(const CSize& s)
 {
     _size = s;
 }
+
+CPrimitive* CSVG::copy() const
+{
+    CPrimitive * prim = new CPrimitive(*this);
+    CNodeInterface::reset(prim);
+    return prim;
+}

@@ -118,7 +118,7 @@ CPoints CBezier::lianirize(double tol) const
     CPoints finished;
     finished.append(_points.p1());
 
-    QVector<CBezier> todo = { *static_cast<CBezier*>(this->copy()) };
+    QVector<CBezier> todo = { *static_cast<CBezier*>(this->copyNesteed()) };
 
     while ( todo.count()>0 ){
         const CBezier & segment = todo[0];

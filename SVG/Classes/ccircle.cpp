@@ -58,3 +58,14 @@ bool CCircle::toPath()
     path->setIsClosed(true);
     return true;
 }
+
+/**
+* @brief Copy
+* @return
+*/
+CPrimitive* CCircle::copy() const
+{
+    CPrimitive * prim = new CCircle(*this);
+    CNodeInterface::reset(prim);
+    return prim;
+}

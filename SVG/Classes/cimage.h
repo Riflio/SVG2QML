@@ -15,6 +15,7 @@ public:
     void cstream(QDataStream &dataStream, double scale);
     CPoints lianirize(double tol) const;
     QString imageType() const;
+    CPrimitive* copy() const override;
 
 private:
     QString _imgType;

@@ -23,6 +23,9 @@ public:
 
     bool toPath() override;
 
+    CPrimitive* copy() const override;
+
+
 private:
     TRadius _radius;
     CPoint _centerPoint;

@@ -22,6 +22,7 @@ public:
     TRadius radius() const;
 
     bool toPath() override;
+    CPrimitive* copy() const override;
 
 private:
     CPoint _tl;

@@ -13,7 +13,9 @@ public:
     void setRadius(double radius);
     double radius() const;
 
-    bool toPath();
+    bool toPath() override;
+
+    CPrimitive* copy() const override;
 
 private:
     double _radius;

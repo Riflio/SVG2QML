@@ -79,6 +79,13 @@ bool CEllipse::toPath()
     return true;
 }
 
+CPrimitive* CEllipse::copy() const
+{
+    CPrimitive * prim = new CEllipse(*this);
+    CNodeInterface::reset(prim);
+    return prim;
+}
+
 
 
 

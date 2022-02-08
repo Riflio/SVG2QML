@@ -17,6 +17,8 @@ public:
     CSize size() const;
     void setSize(const CSize &s);
 
+    CPrimitive* copy() const override;
+
 private:
     QRectF _viewBox;
     CSize _size;
