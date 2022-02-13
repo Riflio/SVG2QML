@@ -1,16 +1,17 @@
 #include "csize.h"
 #include "math.h"
 
-CSize::CSize(): _width(0), _height(0), _epsilon(Equal::EPS)
+CSize::CSize(): _width(NAN), _height(NAN)
 {
 
 }
 
-CSize::CSize(double w, double h)
+CSize::CSize(double w, double h): _width(w), _height(h)
+{    
+}
+
+CSize::CSize(const CPoint& tl, const CPoint& br): _width(br.x()-tl.x()), _height(br.y()-tl.y())
 {
-    _width = w;
-    _height = h;
-    _epsilon = Equal::EPS;
 }
 
 double CSize::width() const
@@ -39,7 +40,12 @@ void CSize::setHeight(double h)
     _height = h;
 }
 
-bool CSize::isZero() const
+bool CSize::isZero(double tolerance) const
 {
-    return ( (fabs(_width)<_epsilon) && (fabs(_height)<_epsilon) );
+    return ( Equal::almostEqual(_width, 0.0, tolerance) && Equal::almostEqual(_height, 0.0, tolerance) );
+}
+
+bool CSize::operator==(const CEmptyPriv&) const
+{
+    return (_width!=_width || _height!=_height);
 }
