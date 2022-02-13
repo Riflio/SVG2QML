@@ -2,6 +2,7 @@
 #define CMATRIX_H
 
 #include "cempty.h"
+#include "equal.h"
 #include <QVector>
 #include <QSize>
 
@@ -40,8 +41,8 @@ public:
 
     CMatrix & translate(double tx, double ty);
     CMatrix & scale(double sx, double sy);
-    CMatrix & rotate(double angle);
-    CMatrix & rotateD(double angle);
+    CMatrix & rotate(double radians);
+    CMatrix & rotateD(double degrees);
 
     CMatrix & addition(const CMatrix & m);
     CMatrix & subtraction(const CMatrix & m);    
@@ -60,8 +61,8 @@ public:
     CMatrix clon() const;
     CMatrix apply(const CMatrix & m) const;
 
-    bool isIdentity() const;
-    bool isZeros() const;
+    bool isIdentity(double tolerance = Equal::EPS) const;
+    bool isZeros(double tolerance = Equal::EPS) const;
 
     double& operator[] (int idx);
     double operator[] (int idx) const;
@@ -69,6 +70,7 @@ public:
     friend QDebug operator<<(QDebug dbg, const CMatrix & m);
 
     bool operator==(const CEmptyPriv &) const;
+    CMatrix &operator =(const CMatrix &o);
 
 private:
     CMatrix(int cols, int rows);

@@ -1,6 +1,6 @@
 #include "cmatrix.h"
-#include "Algebra/equal.h"
 #include "math.h"
+
 #include <QDebug>
 
 /**
@@ -212,9 +212,9 @@ CMatrix & CMatrix::scale(double sx, double sy)
 * @param angle - angle in radians
 * @return
 */
-CMatrix& CMatrix::rotate(double angle)
+CMatrix& CMatrix::rotate(double radians)
 {
-    CMatrix mr(3, 3, {cos(angle), -sin(angle), 0, sin(angle), cos(angle), 0, 0, 0, 1});
+    CMatrix mr(3, 3, {cos(radians), -sin(radians), 0, sin(radians), cos(radians), 0, 0, 0, 1});
     multiplication(mr);
     return *this;
 }
@@ -224,9 +224,9 @@ CMatrix& CMatrix::rotate(double angle)
 * @param angle - angle in degrees
 * @return
 */
-CMatrix &CMatrix::rotateD(double angle)
+CMatrix &CMatrix::rotateD(double degrees)
 {
-    return rotate(angle*(M_PI/180.0));
+    return rotate(degrees*(M_PI/180.0));
 }
 
 /**
@@ -359,10 +359,10 @@ CMatrix CMatrix::apply(const CMatrix & m) const
 * @brief Is matrix identity
 * @return
 */
-bool CMatrix::isIdentity() const
+bool CMatrix::isIdentity(double tolerance) const
 {
     for (int i=0; i<_rows*_cols; ++i) {
-        if ( !Equal::almostEqual(_matrix[i], (i%_cols==i/_rows)? 1.0 : 0.0) ) { return false; }
+        if ( !Equal::almostEqual(_matrix[i], (int(i%_cols)==int(i/_rows))? 1.0 : 0.0, tolerance) ) { return false; }
     }
     return true;
 }
@@ -371,10 +371,10 @@ bool CMatrix::isIdentity() const
 * @brief Is matrix zeros
 * @return
 */
-bool CMatrix::isZeros() const
+bool CMatrix::isZeros(double tolerance) const
 {
     for (int i=0; i<_rows*_cols; ++i) {
-        if ( !Equal::almostEqual(_matrix[i], 0.0) ) { return false; }
+        if ( !Equal::almostEqual(_matrix[i], 0.0, tolerance) ) { return false; }
     }
     return true;
 }
@@ -392,6 +392,14 @@ double& CMatrix::operator[](int idx)
 bool CMatrix::operator==(const CEmptyPriv&) const
 {
     return (isIdentity() || isZeros());
+}
+
+CMatrix& CMatrix::operator =(const CMatrix& o)
+{
+    _cols = o.cols();
+    _rows = o.rows();
+    _matrix = o.data();
+    return *this;
 }
 
 /**
