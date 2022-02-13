@@ -9,6 +9,12 @@ CPrimitive<T>::CPrimitive(const CPrimitive&other)
 }
 
 template<class T>
+CPrimitive<T>::CPrimitive(IPrimitive* other): CPrimitive(*dynamic_cast<CPrimitive*>(other))
+{
+
+}
+
+template<class T>
 CPrimitive<T>::CPrimitive(): CNodeInterface(), _type(PT_NONE), _id("")
 {
     needUpdate();
@@ -158,8 +164,6 @@ CPoints CPrimitive<T>::lianirize(double tol) const
     }
     return res;
 }
-
-
 
 /**
 * @brief Clone nesteed

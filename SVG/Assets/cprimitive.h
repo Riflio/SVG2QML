@@ -19,6 +19,7 @@ class CPrimitive: public CNodeInterface, public virtual IPrimitive
 {
 public:
     CPrimitive(const CPrimitive&other);
+    CPrimitive(IPrimitive *other);
     CPrimitive();
     CPrimitive(PrimitiveType type);
 
