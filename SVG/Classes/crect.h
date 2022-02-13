@@ -2,11 +2,12 @@
 #define CRECT_H
 
 #include "../Assets/cprimitive.h"
+#include "Algebra/csize.h"
 
-class CRect: public CPrimitive
+class CRect: public CPrimitive<CRect>
 {
 public:
-    CRect();
+    CRect(const CPoint &tl = CPoint(), const CPoint &br = CPoint());
     typedef QPair<double, double> TRadius;
 
     void setX(double x);
@@ -17,17 +18,16 @@ public:
     void setRY(double y);
 
     CPoint topLeft() const;
-    QSizeF size() const;
+    CPoint bottomRight() const;
+    CSize size() const;
 
     TRadius radius() const;
 
     bool toPath() override;
-    CPrimitive* copy() const override;
 
 private:
-    CPoint _tl;
-    QSizeF _size;
     TRadius _radius;
+
 };
 
 #endif // CRECT_H

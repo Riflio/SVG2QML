@@ -26,8 +26,6 @@ public:
 
     TDefType defType() const override { return DF_LINEARGRADIENT;  }
 
-    CPrimitive* copy() const override;
-
 private:
     CPoint _startPoint;
     CPoint _endPoint;

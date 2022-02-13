@@ -3,7 +3,7 @@
 
 #include "../Assets/cprimitive.h"
 
-class CCircle: public CPrimitive
+class CCircle: public CPrimitive<CCircle>
 {
 public:
     CCircle();    
@@ -14,8 +14,6 @@ public:
     double radius() const;
 
     bool toPath() override;
-
-    CPrimitive* copy() const override;
 
 private:
     double _radius;

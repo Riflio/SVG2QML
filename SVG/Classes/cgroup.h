@@ -3,7 +3,7 @@
 
 #include "SVG/Assets/cprimitive.h"
 
-class CGroup:public CPrimitive
+class CGroup:public CPrimitive<CGroup>
 {
 public:    
     CGroup();

@@ -17,18 +17,6 @@ CLine::CLine(const CLine &other): CPrimitive(other)
 
 }
 
-void CLine::cpaint(QPainter *painter, const CBoundingBox &area)
-{
-    Q_UNUSED(area);
-    QPainterPath path;
-
-    path.moveTo(_points.p1().x(), _points.p1().y());
-    path.lineTo(_points.p2().x(), _points.p2().y());
-
-    drawPath(path, painter);
-}
-
-
 void CLine::cstream(QDataStream &dataStream, double scale)
 {
     dataStream<<PT_LINE<<_points.p1()*scale<<_points.p2()*scale;
@@ -47,7 +35,7 @@ bool CLine::toPath()
 {
     CPath * path = new CPath();
     CLine * line = new CLine(*this);
-    CNodeInterface::addNext(path, line);
-    CNodeInterface::addNext(this, path);
+    path->addNext(line);
+    addNext(path);
     return true;
 }

@@ -4,10 +4,10 @@
 #include "../Assets/cprimitive.h"
 #include "cbezier.h"
 
-class CEllipse: public CPrimitive
+class CEllipse: public CPrimitive<CEllipse>
 {
 public:
-    CEllipse();
+    CEllipse(const CPoint &centerPoint = CPoint());
 
     typedef QPair<double, double> TRadius;
 
@@ -23,12 +23,9 @@ public:
 
     bool toPath() override;
 
-    CPrimitive* copy() const override;
-
-
 private:
     TRadius _radius;
-    CPoint _centerPoint;
+
 };
 
 #endif // CELLIPSE_H

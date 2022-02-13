@@ -3,7 +3,7 @@
 
 #include "SVG/Assets/cprimitive.h"
 
-class CBezier : public CPrimitive
+class CBezier : public CPrimitive<CBezier>
 {
 public:
     CBezier();
@@ -12,17 +12,14 @@ public:
     CBezier(const CBezier&other);
     CBezier(const CPoints &points);
 
-    void cpaint(QPainter *painter, const CBoundingBox &area);
-    void cstream(QDataStream &dataStream, double scale);
+    void cstream(QDataStream &dataStream, double scale) override;
 
-    CPoints lianirize(double tol) const;
+    CPoints lianirize(double tol) const override;
 
-    const CBoundingBox &getBBox() const;
-
+    CBoundingBox boundingBox(bool withTransform=true) const override;
 
     QPair<CBezier, CBezier> subDivide(double t) const;
     QList<CBezier *> split(double t1, double t2 = -1) const;
-
 
     QList<CBezier*> makeOffset(double d) const;
 

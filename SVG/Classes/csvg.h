@@ -6,7 +6,7 @@
 
 #include <QRectF>
 
-class CSVG: public CPrimitive
+class CSVG: public CPrimitive<CSVG>
 {
 public:
     CSVG();
@@ -16,8 +16,6 @@ public:
 
     CSize size() const;
     void setSize(const CSize &s);
-
-    CPrimitive* copy() const override;
 
 private:
     QRectF _viewBox;

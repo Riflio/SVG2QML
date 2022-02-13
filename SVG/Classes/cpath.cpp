@@ -23,11 +23,11 @@ void CPath::setIsClosed(bool closed)
 */
 void CPath::reverse()
 {
-    for (CNodeInterface * ni = down; ni!=nullptr; ni=ni->next) {
-        CPrimitive * pr = static_cast<CPrimitive*>(ni);
-        pr->reverse();
-        CNodeInterface::removeFromLevel(pr);
-        CNodeInterface::addPrev(this, pr);        
+    for (INodeInterface * ni = down(); ni!=nullptr; ni=ni->next()) {
+        IPrimitive * pr = dynamic_cast<IPrimitive*>(ni);
+        pr->reverse();        
+        pr->removeFromLevel();
+        addPrev(pr);
     }
 }
 
@@ -42,14 +42,14 @@ CPath *CPath::makeOffset(double d)
     offsetPath->setIsClosed(isClosed());
 
     //TODO: Доделать смещение остальных примитивов
-    for (CNodeInterface * ni = down; ni!=nullptr; ni=ni->next) {
-        CPrimitive * pr = static_cast<CPrimitive*>(ni);
+    for (INodeInterface * ni = down(); ni!=nullptr; ni=ni->next()) {
+        IPrimitive * pr = dynamic_cast<IPrimitive*>(ni);
 
         if ( pr->type()==PT_BEZIER ) {            
-            CBezier * b = static_cast<CBezier*>(pr);
+            CBezier * b = dynamic_cast<CBezier*>(pr);
             QList<CBezier*> obl = b->makeOffset(d);
             foreach (CBezier * ob, obl) {
-                CNodeInterface::addNext(offsetPath, ob);
+                offsetPath->addNext(ob);
             }
         } else {
             qWarning()<<"Not supported primitive for offset"<<pr->type();

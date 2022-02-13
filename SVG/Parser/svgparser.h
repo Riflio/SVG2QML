@@ -38,7 +38,6 @@ class SVGParser : public QObject
     Q_OBJECT
 
 public:
-
     enum ParseStatus {
         PS_OK,
         PS_NOFILE,
@@ -49,7 +48,7 @@ public:
     explicit SVGParser(QObject *parent = nullptr);
     ParseStatus parse(QIODevice *device);
 
-    CPrimitive * rootItem() const;
+    IPrimitive * rootItem() const;
 
     CDefs defs() const;
 
@@ -67,22 +66,22 @@ private:
 
     CSS::CssParser * _cssParser;
 
-    CPrimitive * parseSVG(CNodeInterface **level, QXmlStreamReader * xml);
-    CPrimitive * parseGroup(CNodeInterface **level, QXmlStreamReader * xml);
-    CPrimitive * parsePath(CNodeInterface * level, QXmlStreamReader * xml);
-    CPrimitive * parseRect(CNodeInterface * level, QXmlStreamReader * xml);
-    CPrimitive * parseLine(CNodeInterface * level, QXmlStreamReader * xml);
-    CPrimitive * parseImage(CNodeInterface * level, QXmlStreamReader * xml);
-    CPrimitive * parseCircle(CNodeInterface * level, QXmlStreamReader * xml);
-    CPrimitive * parseEllipse(CNodeInterface * level, QXmlStreamReader * xml);
-    CPrimitive * parsePolyline(CNodeInterface * level, QXmlStreamReader * xml);
-    CPrimitive * parsePolygon(CNodeInterface * level, QXmlStreamReader * xml);
-    CPrimitive * parseClipPath(CNodeInterface ** level, QXmlStreamReader * xml);
-    CPrimitive * parseLinearGradient(CNodeInterface ** level, QXmlStreamReader * xml);
-    CPrimitive * parseRadialGradient(CNodeInterface ** level, QXmlStreamReader * xml);
+    IPrimitive * parseSVG(INodeInterface **level, QXmlStreamReader * xml);
+    IPrimitive * parseGroup(INodeInterface** level, QXmlStreamReader * xml);
+    IPrimitive * parsePath(INodeInterface * level, QXmlStreamReader * xml);
+    IPrimitive * parseRect(INodeInterface * level, QXmlStreamReader * xml);
+    IPrimitive * parseLine(INodeInterface * level, QXmlStreamReader * xml);
+    IPrimitive * parseImage(INodeInterface * level, QXmlStreamReader * xml);
+    IPrimitive * parseCircle(INodeInterface* level, QXmlStreamReader * xml);
+    IPrimitive * parseEllipse(INodeInterface* level, QXmlStreamReader * xml);
+    IPrimitive * parsePolyline(INodeInterface * level, QXmlStreamReader * xml);
+    IPrimitive * parsePolygon(INodeInterface * level, QXmlStreamReader * xml);
+    IPrimitive * parseClipPath(INodeInterface ** level, QXmlStreamReader * xml);
+    IPrimitive * parseLinearGradient(INodeInterface ** level, QXmlStreamReader * xml);
+    IPrimitive * parseRadialGradient(INodeInterface ** level, QXmlStreamReader * xml);
 
     bool parseGradientStops(FGradient * gradient, QXmlStreamReader * xml);
-    bool parseCss(CNodeInterface * level, QXmlStreamReader * xml);
+    bool parseCss(INodeInterface* level, QXmlStreamReader * xml);
     QList<double> parseParams(QString attr, QXmlStreamReader * xml) const;
     QList<double> parseParams(QString params) const;
 
@@ -91,7 +90,7 @@ private:
 
     CDefs _defs;
 
-    void parseBaseAttributes(CPrimitive * itm, QXmlStreamReader * xml);
+    void parseBaseAttributes(IPrimitive * itm, QXmlStreamReader * xml);
     void parseHREF(CDef * el, QXmlStreamReader * xml);
 
     QMultiHash<QString, CDef*> _dependsCDef; //-- Waiting href element depend will be parsed

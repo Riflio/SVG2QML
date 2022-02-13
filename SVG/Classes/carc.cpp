@@ -26,17 +26,6 @@ CArc::CArc(CPoint startPoint, double rx, double ry, double rotation, bool largeA
 
 }
 
-/**
-* @brief Copy
-* @return
-*/
-CPrimitive* CArc::copy() const
-{
-    CPrimitive * prim = new CArc(*this);
-    CNodeInterface::reset(prim);
-    return prim;
-}
-
 double CArc::rx() const
 {
     return _rx;
@@ -111,11 +100,11 @@ bool CArc::toPath()
         CPoint p3 = mapToEllipse(curve[1], rx, ry, cosphi, sinphi, arcCenter.p);
         CPoint p4 = mapToEllipse(curve[2], rx, ry, cosphi, sinphi, arcCenter.p);
         CBezier * b = new CBezier(p1, p2, p3, p4);
-        CNodeInterface::addNext(path, b);
+        path->addNext(b);
         p1 = p4;
     }
 
-    CNodeInterface::addNext(this, path);
+    addNext(path);
 
     return true;
 }

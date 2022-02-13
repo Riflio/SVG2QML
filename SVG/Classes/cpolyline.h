@@ -3,7 +3,7 @@
 
 #include "../Assets/cprimitive.h"
 
-class CPolyline: public CPrimitive
+class CPolyline: public CPrimitive<CPolyline>
 {
 public:
     CPolyline();

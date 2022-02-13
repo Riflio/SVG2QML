@@ -1,43 +1,43 @@
 #include "cprimitive.h"
 
-CPrimitive::CPrimitive(const CPrimitive&other)
-    :CNodeInterface(other), rotation(other.rotation), offset(other.offset), marked(other.marked), source(other.source),
-      flippedX(other.flippedX), flippedY(other.flippedY), _type(other._type), _points(other._points), _styles(other._styles), _bbox(other._bbox), _id(other._id),
-      _class(other._class), _transformMatrix(other._transformMatrix), _title(other._title), _descr(other._descr)
+template<class T>
+CPrimitive<T>::CPrimitive(const CPrimitive&other)
+    : CNodeInterface(other), _type(other._type), _points(other._points), _styles(other._styles), _boundingBox(other._boundingBox), _id(other._id),
+      _className(other._className), _transformMatrix(other._transformMatrix), _title(other._title), _descr(other._descr)
 {
 
 }
 
-CPrimitive::CPrimitive():CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(PT_NONE), _id("")
-{
-    needUpdate();
-}
-
-CPrimitive::CPrimitive(PrimitiveType type)
-    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(type), _id("")
+template<class T>
+CPrimitive<T>::CPrimitive(): CNodeInterface(), _type(PT_NONE), _id("")
 {
     needUpdate();
 }
 
+template<class T>
+CPrimitive<T>::CPrimitive(PrimitiveType type): CPrimitive()
+{
+    _type = type;
+    needUpdate();
+}
 
-CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1)
-    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false),_type(type), _id("")
+template<class T>
+CPrimitive<T>::CPrimitive(PrimitiveType type, const CPoint &p1): CPrimitive(type)
 {
     _points.add(p1);
     needUpdate();
 }
 
-
-CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2)
-    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false),_type(type), _id("")
+template<class T>
+CPrimitive<T>::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2): CPrimitive(type)
 {
     _points.add(p1);
     _points.add(p2);
     needUpdate();
 }
 
-CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, const CPoint &p3, const CPoint &p4)
-    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(type), _id("")
+template<class T>
+CPrimitive<T>::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, const CPoint &p3, const CPoint &p4): CPrimitive(type)
 {
     _points.add(p1);
     _points.add(p2);
@@ -46,8 +46,8 @@ CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, c
     needUpdate();
 }
 
-CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, const CPoint &p3, const CPoint &p4, const CPoint &p5, const CPoint &p6)
-    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(type), _id("")
+template<class T>
+CPrimitive<T>::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, const CPoint &p3, const CPoint &p4, const CPoint &p5, const CPoint &p6): CPrimitive(type)
 {
     _points.add(p1);
     _points.add(p2);
@@ -58,76 +58,78 @@ CPrimitive::CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, c
     needUpdate();
 }
 
-CPrimitive::CPrimitive(CPrimitive::PrimitiveType type, const CPoints &points)
-    : CNodeInterface(), rotation(0), offset(CPoint(0,0)), marked(false), source(0), flippedX(false), flippedY(false), _type(type),  _points(points), _id("")
-{
-
-}
-
-CPrimitive::~CPrimitive()
-{
-    CNodeInterface::removeFromLevel(this);
-}
-
-CPrimitive::PrimitiveType CPrimitive::type() const
-{
-    return _type;
-}
-
-CPoints CPrimitive::points() const
-{
-    return _points;
-}
-
-void CPrimitive::setPoints(const CPoints &points)
+template<class T>
+CPrimitive<T>::CPrimitive(CPrimitive::PrimitiveType type, const CPoints &points): CPrimitive(type)
 {
     _points = points;
     needUpdate();
 }
 
-int CPrimitive::pointsCount() const
+template<class T>
+CPrimitive<T>::~CPrimitive()
+{
+    for (INodeInterface * ni=this->down(); ni!=nullptr; ni=ni->next()) {
+        delete ni;
+    }
+    removeFromLevel();    
+}
+
+template<class T>
+typename CPrimitive<T>::PrimitiveType CPrimitive<T>::type() const
+{
+    return _type;
+}
+
+template<class T>
+CPoints CPrimitive<T>::points() const
+{
+    return _points;
+}
+
+template<class T>
+void CPrimitive<T>::setPoints(const CPoints &points)
+{
+    _points = points;
+    needUpdate();
+}
+
+template<class T>
+int CPrimitive<T>::pointsCount() const
 {
     return _points.count();
 }
 
-/**
-* @brief Прорисовываем на своём уровне
-* @param painter
-* @param scale
-*/
-void CPrimitive::cpaint(QPainter *painter, const CBoundingBox &area)
-{
-    for (CNodeInterface * ni = down; ni!=nullptr; ni=ni->next) {
-        CPrimitive * pr = static_cast<CPrimitive*>(ni);
-        pr->cpaint(painter, area);
-    }
-}
-
-CSS::Style CPrimitive::styles() const
+template<class T>
+CSS::Style CPrimitive<T>::styles() const
 {
     return _styles;
 }
 
 /**
-* @brief Отдаём ограничительную рамку элемента (с учётом вложенных)
-* @return CBoundingBox*
+* @brief Return bounding gox (with childs)
+* @param withTransform - consider transformation matrix
+* @return CBoundingBox
 */
-const CBoundingBox &CPrimitive::getBBox() const
-{    
-    if ( !_bbox.isEmpty() ) { return _bbox; }
+template<class T>
+CBoundingBox CPrimitive<T>::boundingBox(bool withTransform) const
+{
+    if ( !_boundingBox.isEmpty() ) { return _boundingBox; }
+    _boundingBox.addPoints(_points);
 
-    _bbox.addPoints(_points);
+    if ( withTransform ) { _boundingBox.transform(_transformMatrix); }
 
     //-- Суммируем все ограничительные рамки у вложенных итемов    
-    for (CNodeInterface *ni = down; ni!=nullptr; ni=ni->next) {
-        CPrimitive * pi = static_cast<CPrimitive*>(ni);
-        _bbox.addBBox(pi->getBBox());
+    for (INodeInterface *ni = down(); ni!=nullptr; ni=ni->next()) {
+        IPrimitive * pi = dynamic_cast<IPrimitive*>(ni);
+        _boundingBox.addBBox(pi->boundingBox());
     }
 
-    return _bbox;
+
+    return _boundingBox;
 }
 
-void CPrimitive::setStyles(CSS::Style styles)
+template<class T>
+void CPrimitive<T>::setStyles(CSS::Style styles)
 {
     _styles = styles;
 }
@@ -135,7 +137,8 @@ void CPrimitive::setStyles(CSS::Style styles)
 /**
 * @brief Изменяем направление на противоположное
 */
-void CPrimitive::reverse()
+template<class T>
+void CPrimitive<T>::reverse()
 {
     _points.reverse();
 }
@@ -145,138 +148,61 @@ void CPrimitive::reverse()
 * @param tol
 * @return
 */
-CPoints CPrimitive::lianirize(double tol) const
+template<class T>
+CPoints CPrimitive<T>::lianirize(double tol) const
 {
     CPoints res;
-    for (CNodeInterface * ni = down; ni!=nullptr; ni=ni->next) {
-        CPrimitive * pr = static_cast<CPrimitive*>(ni);
+    for (INodeInterface * ni = down(); ni!=nullptr; ni=ni->next()) {
+        IPrimitive * pr = dynamic_cast<IPrimitive*>(ni);
         res.append(pr->lianirize(tol));
     }
     return res;
 }
 
-/**
-* @brief Перемещаем примитив на задданое расстояние по XY
-* @param m
-*/
-void CPrimitive::move(const CPoint &m)
-{
-    _points.move(m);
-    needUpdate();
 
-    //-- И потомков ниже уровнем
-    for (CNodeInterface * ni=this->down; ni!=nullptr; ni = ni->next) {
-        CPrimitive * p = static_cast<CPrimitive*>(ni);
-        p->move(m);
-    }
-}
 
 /**
-* @brief Удаляем примитив и всех на своём уровне
+* @brief Clone nesteed
 */
-void CPrimitive::del()
-{
-    for (CNodeInterface * ni=this->down; ni!=nullptr; ni=ni->next) {
-        delete ni;
-    }
-    delete this;
-}
+template<class T>
+CPrimitive<T> * CPrimitive<T>::clone() const
+{    
+    T * clon = new T(*dynamic_cast<const T*>(this));
 
-/**
-* @brief Copy self
-* @return
-*/
-CPrimitive* CPrimitive::copy() const
-{
-    CPrimitive * copy = new CPrimitive(*this);
-    CNodeInterface::reset(copy);
-    return copy;
-}
+    clon->reset();
 
-/**
-* @brief Copy nesteed
-*/
-CPrimitive * CPrimitive::copyNesteed() const
-{
-    CPrimitive * meCopy = copy();
-
-    for (CNodeInterface * ni=this->down; ni!=nullptr; ni=ni->next) {
-        CPrimitive * pr = static_cast<CPrimitive*>(ni);
-        CPrimitive * prCopy = pr->copyNesteed();
-        CNodeInterface::addNext(meCopy, prCopy);
+    for (INodeInterface * ni=this->down(); ni!=nullptr; ni=ni->next()) {
+        IPrimitive * pr = dynamic_cast<IPrimitive*>(ni);
+        IPrimitive * prCopy = pr->clone();
+        clon->addNext(prCopy);
     }
 
-    return meCopy;
-}
-
-/**
-* @brief Вертим =)
-* @param center - точка, вокруг которой вертим
-* @param angle - угол в радианах
-*/
-void CPrimitive::rotate(const CPoint &center, double angle)
-{
-    rotation = angle;
-
-    _points.rotate(center, angle);
-
-    for (CNodeInterface * ni=this->down; ni!=nullptr; ni=ni->next) {
-        CPrimitive * pi = static_cast<CPrimitive*>(ni);
-        pi->rotate(center, angle);
-    }
-
-    needUpdate();
-}
-
-/**
-* @brief Маштабируем
-* @param sX - По X
-* @param sY - По Y
-*/
-void CPrimitive::scale(double sX, double sY)
-{
-    if ( sX<0 ) flippedX = !flippedX;
-    if ( sY<0 ) flippedY = !flippedY;
-
-    //-- Себя
-    for (int i=0; i<_points.count(); ++i) {
-        _points[i].set(_points[i].x()*sX, _points[i].y()*sY);
-    }
-
-    //-- Остальных на нижнем уровне, если есть
-    if ( this->down!=nullptr ) {
-        for (CNodeInterface * ni=this->down; ni!=nullptr; ni=ni->next) {
-            CPrimitive * pi = static_cast<CPrimitive*>(ni);
-            pi->scale(sX, sY);
-        }
-    }
-
-    needUpdate(); //TODO: Можно просто так же маштабировать ограничительную рамку, если в дальнейшем только она из изменяемых останется
+    return clon;
 }
 
 /**
 * @brief Применяем заданную матрицу трансформаций
-* @param matrix - если нужно применить ещё и какую-то другую
+* @param matrix
 * @return
 */
-bool CPrimitive::applyTransform(const CMatrix &matrix)
+template<class T>
+bool CPrimitive<T>::applyTransform(const CMatrix &matrix)
 {
-    CMatrix totalMatrix = _transformMatrix.multiplication(matrix);
-
     //-- Себя
     for (int i=0; i<_points.count(); ++i) {
-        _points[i].transform(totalMatrix);
+        _points[i].transform(matrix);
     }
 
+    needUpdate();
+
     //-- Остальным на нижнем уровне, если есть
-    if ( this->down!=nullptr ) {
-        for (CNodeInterface * ni=this->down; ni!=nullptr; ni=ni->next) {
-            CPrimitive * pi = static_cast<CPrimitive*>(ni);
-            pi->applyTransform(totalMatrix);
+    if ( this->down()!=nullptr ) {
+        for (INodeInterface * ni=this->down(); ni!=nullptr; ni=ni->next()) {
+            IPrimitive * pi = dynamic_cast<IPrimitive*>(ni);
+            pi->applyTransform(matrix);
         }
     }
 
-    _transformMatrix.toIdentity();
     return true;
 }
 
@@ -284,116 +210,93 @@ bool CPrimitive::applyTransform(const CMatrix &matrix)
 * @brief Преобразовываем себя в путь и добавляем к себе же уровнем ниже
 * @return
 */
-bool CPrimitive::toPath()
+template<class T>
+bool CPrimitive<T>::toPath()
 {
     return false;
 }
 
-QString CPrimitive::ID() const
+template<class T>
+QString CPrimitive<T>::ID() const
 {
     return _id;
 }
 
-void CPrimitive::setID(QString id)
+template<class T>
+void CPrimitive<T>::setID(QString id)
 {
     _id = id;
 }
 
-QString CPrimitive::classSVG() const
+template<class T>
+QString CPrimitive<T>::className() const
 {
-    return _class;
+    return _className;
 }
 
-void CPrimitive::setClassSVG(QString classSVG)
+template<class T>
+void CPrimitive<T>::setClassName(QString className)
 {
-    _class = classSVG;
+    _className = className;
 }
 
-void CPrimitive::setTitle(QString title)
+template<class T>
+void CPrimitive<T>::setTitle(QString title)
 {
     _title = title;
 }
 
-QString CPrimitive::title() const
+template<class T>
+QString CPrimitive<T>::title() const
 {
     return _title;
 }
 
-void CPrimitive::setDescr(QString descr)
+template<class T>
+void CPrimitive<T>::setDescr(QString descr)
 {
     _descr = descr;
 }
 
-QString CPrimitive::descr() const
+template<class T>
+QString CPrimitive<T>::descr() const
 {
     return _descr;
 }
 
-CPoint &CPrimitive::operator[](int i)
+template<class T>
+CPoint &CPrimitive<T>::operator[](int i)
 {
     return _points[i];
 }
 
-const CPoint &CPrimitive::operator[](int i) const
+template<class T>
+const CPoint &CPrimitive<T>::operator[](int i) const
 {
     return _points[i];
-}
-
-/**
-* @brief Ставим отметку выбран примитив или нет
-* @param isSelected
-*/
-void CPrimitive::setSelected(bool isSelected)
-{
-    marked = isSelected;
-    for (CNodeInterface * ni=this->down; ni!=nullptr; ni=ni->next) {
-        CPrimitive * pi = static_cast<CPrimitive*>(ni);
-        pi->setSelected(isSelected);
-    }
 }
 
 /**
 * @brief Сбрасываем все запомненные расчёты
 */
-void CPrimitive::needUpdate()
+template<class T>
+void CPrimitive<T>::needUpdate()
 {
-    _bbox.clear();
+    _boundingBox.clear();
 
     //-- Придётся и у предка то же, т.к. может быть основан на наших
-    CPrimitive * upItm = static_cast<CPrimitive*>(up);
-    if ( upItm!=nullptr ) upItm->needUpdate();
+    IPrimitive * upItm = dynamic_cast<IPrimitive*>(up());
+    if ( upItm!=nullptr ) { upItm->needUpdate(); }
 }
 
-CMatrix CPrimitive::transform() const
+template<class T>
+CMatrix CPrimitive<T>::transformation() const
 {
     return _transformMatrix;
 }
 
-void CPrimitive::setTransform(const CMatrix &matrix)
+template<class T>
+void CPrimitive<T>::setTransformation(const CMatrix &matrix)
 {
     _transformMatrix = matrix;
-}
-
-/**
-* @brief Рисуем путь с настройками по умолчанию
-* @param path
-* @param painter
-*/
-void CPrimitive::drawPath(const QPainterPath &path, QPainter *painter)
-{
-    painter->save();
-    QPen pen;
-
-    if ( marked ) {
-        pen.setColor(Qt::red);
-        pen.setWidth(5);
-    } else {
-        pen.setColor( (styles().get("stroke").isValid())? styles().get("stroke").toString() : "#00ff00" );
-        pen.setWidth(1);
-    }
-
-    painter->setPen(pen);
-    painter->drawPath(path);
-
-    painter->restore();
 }

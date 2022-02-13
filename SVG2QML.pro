@@ -67,6 +67,8 @@ HEADERS += \
     SVG/Assets/cpoints.h \
     SVG/Assets/cprimitive.h \
     SVG/Assets/fgradient.h \
+    SVG/Assets/inode.h \
+    SVG/Assets/iprimitive.h \
     SVG/Classes/carc.h \
     SVG/Classes/cbezier.h \
     SVG/Classes/ccircle.h \

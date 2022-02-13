@@ -5,39 +5,19 @@
 #include <QPainterPath>
 #include <QList>
 
+#include "iprimitive.h"
+
 #include "Algebra/cpoint.h"
 #include "Algebra/cmatrix.h"
-
-#include "cnode.h"
-#include "cpoints.h"
-#include "cboundingbox.h"
-
-#include "CSS/style.h"
 
 
 /**
 * @brief Базовый класс с общими методами для всех отображаемых примитивов SVG (путь, линия, круг, группа и т.д)
 */
-class CPrimitive: public CNodeInterface
+template<class T>
+class CPrimitive: public CNodeInterface, public virtual IPrimitive
 {
 public:
-    enum PrimitiveType {
-        PT_NONE,
-        PT_SVG,
-        PT_BEZIER,
-        PT_LINE,
-        PT_PATH,
-        PT_GROUP,
-        PT_IMAGE,
-        PT_POLYGON,
-        PT_ARC,
-        PT_RECT,
-        PT_CIRCLE,
-        PT_ELLIPSE,
-        PT_POLYLINE,
-        PT_DEF
-    };
-
     CPrimitive(const CPrimitive&other);
     CPrimitive();
     CPrimitive(PrimitiveType type);
@@ -50,78 +30,61 @@ public:
     CPrimitive(PrimitiveType type, const CPoint &p1, const CPoint &p2, const CPoint &p3, const CPoint &p4, const CPoint &p5, const CPoint &p6);
     CPrimitive(PrimitiveType type, const CPoints &points);
 
-    PrimitiveType type() const;
-    CPoints points() const;
-    void setPoints(const CPoints &points);
-    int pointsCount() const;
+    PrimitiveType type() const override;
+    CPoints points() const override;
+    void setPoints(const CPoints &points) override;
+    int pointsCount() const override;
 
-    static const CBoundingBox allArea;
-
-    virtual void cpaint(QPainter * painter, const CBoundingBox &area = CPrimitive::allArea);
     virtual void cstream(QDataStream &dataStream, double scale) { Q_UNUSED(dataStream); Q_UNUSED(scale); }
 
-    virtual const CBoundingBox &getBBox() const;
-    virtual void setStyles(CSS::Style styles);
-    virtual CSS::Style styles() const;
-    virtual void reverse();
-    virtual CPoints lianirize(double tol) const;
-    virtual void move(const CPoint &m);
-    virtual void del();
-    virtual CPrimitive * copy() const;
-    virtual CPrimitive * copyNesteed() const;
-    virtual void rotate(const CPoint &center, double angle);
-    virtual void scale(double sX, double sY);
+    CBoundingBox boundingBox(bool withTransform=true) const override;
 
-    virtual bool applyTransform(const CMatrix &matrix = CMatrix::identity(3,3));
+    void setStyles(CSS::Style styles) override;
+    CSS::Style styles() const override;
+    void reverse() override;
+    CPoints lianirize(double tol) const override;
+    CPrimitive * clone() const override;
 
-    virtual bool toPath();
+    bool applyTransform(const CMatrix &matrix) override;
 
-    QString ID() const;
-    void setID(QString id);
+    bool toPath() override;
 
-    QString classSVG() const;
-    void setClassSVG(QString classSVG);
+    QString ID() const override;
+    void setID(QString id) override;
 
-    void setTitle(QString title);
-    QString title() const;
+    QString className() const override;
+    void setClassName(QString className) override;
 
-    void setDescr(QString descr);
-    QString descr() const;
+    void setTitle(QString title) override;
+    QString title() const override;
+
+    void setDescr(QString descr) override;
+    QString descr() const override;
 
     friend QDataStream& operator <<(QDataStream &dataStream, const CPrimitive &p) { Q_UNUSED(p); return dataStream; }
 
-    CPoint &operator[](int i);
-    const CPoint &operator[](int i) const;
+    CPoint &operator[](int i) override;
+    const CPoint &operator[](int i) const override;
 
-    virtual void setSelected(bool isSelected);
+    void needUpdate() override;
 
-    double rotation;
-    CPoint offset;
-    bool marked;
-    int source;
-    bool flippedX;
-    bool flippedY;
-
-    void needUpdate();
-
-    CMatrix transform() const;
-    void setTransform(const CMatrix &matrix);
+    CMatrix transformation() const override;
+    void setTransformation(const CMatrix &matrix) override;
 
 protected:
     PrimitiveType _type;
     CPoints _points;
     CSS::Style _styles; //-- Собранные стили этого элемента
-    mutable CBoundingBox _bbox; //-- Ограничительная рамка
-    QString _id; //-- Айдишник из SVG
-    QString _class; //-- Класс из SVG
+    mutable CBoundingBox _boundingBox; //-- Bounding Box
+    QString _id; //-- ID from SVG
+    QString _className; //-- Class name from SVG
 
     CMatrix _transformMatrix = CMatrix::identity(3,3);
 
     QString _title;
     QString _descr;
 
-    void drawPath(const QPainterPath &path, QPainter *painter);
-
 };
+#include "cprimitive.cpp"
 
 #endif // CPRIMITIVE_H

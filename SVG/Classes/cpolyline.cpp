@@ -21,10 +21,10 @@ bool CPolyline::toPath()
     CPoint prevPoint = _points[0];
     for(int i=1; i<_points.count(); ++i) {
         CLine * line = new CLine(prevPoint, _points[i]);
-        CNodeInterface::addNext(path, line);
+        path->addNext(line);
         prevPoint = _points[i];
     }
 
-    CNodeInterface::addNext(this, path);
+    addNext(path);
     return true;
 }

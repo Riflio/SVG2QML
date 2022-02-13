@@ -35,25 +35,6 @@ void CPolygon::addPoint(const CPoint &p)
     _points.add(p);
 }
 
-void CPolygon::cpaint(QPainter *painter, const CBoundingBox &area)
-{
-    Q_UNUSED(area);
-    if ( _points.count()==0 ) { return; }
-    QPainterPath path;
-
-    path.moveTo(_points.p1().x(), _points.p1().y() );
-    for(int i=1; i<_points.count(); ++i) {
-        const CPoint &p = _points[i];
-        path.lineTo(p.x(), p.y());
-    }
-
-    if ( !isClosed() ) {
-        path.lineTo(_points.p1().x(), _points.p1().y());
-    }
-
-    drawPath(path, painter);
-}
-
 CPoints CPolygon::lianirize(double tol) const
 {
     Q_UNUSED(tol);
@@ -104,14 +85,15 @@ bool CPolygon::toPath()
 
     CPoint prevPoint = _points[0];
     for(int i=1; i<_points.count(); ++i) {
-        CLine * line = new CLine(prevPoint, _points[i]);
-        CNodeInterface::addNext(path, line);
+        CLine * line = new CLine(prevPoint, _points[i]);        
+        path->addNext(line);
         prevPoint = _points[i];
     }
 
 
     path->setIsClosed(true);
-    CNodeInterface::addNext(this, path);
+    addNext(path);
+
     return true;
 }
 
@@ -158,10 +140,10 @@ bool CPolygon::isRectangle(double tolerance) const
 {
     Q_UNUSED(tolerance);
     for(int i=0; i<_points.count(); ++i){
-        if ( !Equal::almostEqual(_points[i].x(), _bbox.tl().x()) && !Equal::almostEqual(_points[i].x(), _bbox.br().x()) ) {
+        if ( !Equal::almostEqual(_points[i].x(), _boundingBox.tl().x(), tolerance) && !Equal::almostEqual(_points[i].x(), _boundingBox.br().x(), tolerance) ) {
             return false;
         }
-        if ( !Equal::almostEqual(_points[i].y(), _bbox.tl().y()) && !Equal::almostEqual(_points[i].y(), _bbox.br().y()) ) {
+        if ( !Equal::almostEqual(_points[i].y(), _boundingBox.tl().y(), tolerance) && !Equal::almostEqual(_points[i].y(), _boundingBox.br().y(), tolerance) ) {
             return false;
         }
     }
@@ -170,14 +152,14 @@ bool CPolygon::isRectangle(double tolerance) const
 }
 
 /**
-* @brief Определяем, пересекает ли полигон наш
+* @brief Detect intersect
 * @param other
 * @return
 */
 bool CPolygon::intersect(const CPolygon &other) const
 {
-    CPoint offsetA = offset;
-    CPoint offsetB = other.offset;
+    CPoint offsetA = CPoint(0, 0);
+    CPoint offsetB = CPoint(0, 0);
 
     CPolygon A(*this);
     CPolygon B(other);
@@ -292,8 +274,8 @@ double CPolygon::projectionDistance(const CPolygon &other, const CVector2D &dire
     edgeA.close();
     edgeB.close();
 
-    CPoint offsetB = edgeB.offset;
-    CPoint offsetA = edgeA.offset;
+    CPoint offsetB = CPoint(0, 0);
+    CPoint offsetA = CPoint(0, 0);
 
     double distance = NAN_DOUBLE;
     double d = NAN_DOUBLE;
@@ -342,8 +324,8 @@ double CPolygon::slideDistance(const CPolygon &other, const CVector2D &direction
     edgeA.close();
     edgeB.close();
 
-    CPoint offsetB = edgeB.offset;
-    CPoint offsetA = edgeA.offset;
+    CPoint offsetB = CPoint(0, 0);
+    CPoint offsetA = CPoint(0, 0);
 
     double distance = NAN_DOUBLE;
 

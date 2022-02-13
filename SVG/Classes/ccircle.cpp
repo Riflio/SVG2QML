@@ -3,21 +3,18 @@
 #include "cbezier.h"
 #include "cellipse.h"
 
-CCircle::CCircle()
-    :CPrimitive(PT_CIRCLE, CPoint())
+CCircle::CCircle(): CPrimitive(PT_CIRCLE, CPoint())
 {
 
 }
 
-CCircle::CCircle(const CCircle &other)
-    :CPrimitive(other)
+CCircle::CCircle(const CCircle &other): CPrimitive(other)
 {
     _radius = other._radius;
 }
 
 
-CCircle::CCircle(CPoint center, double radius)
-    :CPrimitive(PT_CIRCLE, center), _radius(radius)
+CCircle::CCircle(CPoint center, double radius): CPrimitive(PT_CIRCLE, center), _radius(radius)
 {
 
 }
@@ -49,23 +46,13 @@ bool CCircle::toPath()
     b2->reverse();
     b4->reverse();
 
-    CNodeInterface::addNext(path, b1);
-    CNodeInterface::addNext(path, b2);
-    CNodeInterface::addNext(path, b3);
-    CNodeInterface::addNext(path, b4);
-    CNodeInterface::addNext(this, path);
+    path->addNext(b1);
+    path->addNext(b2);
+    path->addNext(b3);
+    path->addNext(b4);
+    addNext(path);
 
     path->setIsClosed(true);
-    return true;
-}
 
-/**
-* @brief Copy
-* @return
-*/
-CPrimitive* CCircle::copy() const
-{
-    CPrimitive * prim = new CCircle(*this);
-    CNodeInterface::reset(prim);
-    return prim;
+    return true;
 }

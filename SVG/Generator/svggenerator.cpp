@@ -7,7 +7,7 @@ SVGGenerator::SVGGenerator(QObject *parent) : QObject(parent)
 
 }
 
-SVGGenerator::GenerateStatus SVGGenerator::generate(QIODevice *device, CPrimitive * rootItm)
+SVGGenerator::GenerateStatus SVGGenerator::generate(QIODevice *device, IPrimitive * rootItm)
 {
    if ( !device->isOpen() && !device->open(QIODevice::WriteOnly|QIODevice::Text) ) {
         qWarning()<<"Device not opened!";
@@ -24,17 +24,17 @@ SVGGenerator::GenerateStatus SVGGenerator::generate(QIODevice *device, CPrimitiv
     while ( i.next() ) {
 
         if ( i.type()&CNodeInterfaceIterator::IT_STARTLEVEL ) {
-            CPrimitive * lvl = i.level<CPrimitive*>();
-            if ( lvl->type()==CPrimitive::PT_GROUP ) {
+            IPrimitive * lvl = i.level<IPrimitive*>();
+            if ( lvl->type()==IPrimitive::PT_GROUP ) {
                 _xml->writeStartElement("g");
             }
         }
 
         if ( i.type()&CNodeInterfaceIterator::IT_STARTELEMENT ) {
-            CPrimitive * p = i.item<CPrimitive*>();
+            IPrimitive * p = i.item<IPrimitive*>();
 
-            if ( p->type()==CPrimitive::PT_PATH ) {
-                CPath * path = static_cast<CPath*>(p);
+            if ( p->type()==IPrimitive::PT_PATH ) {
+                CPath * path = dynamic_cast<CPath*>(p);
                 _xml->writeStartElement("path");
                 _xml->writeAttribute("d", generatePath(path));
                 _xml->writeAttribute("style", path->styles().toString());
@@ -46,8 +46,8 @@ SVGGenerator::GenerateStatus SVGGenerator::generate(QIODevice *device, CPrimitiv
 
 
         if ( i.type()&CNodeInterfaceIterator::IT_ENDLEVEL ) {
-            CPrimitive * lvl = i.level<CPrimitive*>();
-            if ( lvl->type()==CPrimitive::PT_GROUP ) {
+            IPrimitive * lvl = i.level<IPrimitive*>();
+            if ( lvl->type()==IPrimitive::PT_GROUP ) {
                 _xml->writeEndElement();
             }
         }
@@ -60,19 +60,19 @@ SVGGenerator::GenerateStatus SVGGenerator::generate(QIODevice *device, CPrimitiv
     return GS_OK;
 }
 
-QString SVGGenerator::generatePath(CNodeInterface *item)
+QString SVGGenerator::generatePath(IPrimitive *item)
 {
     QStringList res;
 
-    CPath * path = static_cast<CPath*>(item);
+    CPath * path = dynamic_cast<CPath*>(item);
 
     if ( path==nullptr ) { throw -1; }
-    if ( path->down == nullptr ) return QString();
+    if ( path->down() == nullptr ) { return QString(); }
 
     bool isClosed = path->isClosed();
     bool isFirst = true;
 
-    CPrimitive * p = static_cast<CPrimitive*>(path->down);
+    IPrimitive * p = dynamic_cast<IPrimitive*>(path->down());
 
     while (true) {
         if ( p==nullptr ) break;
@@ -83,20 +83,20 @@ QString SVGGenerator::generatePath(CNodeInterface *item)
             isFirst = false;
         }
 
-        if ( p->type()==CPrimitive::PT_BEZIER ) {
-            CBezier * b = static_cast<CBezier*>(p);
+        if ( p->type()==IPrimitive::PT_BEZIER ) {
+            CBezier * b = dynamic_cast<CBezier*>(p);
             res.append("C");
             res.append(b->points().p2().toString());
             res.append(b->points().p3().toString());
             res.append(b->points().p4().toString());
         } else
-        if ( p->type()==CPrimitive::PT_LINE ) {
-            CLine * l = static_cast<CLine*>(p);
+        if ( p->type()==IPrimitive::PT_LINE ) {
+            CLine * l = dynamic_cast<CLine*>(p);
             res.append("L");
             res.append(l->points().p2().toString());
         } else
-        if ( p->type()==CPrimitive::PT_ARC ) {
-            CArc * a = static_cast<CArc*>(p);
+        if ( p->type()==IPrimitive::PT_ARC ) {
+            CArc * a = dynamic_cast<CArc*>(p);
             res.append("A");
             res.append(QString::number(a->rx()));
             res.append(QString::number(a->ry()));
@@ -105,20 +105,20 @@ QString SVGGenerator::generatePath(CNodeInterface *item)
             res.append((a->sweepFlag())? "1" : "0");
             res.append(a->points().p2().toString());
         } else
-        if ( p->type()==CPrimitive::PT_PATH ) { //-- Составной путь. Завершаем и начинаем новый.
+        if ( p->type()==IPrimitive::PT_PATH ) { //-- Составной путь. Завершаем и начинаем новый.
             if ( isClosed ) { res.append("Z"); }
-            CPath * subPath = static_cast<CPath*>(p);
+            CPath * subPath = dynamic_cast<CPath*>(p);
             isClosed = subPath->isClosed();
             isFirst = true;
-            p = static_cast<CPrimitive*>(p->down);
+            p = dynamic_cast<IPrimitive*>(p->down());
             continue;
         }
         else {
             qWarning()<<"Unknow path type"<<p->type();
         }
 
-        if ( p->next==nullptr ) break;
-        p = static_cast<CPrimitive*>(p->next);
+        if ( p->next()==nullptr ) { break; }
+        p = dynamic_cast<IPrimitive*>(p->next());
     }
 
     if ( isClosed ) res.append("Z");

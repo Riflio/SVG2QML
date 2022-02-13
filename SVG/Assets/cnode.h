@@ -1,6 +1,8 @@
 #ifndef CNODE_H
 #define CNODE_H
 
+#include "inode.h"
+
 /**
 * @brief Базовый класс, что бы можно было по быстрому связать примитивы пути группы и тд
 * у каждого элемента доно быть установлены указатели на
@@ -10,112 +12,123 @@
 * down - первый элемент из уровня ниже
 * если чего-то нету, то nullptr
 */
-
-class CNodeInterface
+class CNodeInterface: public virtual INodeInterface
 {
 public:
-    CNodeInterface * first;
-    CNodeInterface * last;
-    CNodeInterface * up;
-    CNodeInterface * down;
-    CNodeInterface * next;
-    CNodeInterface * prev;
 
-    CNodeInterface() { reset(this); }
+    CNodeInterface(): _first(nullptr), _last(nullptr), _up(nullptr), _down(nullptr), _next(nullptr), _prev(nullptr) {  }
     virtual ~CNodeInterface() {}
 
     /**
     * @brief Сбрасываем состояние ноды
     * @param node
     */
-    static void reset(CNodeInterface * node)
+    void reset() override
     {
-        node->down = nullptr;
-        node->next = nullptr;
-        node->prev = nullptr;
-        node->up = nullptr;
-        node->last = nullptr;
-        node->first = nullptr;
+        CNodeInterface * node = dynamic_cast<CNodeInterface*>(this);
+        node->_down = nullptr;
+        node->_next = nullptr;
+        node->_prev = nullptr;
+        node->_up = nullptr;
+        node->_last = nullptr;
+        node->_first = nullptr;
     }
 
     /**
-    * @brief Добавляем на указанный уровень ещё один элемент в конец
-    * @param level
+    * @brief Добавляем на текущий уровень ещё один элемент в конец
     * @param node
     */
-    static void addNext(CNodeInterface * level, CNodeInterface * node)
+    void addNext(INodeInterface * iNode) override
     {
-        if ( level->first==nullptr ) level->first=node;
+        CNodeInterface * level = dynamic_cast<CNodeInterface*>(this);
+        CNodeInterface * node = dynamic_cast<CNodeInterface*>(iNode);
 
-        if ( level->last!=nullptr ) {
-            level->last->next=node;
-            node->prev = level->last;
+        if ( level->_first==nullptr ) { level->_first = node; }
+
+        if ( level->_last!=nullptr ) {
+            level->_last->_next=node;
+            node->_prev = level->_last;
         }
 
-        level->last = node;
-        node->up = level;
+        level->_last = node;
+        node->_up = level;
 
-        if ( level->down==nullptr ) level->down = node;
+        if ( level->_down==nullptr ) { level->_down = node; }
     }
 
     /**
-    * @brief Добавляем на указанный уровень ещё один элемент в начало
-    * @param level
+    * @brief Добавляем на текущий уровень ещё один элемент в начало
     * @param node
     */
-    static void addPrev(CNodeInterface * level, CNodeInterface * node)
+    void addPrev(INodeInterface * iNode) override
     {
-        if ( level->last==nullptr ) level->last = node;
+        CNodeInterface * level = dynamic_cast<CNodeInterface*>(this);
+        CNodeInterface * node = dynamic_cast<CNodeInterface*>(iNode);
 
-        if ( level->first!=nullptr ) {
-            level->first->prev = node;
-            node->next = level->first;
+        if ( level->_last==nullptr ) { level->_last = node; }
+
+        if ( level->_first!=nullptr ) {
+            level->_first->_prev = node;
+            node->_next = level->_first;
         }
 
-        level->first = node;
-        node->up = level;
-        level->down = node;
+        level->_first = node;
+        node->_up = level;
+        level->_down = node;
     }
 
     /**
-    * @brief Добавляем на указанный уровень ещё элемент и заменяем указанный уровень на этот элемент
-    * @param level
+    * @brief Создаём уровень ниже
     * @param node
     */
-    static CNodeInterface * levelDown(CNodeInterface * level, CNodeInterface * node )
+    INodeInterface * levelDown(INodeInterface * node) override
     {
-        addNext(level, node);
+        addNext(node);
         return node;
     }
 
     /**
-    * @brief Заменяем указанный уровень, на верхний уровень из указанного
-    * @param level
+    * @brief Переходим на уровень выше
     */
-    static CNodeInterface * levelUp(CNodeInterface * level)
+    INodeInterface * levelUp() override
     {
-       return level->up;
+       return up();
     }
 
     /**
     * @brief Убираем из уровня ноду
-    * @param node
     */
-    static void removeFromLevel(CNodeInterface * node)
+    void removeFromLevel() override
     {
-        if ( node->up!=nullptr ) {
-            if ( node->up->last==node ) node->up->last = node->prev;
-            if ( node->up->first==node ) node->up->first = node->next;
-            if ( node->up->down==node ) node->up->down = node->next;
+        CNodeInterface * node = this;
+        if ( node->_up!=nullptr ) {
+            if ( node->_up->_last==node ) { node->_up->_last = node->_prev; }
+            if ( node->_up->_first==node ) { node->_up->_first = node->_next; }
+            if ( node->_up->_down==node ) { node->_up->_down = node->_next; }
         }
-        node->up = nullptr;
+        node->_up = nullptr;
 
-        if ( node->next!=nullptr ) node->next->prev = node->prev;
-        if ( node->prev!=nullptr ) node->prev->next = node->next;
+        if ( node->_next!=nullptr ) { node->_next->_prev = node->_prev; }
+        if ( node->_prev!=nullptr ) { node->_prev->_next = node->_next; }
 
-        node->next = nullptr;
-        node->prev = nullptr;
+        node->_next = nullptr;
+        node->_prev = nullptr;
     }
+
+    INodeInterface * first() const override { return _first; }
+    INodeInterface * last() const override { return _last; }
+    INodeInterface * up() const override { return _up; }
+    INodeInterface * down() const override { return _down; }
+    INodeInterface * next() const override { return _next; }
+    INodeInterface * prev() const override { return _prev; }
+
+private:
+    CNodeInterface * _first;
+    CNodeInterface * _last;
+    CNodeInterface * _up;
+    CNodeInterface * _down;
+    CNodeInterface * _next;
+    CNodeInterface * _prev;
 
 };
 
@@ -125,7 +138,7 @@ public:
 class CNodeInterfaceIterator
 {
 public:
-    CNodeInterfaceIterator(CNodeInterface * rootItm): _rootItm(rootItm), _curItm(rootItm), _curLevel(rootItm), _curType(IT_NONE) {
+    CNodeInterfaceIterator(INodeInterface * rootItm): _rootItm(rootItm), _curItm(rootItm), _curLevel(rootItm), _curType(IT_NONE) {
         if ( _curItm!=nullptr ) { _curType = IT_STARTELEMENT; }
     }
 
@@ -145,19 +158,19 @@ public:
     {
         if ( _curItm==nullptr ) { return false; }
 
-        if ( (_curType&IT_STARTELEMENT) && (_curItm->down!=nullptr) ) {
+        if ( (_curType&IT_STARTELEMENT) && (_curItm->down()!=nullptr) ) {
             _curLevel = _curItm;
-            _curItm = _curItm->down;
+            _curItm = _curItm->down();
             _curType = (IT_STARTELEMENT | IT_STARTLEVEL);
             return true;
         } else
-        if ( _curItm->next!=nullptr ) {
-            _curItm = _curItm->next;
+        if ( _curItm->next()!=nullptr ) {
+            _curItm = _curItm->next();
             _curType = IT_STARTELEMENT;
             return true;
         } else
-        if ( _curItm->up!=_rootItm->up ) {
-            _curItm = _curItm->up;
+        if ( _curItm->up()!=_rootItm->up() ) {
+            _curItm = _curItm->up();
             _curLevel = _curItm;
             _curType = IT_ENDLEVEL;
             return true;
@@ -172,29 +185,29 @@ public:
     */
     bool nextLevel()
     {
-        if ( _curItm->last!=nullptr ) { _curItm = _curItm->last; }
-        if ( _curItm->up==_rootItm->up ) { _curItm = nullptr; return false; }
-        _curItm = _curItm->up;
+        if ( _curItm->last()!=nullptr ) { _curItm = _curItm->last(); }
+        if ( _curItm->up()==_rootItm->up() ) { _curItm = nullptr; return false; }
+        _curItm = _curItm->up();
         _curLevel = _curItm;
         _curType = IT_ENDLEVEL;
         return true;
     }
 
     template<class T=CNodeInterface*>
-    T item() const { return static_cast<T>(_curItm); }
+    T item() const { return dynamic_cast<T>(_curItm); }
 
     template<class T=CNodeInterface*>
-    T level() const { return static_cast<T>(_curLevel); }
+    T level() const { return dynamic_cast<T>(_curLevel); }
 
     template<class T=CNodeInterface*>
-    T rootItem() const { return static_cast<T>(_rootItm); }
+    T rootItem() const { return dynamic_cast<T>(_rootItm); }
 
     int type() const { return _curType; }
 
 private:
-    CNodeInterface * _rootItm;
-    CNodeInterface * _curItm;
-    CNodeInterface * _curLevel;
+    INodeInterface * _rootItm;
+    INodeInterface * _curItm;
+    INodeInterface * _curLevel;
     int _curType;
 };
 

@@ -7,15 +7,13 @@
 /**
 * @brief Работаем с картинками
 */
-class CImage: public CPrimitive
+class CImage: public CPrimitive<CImage>
 {
 public:
     CImage(CPoint topLeft, QString type, QString encoding, QByteArray data);
-    void cpaint(QPainter *painter, const CBoundingBox &area);
-    void cstream(QDataStream &dataStream, double scale);
-    CPoints lianirize(double tol) const;
+    void cstream(QDataStream &dataStream, double scale) override;
+    CPoints lianirize(double tol) const override;
     QString imageType() const;
-    CPrimitive* copy() const override;
 
 private:
     QString _imgType;

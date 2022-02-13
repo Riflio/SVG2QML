@@ -3,12 +3,11 @@
 
 #include "SVG/Assets/cprimitive.h"
 
-class CLine: public CPrimitive
+class CLine: public CPrimitive<CLine>
 {
 public:
     CLine(CPoint s, CPoint e);
     CLine(const CLine &other);
-    void cpaint(QPainter *painter, const CBoundingBox &area) override;
     void cstream(QDataStream &dataStream, double scale) override;
     CPoints lianirize(double tol) const override;
     bool toPath() override;

@@ -48,28 +48,12 @@ CBezier& CBezier::operator =(const CBezier& b)
     _points = b.points();
     _styles = b.styles();
     _id = b.ID();
-    _class = b.classSVG();
-    _transformMatrix = b.transform();
+    _className = b.className();
+    _transformMatrix = b.transformation();
     _title = b.title();
     _descr = b.descr();
-    _bbox = b.getBBox();
+    _boundingBox = b.boundingBox();
     return *this;
-}
-
-void CBezier::cpaint(QPainter *painter, const CBoundingBox &area)
-{
-    Q_UNUSED(area);
-    QPainterPath path;
-
-    const CPoint &p1 =  _points.p1();
-    const CPoint &p2 =  _points.p2();
-    const CPoint &p3 =  _points.p3();
-    const CPoint &p4 =  _points.p4();
-
-    path.moveTo(p1.x(), p1.y());
-    path.cubicTo(p2.x(), p2.y(),  p3.x(), p3.y(),  p4.x(), p4.y());
-
-    drawPath(path, painter);
 }
 
 void CBezier::cstream(QDataStream &dataStream, double scale)
@@ -118,7 +102,7 @@ CPoints CBezier::lianirize(double tol) const
     CPoints finished;
     finished.append(_points.p1());
 
-    QVector<CBezier> todo = { *static_cast<CBezier*>(this->copyNesteed()) };
+    QVector<CBezier> todo = { *static_cast<CBezier*>(this->clone()) };
 
     while ( todo.count()>0 ){
         const CBezier & segment = todo[0];
@@ -140,9 +124,9 @@ CPoints CBezier::lianirize(double tol) const
 * @brief Переопределяем ограничительную рамку
 * @return
 */
-const CBoundingBox &CBezier::getBBox() const
+CBoundingBox CBezier::boundingBox(bool withTransform) const
 {
-    if ( !_bbox.isEmpty() ) return _bbox;
+    if ( !_boundingBox.isEmpty() ) { return _boundingBox; }
 
     const CPoint &p1 = _points.p1();
     const CPoint &p2 = _points.p2();
@@ -202,10 +186,13 @@ const CBoundingBox &CBezier::getBBox() const
         }
     }
 
-    _bbox.addPoint(CPoint(xl, yl));
-    _bbox.addPoint(CPoint(xh, yh));
+    _boundingBox.addPoint(CPoint(xl, yl));
+    _boundingBox.addPoint(CPoint(xh, yh));
 
-    return _bbox;
+
+    if ( withTransform ) { _boundingBox.transform(_transformMatrix); }
+
+    return _boundingBox;
 }
 
 /**

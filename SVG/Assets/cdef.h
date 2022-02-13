@@ -9,7 +9,7 @@
 /**
 * @brief Базовый клас для шаблонных элементов
 */
-class CDef : public CPrimitive
+class CDef : public CPrimitive<CDef>
 {
 public:
     explicit CDef();

@@ -2,14 +2,14 @@
 #include "cpath.h"
 #include "cbezier.h"
 
-CEllipse::CEllipse(): CPrimitive(PT_ELLIPSE, _centerPoint)
+CEllipse::CEllipse(const CPoint& centerPoint): CPrimitive(PT_ELLIPSE, centerPoint)
 {
 
 }
 
 CPoint CEllipse::center() const
 {
-    return _centerPoint;
+    return _points[0];
 }
 
 CEllipse::TRadius CEllipse::radius() const
@@ -19,14 +19,12 @@ CEllipse::TRadius CEllipse::radius() const
 
 void CEllipse::setCX(double x)
 {
-    _centerPoint.setX(x);
-    _points[0] = _centerPoint;
+    _points[0].setX(x);
 }
 
 void CEllipse::setCY(double y)
 {
-    _centerPoint.setY(y);
-    _points[0] = _centerPoint;
+    _points[0].setY(y);
 }
 
 void CEllipse::setRX(double rx)
@@ -61,45 +59,21 @@ CBezier *CEllipse::drawBezierEllipseQuarter(CPoint center, QSizeF size)
 bool CEllipse::toPath()
 {
     CPath * path = new CPath();
+    const CPoint & cp = _points[0];
 
-    CBezier * b1 = drawBezierEllipseQuarter(_centerPoint, QSizeF(_radius.first, _radius.second));
-    CBezier * b2 = drawBezierEllipseQuarter(_centerPoint, QSizeF(-_radius.first, _radius.second));
-    CBezier * b3 = drawBezierEllipseQuarter(_centerPoint, QSizeF(-_radius.first, -_radius.second));
-    CBezier * b4 = drawBezierEllipseQuarter(_centerPoint, QSizeF(_radius.first, -_radius.second));
+    CBezier * b1 = drawBezierEllipseQuarter(cp, QSizeF(_radius.first, _radius.second));
+    CBezier * b2 = drawBezierEllipseQuarter(cp, QSizeF(-_radius.first, _radius.second));
+    CBezier * b3 = drawBezierEllipseQuarter(cp, QSizeF(-_radius.first, -_radius.second));
+    CBezier * b4 = drawBezierEllipseQuarter(cp, QSizeF(_radius.first, -_radius.second));
 
     b2->reverse();
     b4->reverse();
 
-    CNodeInterface::addNext(path, b1);
-    CNodeInterface::addNext(path, b2);
-    CNodeInterface::addNext(path, b3);
-    CNodeInterface::addNext(path, b4);
+    path->addNext(b1);
+    path->addNext(b2);
+    path->addNext(b3);
+    path->addNext(b4);
+    addNext(path);
 
-    CNodeInterface::addNext(this, path);
     return true;
 }
-
-CPrimitive* CEllipse::copy() const
-{
-    CPrimitive * prim = new CEllipse(*this);
-    CNodeInterface::reset(prim);
-    return prim;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

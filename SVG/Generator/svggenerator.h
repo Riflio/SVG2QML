@@ -41,14 +41,14 @@ public:
         GS_SYNTAXERROR
     };
 
-    GenerateStatus generate(QIODevice *device, CPrimitive * rootItm);
+    GenerateStatus generate(QIODevice *device, IPrimitive * rootItm);
 
 signals:
 
 public slots:
 
 protected:
-    QString generatePath(CNodeInterface *item);
+    QString generatePath(IPrimitive* item);
 
 private:
     QXmlStreamWriter * _xml;

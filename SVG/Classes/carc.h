@@ -6,13 +6,11 @@
 #include "cbezier.h"
 #include "cpath.h"
 
-class CArc: public CPrimitive
+class CArc: public CPrimitive<CArc>
 {
 public:
     CArc();
     CArc(CPoint startPoint, double rx, double ry, double rotation, bool largeArc, bool sweep, CPoint endPoint);
-
-    CPrimitive* copy() const override;
 
     double rx() const;
     double ry() const;

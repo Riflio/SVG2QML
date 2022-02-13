@@ -6,7 +6,7 @@
 /**
 * @brief Корневой элемент после парсинга
 */
-class CDoc: public CPrimitive
+class CDoc: public CPrimitive<CDoc>
 {
 public:
     CDoc();

@@ -3,7 +3,7 @@
 
 #include "SVG/Assets/cprimitive.h"
 
-class CPath: public CPrimitive
+class CPath: public CPrimitive<CPath>
 {
 public:
     CPath();
