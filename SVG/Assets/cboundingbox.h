@@ -2,6 +2,8 @@
 #define CBOUNDINGBOX_H
 
 #include "Algebra/cpoint.h"
+#include "Algebra/csize.h"
+#include "Algebra/cmatrix.h"
 
 /**
 * @brief Вычисляем размеры ограничительной рамки
@@ -16,11 +18,12 @@ public:
     void addPoints(const QVector<CPoint> &points);
     bool addBBox(const CBoundingBox &b);
     void clear();
-    QSizeF size() const;
+    CSize size() const;
     CPoint tl() const;
     CPoint br() const;
 
-    void move(const CPoint &D);
+    CBoundingBox & move(const CPoint &D);
+    CBoundingBox & transform(const CMatrix &transformMatrix);
     bool isEmpty() const;
 
     bool inside(const CBoundingBox &other) const;
@@ -37,8 +40,9 @@ public:
     double top() const;
 
 private:
-    CPoint _tl; //-- Верхняя левая точка
-    CPoint _br; //--Нижняя правая точка    
+    CPoint _tl; //-- Top Left point
+    CPoint _br; //-- Bottom Right point
+
 };
 
 #endif // CBOUNDINGBOX_H

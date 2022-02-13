@@ -60,16 +60,16 @@ void CBoundingBox::clear()
 }
 
 /**
-* @brief Отдаём размеры ограничительной рамки
+* @brief Return size
 * @return
 */
-QSizeF CBoundingBox::size() const
+CSize CBoundingBox::size() const
 {
-    return QSizeF(width(), height());
+    return CSize(width(), height());
 }
 
 /**
-* @brief Верхний левый угол
+* @brief Top Left coordinates
 * @return
 */
 CPoint CBoundingBox::tl() const
@@ -78,7 +78,7 @@ CPoint CBoundingBox::tl() const
 }
 
 /**
-* @brief Правый нижний
+* @brief Bottom Right coordinates
 * @return
 */
 CPoint CBoundingBox::br() const
@@ -87,18 +87,42 @@ CPoint CBoundingBox::br() const
 }
 
 /**
-* @brief Перемещаем ограничительную рамку
+* @brief Move bounding box
 * @param D - расстояние в приращениях
 */
-void CBoundingBox::move(const CPoint &D)
+CBoundingBox& CBoundingBox::move(const CPoint &D)
 {
-    if ( isEmpty() ) return;
+    if ( isEmpty() ) { return *this; }
     _tl.add(D);
     _br.add(D);
+    return *this;
+}
+
+CBoundingBox & CBoundingBox::transform(const CMatrix& transformMatrix)
+{
+    if ( isEmpty() ) { return *this; }
+
+    CPoint tl = _tl;
+    CPoint tr = _tl+CPoint(width(), 0);
+    CPoint br = _br;
+    CPoint bl = _tl+CPoint(0, height());
+
+
+    tl.transform(transformMatrix);
+    tr.transform(transformMatrix);
+    br.transform(transformMatrix);
+    bl.transform(transformMatrix);
+
+    CBoundingBox bbTr({tl, tr, br, bl});
+
+    _tl = bbTr.tl();
+    _br = bbTr.br();
+
+    return *this;
 }
 
 /**
-* @brief Область пустая?
+* @brief isEmpty
 * @return
 */
 bool CBoundingBox::isEmpty() const
