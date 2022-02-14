@@ -17,7 +17,7 @@ QMLGenerator::TSettings QMLGenerator::settings() const
     return _settings;
 }
 
-SVGGenerator::GenerateStatus QMLGenerator::generateQML(QIODevice *device, CPrimitive *rootItm, const CDefs &defs)
+SVGGenerator::GenerateStatus QMLGenerator::generateQML(QIODevice *device, IPrimitive *rootItm, const CDefs &defs)
 {
     if ( !device->isOpen() ) { qWarning()<<"Device not opened!"; return GS_NOFILE; }
 
@@ -33,7 +33,6 @@ SVGGenerator::GenerateStatus QMLGenerator::generateQML(QIODevice *device, CPrimi
 
     writeStartLvl("Item");
         writePropVal("id", _settings.rootName);
-        writePropVal("property var scaleShape", "Qt.size(1, 1)");
         writePropVal("property bool thinkLines", false);
 
         makeElement(rootItm);
@@ -83,43 +82,43 @@ QString QMLGenerator::sanitizeID(QString id)
 * @param offset
 * @return
 */
-QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset, CMatrix transforms)
+QString QMLGenerator::primitiveToPathCommands(IPrimitive *p, double offset, CMatrix transforms)
 {
     CPath * tPath = nullptr;
 
-    if ( p->type()==CPrimitive::PT_CIRCLE ) {
-        CCircle * circle = static_cast<CCircle*>(p);
+    if ( p->type()==IPrimitive::PT_CIRCLE ) {
+        CCircle * circle = dynamic_cast<CCircle*>(p);
         circle->toPath();
-        tPath = static_cast<CPath*>(circle->down);
+        tPath = dynamic_cast<CPath*>(circle->down());
     } else
-    if ( p->type()==CPrimitive::PT_PATH ) {
-        CPath * path = static_cast<CPath*>(p);
+    if ( p->type()==IPrimitive::PT_PATH ) {
+        CPath * path = dynamic_cast<CPath*>(p);
         tPath = path;
     } else
-    if ( p->type()==CPrimitive::PT_RECT ) {
-        CRect * rect = static_cast<CRect*>(p);
+    if ( p->type()==IPrimitive::PT_RECT ) {
+        CRect * rect = dynamic_cast<CRect*>(p);
         rect->toPath();
-        tPath = static_cast<CPath*>(rect->down);
+        tPath = dynamic_cast<CPath*>(rect->down());
     } else
-    if ( p->type()==CPrimitive::PT_POLYLINE ) {
-        CPolyline * polyline = static_cast<CPolyline*>(p);
+    if ( p->type()==IPrimitive::PT_POLYLINE ) {
+        CPolyline * polyline = dynamic_cast<CPolyline*>(p);
         polyline->toPath();
-        tPath = static_cast<CPath*>(polyline->down);
+        tPath = dynamic_cast<CPath*>(polyline->down());
     } else
-    if ( p->type()==CPrimitive::PT_POLYGON ) {
-        CPolygon * polygon = static_cast<CPolygon*>(p);
+    if ( p->type()==IPrimitive::PT_POLYGON ) {
+        CPolygon * polygon = dynamic_cast<CPolygon*>(p);
         polygon->toPath();
-        tPath = static_cast<CPath*>(polygon->down);
+        tPath = dynamic_cast<CPath*>(polygon->down());
     } else
-    if ( p->type()==CPrimitive::PT_LINE ) {
-        CLine * line = static_cast<CLine*>(p);
+    if ( p->type()==IPrimitive::PT_LINE ) {
+        CLine * line = dynamic_cast<CLine*>(p);
         line->toPath();
-        tPath = static_cast<CPath*>(line->down);
+        tPath = dynamic_cast<CPath*>(line->down());
     } else
-    if ( p->type()==CPrimitive::PT_ELLIPSE ) {
-        CEllipse * ellipse = static_cast<CEllipse*>(p);
+    if ( p->type()==IPrimitive::PT_ELLIPSE ) {
+        CEllipse * ellipse = dynamic_cast<CEllipse*>(p);
         ellipse->toPath();
-        tPath = static_cast<CPath*>(ellipse->down);
+        tPath = dynamic_cast<CPath*>(ellipse->down());
     } else {
         qWarning()<<"Unsupported SVG element"<<p->type();
         return "";
@@ -127,14 +126,11 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset, CMat
 
     if ( offset>0 ) { tPath = tPath->makeOffset(offset); }
 
-    CPrimitive * tPathCopy = tPath->copyNesteed();
+    IPrimitive * tPathClone = tPath->clone();
 
-    if ( !transforms.isIdentity() ) {
-        //tPathCopy->transform().toIdentity();
-        //tPathCopy->applyTransform(transforms);
-    }
+    tPathClone->applyTransform(transforms);
 
-    QString pathCommnads = generatePath(tPathCopy);
+    QString pathCommnads = generatePath(tPathClone);
 
     return pathCommnads;
 }
@@ -145,18 +141,18 @@ QString QMLGenerator::primitiveToPathCommands(CPrimitive *p, double offset, CMat
 * @param isSimple - если просо цвет или градиент без трансформации
 * @return
 */
-bool QMLGenerator::makeFill(CPrimitive *itm, bool isSimple)
+bool QMLGenerator::makeFill(QShape *shape, bool isSimple)
 {
-    if ( !itm->styles().has("fill") ) {
+    if ( !shape->itm->styles().has("fill") ) {
         writePropThinkLinesVal("fillColor", "transparent", "#000000", true);
         return true;
     }
 
-    QVariant fill = itm->styles().get("fill");
+    QVariant fill = shape->itm->styles().get("fill");
 
     if ( fill.typeId()==QMetaType::QColor ) {
         QColor color = fill.value<QColor>();
-        if ( itm->styles().has("fill-opacity") ) { color.setAlphaF(itm->styles().get("fill-opacity").value<CSS::MeasureUnit>().val());  }
+        if ( shape->itm->styles().has("fill-opacity") ) { color.setAlphaF(shape->itm->styles().get("fill-opacity").value<CSS::MeasureUnit>().val());  }
         writePropThinkLinesVal("fillColor", "transparent", color.name(QColor::HexArgb), true);
         return true;
     } else
@@ -172,14 +168,14 @@ bool QMLGenerator::makeFill(CPrimitive *itm, bool isSimple)
             if ( def->defType()==CDef::DF_LINEARGRADIENT || def->defType()==CDef::DF_RADIALGRADIENT) {
                 FGradient * gr = dynamic_cast<FGradient*>(def);
                 if ( gr->transform().isIdentity() ) {  //-- Если нет трансформаций, то выводим как обычно
-                    makeFillGradient(itm, gr, def->defType());
+                    makeFillGradient(shape, gr, def->defType());
                     return true;
                 } else { //-- Есть трансформации - придётся мучаться
                     if ( isSimple ) { //-- Если режим простая заливка, то выведем просто заливку цветом
                         writePropVal("fillColor", gr->stops().last().color.name(QColor::HexArgb), true);
                         return false;
                     } else {
-                        makeFillGradientTransform(itm, gr, def->defType());
+                        makeFillGradientTransform(shape, gr, def->defType());
                         return true;
                     }
                 }
@@ -204,29 +200,37 @@ bool QMLGenerator::makeFill(CPrimitive *itm, bool isSimple)
 
 /**
 * @brief Разбираемся с прозрачностью
-* @param itm
+* @param shape
 * @return
 */
-bool QMLGenerator::makeOpacity(CPrimitive *itm)
+bool QMLGenerator::makeOpacity(QShape *shape)
 {
-    if ( itm->styles().has("opacity") ) {
-        double opacity = itm->styles().get("opacity").value<CSS::MeasureUnit>().val();
-        _qml<<tab(_lvl)<<"opacity: "<<opacity<<Qt::endl;
+    if ( shape->itm->styles().has("opacity") ) {
+        double opacity = shape->itm->styles().get("opacity").value<CSS::MeasureUnit>().val();
+        writePropVal("opacity", opacity);
     }
     return true;
 }
 
 /**
 * @brief Выводим градиент без трансформаций
-* @param itm
+* @param shape
 * @param gr
 * @param type
 */
-void QMLGenerator::makeFillGradient(CPrimitive *itm, FGradient *gr, CDef::TDefType type)
+void QMLGenerator::makeFillGradient(QShape *shape, FGradient *gr, CDef::TDefType type)
 {
-    Q_UNUSED(itm);
-    if ( type==CDef::DF_LINEARGRADIENT ) { makeLinearGradient(dynamic_cast<FLinearGradient*>(gr)); } else
-    if ( type==CDef::DF_RADIALGRADIENT ) { makeRadialGradient(dynamic_cast<FRadialGradient*>(gr)); }
+    if ( type==CDef::DF_LINEARGRADIENT ) {
+        FLinearGradient * lgr = dynamic_cast<FLinearGradient*>(gr);
+        lgr->setStartPoint(lgr->startPoint() - shape->boundingBox.tl());
+        lgr->setEndPoint(lgr->endPoint() - shape->boundingBox.tl());
+        makeLinearGradient(lgr);
+    } else
+    if ( type==CDef::DF_RADIALGRADIENT ) {
+        FRadialGradient * rgr = dynamic_cast<FRadialGradient*>(gr);
+        rgr->setCenterPoint(rgr->centerPoint() - shape->boundingBox.tl());
+        makeRadialGradient(rgr);
+    }
 }
 
 /**
@@ -235,58 +239,63 @@ void QMLGenerator::makeFillGradient(CPrimitive *itm, FGradient *gr, CDef::TDefTy
 * @param gr
 * @param type
 */
-void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDef::TDefType type)
+void QMLGenerator::makeFillGradientTransform(QShape *shape, FGradient *gr, CDef::TDefType type)
 {
     //-- Внутрь основной засовываем итем, внутрь фигуру (PathLine - rect для line gradient или PathAngleArc - circle) с заливкой градиентом, к итему ещё применяем маску, что бы градиент не вылезал за его пределы
 
     writeStartLvl("Item");
-        writePropElVal("width", _settings.rootName, "width");
-        writePropElVal("height", _settings.rootName, "height");
+        writePropVal("width", "parent.width");
+        writePropVal("height", "parent.height");
+
         writeStartLvl("Shape");
-            writePropElVal("width", _settings.rootName, "width");
-            writePropElVal("height", _settings.rootName, "height");
+            QString shapeGrId = QString("%1_gr").arg(sanitizeID(shape->itm->ID()));
+            writePropVal("id", shapeGrId, true);
+            writePropVal("width", "parent.width");
+            writePropVal("height", "parent.height");
 
             //-- Path
-            writeStartLvl("ShapePath");
-                if ( _settings.enableScale ) { writePropElVal("scale", _settings.rootName, "scaleShape"); }
+            writeStartLvl("ShapePath");                
 
                 if ( type==CDef::DF_LINEARGRADIENT ) {
                     //-- Делаем строго горизонтальным с началом x1y1, а поворот между x1y1 и x2y2 добавляем к матрице трансформации что бы фигура была по оси x1y1 x2y2
-                    FLinearGradient * lg = dynamic_cast<FLinearGradient*>(gr);
+                    FLinearGradient * lgr = dynamic_cast<FLinearGradient*>(gr);
 
-                    double l = lg->startPoint().lengthTo(lg->endPoint()); //-- Gradient length
+                    double l = lgr->startPoint().lengthTo(lgr->endPoint()); //-- Gradient length
                     double w = 100; //-- Gradient continuation before first and after last stop points
-                    double h = 100; //TODO: As max(width, height) of bouding box?
+                    double h = 300; //TODO: As max(width, height) of bouding box?
 
-                    writePropVal("startX", lg->startPoint().x()-w);
-                    writePropVal("startY", lg->startPoint().y()-h);
+                    CPoint sp = lgr->startPoint();
+                    CPoint ep = lgr->endPoint();
+
+                    writePropVal("startX", sp.x()-w);
+                    writePropVal("startY", sp.y()-h);
 
                     writeStartLvl("PathLine", true);
-                        writePropVal("x", lg->startPoint().x()+l+w, false, true);
-                        writePropVal("y", lg->startPoint().y()-h, false, true);
+                        writePropVal("x", sp.x()+l+w, false, true);
+                        writePropVal("y", sp.y()-h, false, true);
                     writeEndLvl(true);
 
                     writeStartLvl("PathLine", true);
-                        writePropVal("x", lg->startPoint().x()+l+w, false, true);
-                        writePropVal("y", lg->startPoint().y()+h, false, true);
+                        writePropVal("x", sp.x()+l+w, false, true);
+                        writePropVal("y", sp.y()+h, false, true);
                     writeEndLvl(true);
 
                     writeStartLvl("PathLine", true);
-                        writePropVal("x", lg->startPoint().x()-w, false, true);
-                        writePropVal("y", lg->startPoint().y()+h, false, true);
+                        writePropVal("x", sp.x()-w, false, true);
+                        writePropVal("y", sp.y()+h, false, true);
                     writeEndLvl(true);
 
                     writeStartLvl("PathLine", true);
-                        writePropVal("x", lg->startPoint().x()-w, false, true);
-                        writePropVal("y", lg->startPoint().y()-h, false, true);
+                        writePropVal("x", sp.x()-w, false, true);
+                        writePropVal("y", sp.y()-h, false, true);
                     writeEndLvl(true);
 
-                    double rotation = lg->startPoint().angle(lg->startPoint()-CPoint(0.0,1.0), lg->endPoint());
+                    double rotation = sp.angle(sp-CPoint(0.0, 1.0), ep);
 
-                    CMatrix transformMatrix = CMatrix::identity(3,3);
+                    CMatrix transformMatrix = CMatrix::identity(3, 3);
                     transformMatrix.multiplication(gr->transform());
 
-                    CPoint originPoint = lg->startPoint();
+                    CPoint originPoint = sp;
                     originPoint.transform(transformMatrix);
 
                     CMatrix rotM = CMatrix::identity(3, 3);
@@ -298,74 +307,66 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
 
                     gr->setTransform(rotM);
 
-                    lg->setStartPoint(CPoint(lg->startPoint().x(), lg->startPoint().y()));
-                    lg->setEndPoint(CPoint(lg->startPoint().x()+l, lg->startPoint().y()));
+                    lgr->setStartPoint(sp);
+                    lgr->setEndPoint(sp+CPoint(l, 0));
+
+                    makeLinearGradient(lgr);
+
                 } else
                 if ( type==CDef::DF_RADIALGRADIENT ) {
-                    FRadialGradient * rg = dynamic_cast<FRadialGradient*>(gr);
-                    //-- Делаем обычную окружность с радиентом, потом трансформациями доводим до кондиции
+                    FRadialGradient * rgr = dynamic_cast<FRadialGradient*>(gr);
+                    //-- Делаем обычную окружность с градиентом, потом трансформациями доводим до кондиции
 
                     double rr = 100; //-- Gradient continuation
 
                     writeStartLvl("PathAngleArc");
-                        writePropVal("centerX", rg->centerPoint().x());
-                        writePropVal("centerY", rg->centerPoint().y());
-                        writePropVal("radiusX", rg->radius()+rr);
-                        writePropVal("radiusY", rg->radius()+rr);
+                        writePropVal("centerX", rgr->centerPoint().x());
+                        writePropVal("centerY", rgr->centerPoint().y());
+                        writePropVal("radiusX", rgr->radius()+rr);
+                        writePropVal("radiusY", rgr->radius()+rr);
                         writePropVal("startAngle", 0);
                         writePropVal("sweepAngle", 360);
                     writeEndLvl();
+
+                    makeRadialGradient(rgr);
                 }
 
                 writePropVal("strokeWidth", 0);
                 writePropVal("strokeColor", "transparent", true);
 
-                makeFillGradient(itm, gr, type);
-
             writeEndLvl();
 
+            //-- Учитываем положение самой фигуры
+            CMatrix mItm = CMatrix::identity(3, 3);
+            mItm.translate(-shape->boundingBox.left(), -shape->boundingBox.top());
+            mItm.multiplication(gr->transform());
+            gr->setTransform(mItm);
 
-            //-- Трансформации
-            CMatrix m = gr->transform();
-            makeTransform(m);
+            makeTransform(gr->transform());
 
         writeEndLvl();
 
-        //-- Ещё и clipPath придётся сделать, что бы фигура с внутренним градиентом не вылезала шибко далеко, но контур придётся сделать меньше на половину ширины заливки
+        //-- Ещё и clipPath придётся сделать, что бы фигура с внутренним градиентом не вылезала шибко далеко, но контур придётся сделать меньше на половину ширины заливки        
         writePropVal("layer.enabled", true);
         writeStartLvlProp("layer.effect", "ShaderEffect");
-            QString shapeGrID = QString("%1_grcl").arg(sanitizeID(itm->ID()));
             writeStartLvl("Shape");
-                writePropVal("id", shapeGrID);
+                QString shapeGrClipId = QString("%1_grcl").arg(sanitizeID(shape->itm->ID()));
+                writePropVal("id", shapeGrClipId);
                 writePropVal("visible", false);
                 writePropVal("layer.enabled", true);
-                writePropElVal("width", _settings.rootName, "width");
-                writePropElVal("height", _settings.rootName, "height");
-
+                writePropVal("width", "parent.width");
+                writePropVal("height", "parent.height");
                 writeStartLvl("ShapePath");
-                    if ( _settings.enableScale ) { writePropElVal("scale", _settings.rootName, "scaleShape"); }
                     writeStartLvl("PathSvg");
-
-                        //-- In negative coordinatese figure is not drawn, so we must first move
-                        //QRectF bb = itm->getBBox();
-                        CMatrix bbTr = CMatrix::identity(3, 3);//.translate(-bb.left(), -bb.top());
-
-                        QString pathCommands = primitiveToPathCommands(itm, 0);
-
-                        writePropVal("path", pathCommands, true);
+                        writePropVal("path", shape->pathCommands, true);
                     writeEndLvl();
                     writePropVal("fillColor", "#000000", true);
                     writePropVal("strokeWidth", 0);
                     writePropVal("strokeColor", "transparent", true);
                 writeEndLvl();
-
-                //makeTransform(CMatrix::identity(3, 3).translate(bb.left(), bb.top()));
-
             writeEndLvl();
-
-            writePropVal("fragmentShader", "qrc:/mask.frag.qsb", true);
-            writePropVal("property var maskSource", shapeGrID);
-
+            writePropVal("fragmentShader", "qrc:/Shaders/mask.frag.qsb", true); //./qsb --glsl 100es,120,150 --hlsl 50 --msl 12  -o mask.frag.qsb mask.frag
+            writePropVal("property var maskSource", shapeGrClipId);
         writeEndLvl();
 
 
@@ -376,8 +377,8 @@ void QMLGenerator::makeFillGradientTransform(CPrimitive *itm, FGradient *gr, CDe
 * @brief Делаем заливку радиальным градиентом
 * @param gr
 */
-void QMLGenerator::makeRadialGradient(FRadialGradient *gr)
-{    
+void QMLGenerator::makeRadialGradient(FRadialGradient * gr)
+{
     CPoint cp = gr->centerPoint();
     CPoint fp = gr->focalPoint();
 
@@ -395,9 +396,8 @@ void QMLGenerator::makeRadialGradient(FRadialGradient *gr)
 /**
 * @brief Делаем заливку линейным градиентом
 * @param gr
-* @param rootID
 */
-void QMLGenerator::makeLinearGradient(FLinearGradient *gr)
+void QMLGenerator::makeLinearGradient(FLinearGradient * gr)
 {
     CPoint sp = gr->startPoint();
     CPoint ep = gr->endPoint();
@@ -415,13 +415,13 @@ void QMLGenerator::makeLinearGradient(FLinearGradient *gr)
 * @brief Разбираемся с обводкой
 * @param itm
 */
-void QMLGenerator::makeStroke(CPrimitive *itm)
+void QMLGenerator::makeStroke(QShape *shape)
 {
-    if ( itm->styles().has("stroke") ) {
-        QVariant stroke = itm->styles().get("stroke");
+    if ( shape->itm->styles().has("stroke") ) {
+        QVariant stroke = shape->itm->styles().get("stroke");
         if ( stroke.typeId()==QMetaType::QColor ) {
             QColor color = stroke.value<QColor>();
-            if ( itm->styles().has("stroke-opacity") ) { color.setAlphaF(itm->styles().get("stroke-opacity").value<CSS::MeasureUnit>().val()); }
+            if ( shape->itm->styles().has("stroke-opacity") ) { color.setAlphaF(shape->itm->styles().get("stroke-opacity").value<CSS::MeasureUnit>().val()); }
             writePropThinkLinesVal("strokeColor", "#000000", color.name(QColor::HexArgb), true);
         } else
         if ( stroke.toString()=="none" || stroke.toString().isEmpty() ) {
@@ -433,8 +433,8 @@ void QMLGenerator::makeStroke(CPrimitive *itm)
         writePropThinkLinesVal("strokeColor", "#000000", "transparent", true);
     }
 
-    if ( itm->styles().has("stroke-width") ) {
-        QVariant strokeWidth = itm->styles().get("stroke-width");
+    if ( shape->itm->styles().has("stroke-width") ) {
+        QVariant strokeWidth = shape->itm->styles().get("stroke-width");
 
         if ( strokeWidth.canConvert<CSS::MeasureUnit>() ) {
             CSS::MeasureUnit mu = strokeWidth.value<CSS::MeasureUnit>();
@@ -452,8 +452,8 @@ void QMLGenerator::makeStroke(CPrimitive *itm)
          writePropThinkLinesVal("strokeWidth", 1, 0);
     }
 
-    if ( itm->styles().has("stroke-linejoin") ) {
-        QString linejoin = itm->styles().get("stroke-linejoin").toString();
+    if ( shape->itm->styles().has("stroke-linejoin") ) {
+        QString linejoin = shape->itm->styles().get("stroke-linejoin").toString();
         if ( linejoin=="bevel" ) {
             writePropVal("joinStyle", "ShapePath.BevelJoin");
         } else
@@ -467,8 +467,8 @@ void QMLGenerator::makeStroke(CPrimitive *itm)
         }
     }
 
-    if ( itm->styles().has("stroke-linecap") ) {
-        QString linecap = itm->styles().get("stroke-linecap").toString();
+    if ( shape->itm->styles().has("stroke-linecap") ) {
+        QString linecap = shape->itm->styles().get("stroke-linecap").toString();
         if ( linecap=="butt" ) {
             writePropVal("capStyle", "ShapePath.FlatCap");
         } else
@@ -482,13 +482,13 @@ void QMLGenerator::makeStroke(CPrimitive *itm)
         }
     }
 
-    if ( itm->styles().has("stroke-miterlimit") ) {
-        double miterLimit = itm->styles().get("stroke-miterlimit").value<CSS::MeasureUnit>().val();
+    if ( shape->itm->styles().has("stroke-miterlimit") ) {
+        double miterLimit = shape->itm->styles().get("stroke-miterlimit").value<CSS::MeasureUnit>().val();
         writePropVal("miterLimit", miterLimit);
     }
 
-    if ( itm->styles().has("stroke-dasharray") ) {
-        QList<CSS::MeasureUnit> dashList = itm->styles().get("stroke-dasharray").value<QList<CSS::MeasureUnit>>();
+    if ( shape->itm->styles().has("stroke-dasharray") ) {
+        QList<CSS::MeasureUnit> dashList = shape->itm->styles().get("stroke-dasharray").value<QList<CSS::MeasureUnit>>();
         if ( dashList.count()>0 ) {
             QStringList dashListStr;
             foreach (CSS::MeasureUnit mu, dashList) { dashListStr<<QString::number(mu.val()); }
@@ -515,87 +515,127 @@ void QMLGenerator::makeGradientStops(FGradient *gr)
 
 /**
 * @brief Создаём из CPrimitive
-* @param itm
-* @param visible
-* @param layerEnabled
+* @param el
 */
-void QMLGenerator::makeElement(CPrimitive *el, bool visible, bool layerEnabled)
+void QMLGenerator::makeElement(IPrimitive *el)
 {
     //-- Что из элементов поддерживаем пока что
-    QList<int> supportedTypes = {CPrimitive::PT_PATH, CPrimitive::PT_CIRCLE, CPrimitive::PT_RECT,
-                                 CPrimitive::PT_ELLIPSE, CPrimitive::PT_LINE, CPrimitive::PT_POLYLINE,
-                                 CPrimitive::PT_POLYGON};
+    QList<int> supportedTypes = {IPrimitive::PT_PATH, IPrimitive::PT_CIRCLE, IPrimitive::PT_RECT,
+                                 IPrimitive::PT_ELLIPSE, IPrimitive::PT_LINE, IPrimitive::PT_POLYLINE,
+                                 IPrimitive::PT_POLYGON};
 
     CNodeInterfaceIterator i(el);
     while( i.next() ) {
 
-        CPrimitive * p = i.item<CPrimitive*>();
+        IPrimitive * p = i.item<IPrimitive*>();
 
         if ( (i.type()&CNodeInterfaceIterator::IT_STARTLEVEL) ) {
-            CPrimitive * level = i.level<CPrimitive*>();
+            IPrimitive * level = i.level<IPrimitive*>();
 
-            if ( level->type()==CPrimitive::PT_GROUP ) {                
+            if ( level->type()==IPrimitive::PT_GROUP  ) {
                 writeStartLvl("Item");
                     makeID(level);
-                    if ( !visible ) { writePropVal("visible", false); }
-                    if ( layerEnabled ) {  writePropVal("layer.enabled", true); }
-                    writePropElVal("width", _settings.rootName, "width");
-                    writePropElVal("height", _settings.rootName, "height");
-            }                        
+
+                    writePropVal("width", "parent.width");
+                    writePropVal("height", "parent.height");
+
+                    writePropVal("transformOrigin", "Item.TopLeft");
+
+                    makeTransform(level->transformation());
+            }
         }
 
         if ( (i.type()&CNodeInterfaceIterator::IT_STARTELEMENT) ) {
 
-            if ( p->type()==CPrimitive::PT_GROUP || p->type()==CPrimitive::PT_SVG ) continue;
+            if ( p->type()==IPrimitive::PT_GROUP || p->type()==IPrimitive::PT_SVG ) continue;
 
-            if (  supportedTypes.indexOf(p->type())>-1 ) {
+            if ( supportedTypes.indexOf(p->type())>-1 ) {
 
-                QString pathCommnads = primitiveToPathCommands(p);
-                if ( pathCommnads.isEmpty() ) { continue; }
+                //-- Сделаем, что бы фигура имел координаты и размер в соответствии с содержимым
+                CMatrix tr = p->transformation();
+
+                //-- Смещаем содержимое в 0
+                CBoundingBox bb = p->boundingBox(false);
+                CMatrix m = CMatrix::identity(3, 3);
+                m.translate(-bb.left(), -bb.top());
+                p->applyTransform(m);
+
+                CPoint tl(bb.tl());
+                tl.transform(tr);
+
+                //-- Из матрицы трансформации уберём вращение со смещением и назначим самой фигуре
+                double A = atan2(tr.getAt(0, 1), tr.getAt(1, 1));
+                double TX = tr.getAt(2, 0);
+                double TY = tr.getAt(2, 1);
+                CMatrix r = CMatrix::identity(3, 3);
+                r.rotate(-A);
+                r.translate(-TX, -TY);
+                p->setTransformation(tr.multiplication(r));
+
+                QShape * shape = new QShape(p); //TODO: Delete
+                shape->pathCommands = primitiveToPathCommands(p, 0);;
+                shape->x = tl.x();
+                shape->y = tl.y();
+                shape->r = A;
+                shape->boundingBox = bb;
+
+                if ( shape->pathCommands.isEmpty() ) { continue; }
 
                 writeStartLvl("Shape");
                     makeID(p);
-                    writePropElVal("width", _settings.rootName, "width");
-                    writePropElVal("height", _settings.rootName, "height");
+
+                    writePropVal("x", shape->x);
+                    writePropVal("y", shape->y);
+                    writePropVal("rotation", shape->r*180.0/M_PI);
+                    writePropVal("width", bb.width());
+                    writePropVal("height", bb.height());
+                    writePropVal("clip", false);
+                    writePropVal("transformOrigin", "Item.TopLeft");
 
                     //-- Path
-                    _qml<<tab(_lvl++)<<"ShapePath {"<<Qt::endl;
-                        if ( _settings.enableScale ) { writePropElVal("scale", _settings.rootName, "scaleShape"); }
+                    _qml<<tab(_lvl++)<<"ShapePath {"<<Qt::endl;                        
 
                         writeStartLvl("PathSvg");
-                            writePropVal("path", pathCommnads, true);
+                            writePropVal("path", shape->pathCommands, true);
                         writeEndLvl();
 
                         //-- Styles
-                        makeStroke(p);
-                        bool simpleFilled = makeFill(p, true);
+                        makeStroke(shape);
+                        bool simpleFilled = makeFill(shape, true);
 
                     writeEndLvl();
 
-                    if ( !simpleFilled ) { makeFill(p, false); }
+                    if ( !simpleFilled ) { makeFill(shape, false); }
 
                     //-- Clip path
                     if ( p->styles().has("clip-path") ) {
                         CDef * def = _defs.get(p->styles().get("clip-path").toUrl());
 
-                        if ( def==nullptr || def->defType()!=CDef::DF_CLIPPATH ) {
-                            qWarning()<<"Not supported clip-path resource";
-                            continue;
-                        }
+                        if ( def==nullptr || def->defType()!=CDef::DF_CLIPPATH ) { qWarning()<<"Not supported clip-path resource"; continue; }
 
                         FClipPath * cp = static_cast<FClipPath*>(def);
                         writePropVal("layer.enabled", true);
                         writeStartLvlProp("layer.effect", "ShaderEffect");
-                            writePropVal("fragmentShader", "qrc:/mask.frag.qsb", true);
-                            makeElement(cp->clipPath, false, true);
-                            writePropVal("property var maskSource", cp->clipPath->ID());
+                            writeStartLvl("Item");
+                                QString clipItemWrapperId = sanitizeID(QString("%1_clip_wrapper").arg(cp->clipPath->ID()));
+                                writePropVal("id", clipItemWrapperId);
+                                writePropVal("width", "parent.width");
+                                writePropVal("height", "parent.height");
+                                writePropVal("visible", "false");
+                                writePropVal("layer.enabled", "true");
+
+                                cp->clipPath->setTransformation(cp->clipPath->transformation().translate(-shape->x, -shape->y));
+
+                                makeElement(cp->clipPath);
+                            writeEndLvl();
+
+                            writePropVal("fragmentShader", "qrc:/Shaders/mask.frag.qsb", true);
+                            writePropVal("property var maskSource", clipItemWrapperId);
                         writeEndLvl();
                     }
 
-                    makeOpacity(p);
-
-                    makeTransform(p->transform());
-
+                    makeOpacity(shape);
+                    makeTransform(p->transformation());
                 writeEndLvl();
 
                 i.nextLevel();
@@ -606,8 +646,8 @@ void QMLGenerator::makeElement(CPrimitive *el, bool visible, bool layerEnabled)
         }
 
         if ( (i.type()&CNodeInterfaceIterator::IT_ENDLEVEL) ) {
-            CPrimitive * level = i.level<CPrimitive*>();
-            if ( level->type()==CPrimitive::PT_GROUP) {
+            IPrimitive * level = i.level<IPrimitive*>();
+            if ( level->type()==IPrimitive::PT_GROUP) {
                writeEndLvl();
             }
         }
@@ -633,7 +673,7 @@ void QMLGenerator::makeTransform(const CMatrix &m)
 * @brief Выводим id шник
 * @param itm
 */
-void QMLGenerator::makeID(CPrimitive *itm)
+void QMLGenerator::makeID(IPrimitive *itm)
 {
     QString id = sanitizeID(itm->ID());
     if ( id.isEmpty() ) { return; }
@@ -727,7 +767,3 @@ void QMLGenerator::writePropElVal(QString name, QString elementName, QVariant va
     _qml<<elementName<<"."<<val.toString();
     _qml<<Qt::endl;
 }
-
-
-
-

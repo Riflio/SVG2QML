@@ -2,6 +2,9 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>WDropArea.qml</file>
-        <file>mask.frag.qsb</file>
+        <file>Shaders/mask.frag</file>
+        <file>Shaders/mask.vert</file>
+        <file>Shaders/mask.frag.qsb</file>
+        <file>Shaders/mask.vert.qsb</file>
     </qresource>
 </RCC>

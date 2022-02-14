@@ -19,7 +19,7 @@ public:
 
     QUrl generatedQMLPath() const;
 
-    QString version() const { return "1.1"; }
+    QString version() const { return "1.3"; }
 
 signals:
     void generateQMLPathChanged();

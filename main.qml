@@ -8,6 +8,8 @@ Window {
     width: 640
     height: 480
     title: "SVG to QML converter. By pavelk.ru." + " V" + appCore.version;    
+    //color: "#505050"
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 10

@@ -9,6 +9,11 @@ Convert SVG file to native QML file.
 See [Original SVG file](/examples/buttons1.svg) and [Converted QML file](/examples/buttons1.qml)
 
 ## Changelog
+Version 1.3
+- Shape x,y,width,height as content
+- Fix parent styles
+- Fix gradients in negative values
+
 Version 1.2
 - Reworked the creation of gradients and gradientTransform
 - Separately output transform matrix
