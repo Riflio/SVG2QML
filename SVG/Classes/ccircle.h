@@ -15,6 +15,8 @@ public:
 
     bool toPath() override;
 
+    CBoundingBox boundingBox(bool withTransform=true) const override;
+
 private:
     double _radius;
 

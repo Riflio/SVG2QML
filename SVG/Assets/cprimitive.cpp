@@ -1,20 +1,6 @@
 #include "cprimitive.h"
 
 template<class T>
-CPrimitive<T>::CPrimitive(const CPrimitive&other)
-    : CNodeInterface(other), _type(other._type), _points(other._points), _styles(other._styles), _boundingBox(other._boundingBox), _id(other._id),
-      _className(other._className), _transformMatrix(other._transformMatrix), _title(other._title), _descr(other._descr)
-{
-
-}
-
-template<class T>
-CPrimitive<T>::CPrimitive(IPrimitive* other): CPrimitive(*dynamic_cast<CPrimitive*>(other))
-{
-
-}
-
-template<class T>
 CPrimitive<T>::CPrimitive(): CNodeInterface(), _type(PT_NONE), _id("")
 {
     needUpdate();
@@ -25,6 +11,22 @@ CPrimitive<T>::CPrimitive(PrimitiveType type): CPrimitive()
 {
     _type = type;
     needUpdate();
+}
+
+template<class T>
+CPrimitive<T>::CPrimitive(const CPrimitive&other)
+    : CNodeInterface(other), _type(other._type), _points(other._points), _styles(other._styles), _boundingBox(other._boundingBox), _id(other._id),
+      _className(other._className), _transformMatrix(other._transformMatrix), _title(other._title), _descr(other._descr)
+{
+
+}
+
+template<class T>
+CPrimitive<T>::CPrimitive(IPrimitive* other): CNodeInterface(*dynamic_cast<CNodeInterface*>(dynamic_cast<INodeInterface*>(other))),
+    _type(other->type()), _points(other->points()), _styles(other->styles()), _boundingBox(other->boundingBox()), _id(other->ID()),
+    _className(other->className()), _transformMatrix(other->transformation()), _title(other->title()), _descr(other->descr())
+{
+
 }
 
 template<class T>
@@ -124,15 +126,26 @@ CBoundingBox CPrimitive<T>::boundingBox(bool withTransform) const
 
     if ( withTransform ) { _boundingBox.transform(_transformMatrix); }
 
-    //-- Суммируем все ограничительные рамки у вложенных итемов    
-    for (INodeInterface *ni = down(); ni!=nullptr; ni=ni->next()) {
-        IPrimitive * pi = dynamic_cast<IPrimitive*>(ni);
-        _boundingBox.addBBox(pi->boundingBox());
-    }
-
+    boundingBoxChilds(withTransform);
 
     return _boundingBox;
 }
+
+/**
+* @brief Суммируем все ограничительные рамки у вложенных итемов
+* @param withTransform
+* @return
+*/
+template<class T>
+CBoundingBox CPrimitive<T>::boundingBoxChilds(bool withTransform) const
+{
+    for (INodeInterface *ni = down(); ni!=nullptr; ni=ni->next()) {
+        IPrimitive * pi = dynamic_cast<IPrimitive*>(ni);
+        _boundingBox.addBBox(pi->boundingBox(withTransform));
+    }
+    return _boundingBox;
+}
+
 
 template<class T>
 void CPrimitive<T>::setStyles(CSS::Style styles)
@@ -304,3 +317,4 @@ void CPrimitive<T>::setTransformation(const CMatrix &matrix)
 {
     _transformMatrix = matrix;
 }
+

@@ -31,7 +31,7 @@ public:
     virtual void setPoints(const CPoints &points) =0;
     virtual int pointsCount() const =0;
 
-    virtual void cstream(QDataStream &dataStream, double scale) { Q_UNUSED(dataStream); Q_UNUSED(scale); }
+    virtual void cstream(QDataStream &dataStream, double scale) =0;
 
     virtual CBoundingBox boundingBox(bool withTransform=true) const =0;
 
@@ -56,8 +56,6 @@ public:
 
     virtual void setDescr(QString descr) =0;
     virtual QString descr() const =0;
-
-    //friend QDataStream& operator <<(QDataStream &dataStream, const CPrimitive &p) { Q_UNUSED(p); return dataStream; }
 
     virtual CPoint &operator[](int i) =0;
     virtual const CPoint &operator[](int i) const =0;

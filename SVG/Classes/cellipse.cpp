@@ -77,3 +77,18 @@ bool CEllipse::toPath()
 
     return true;
 }
+
+CBoundingBox CEllipse::boundingBox(bool withTransform) const
+{
+    if ( !_boundingBox.isEmpty() ) { return _boundingBox; }
+
+    CPoint R(_radius.first, _radius.second);
+    _boundingBox.addPoint(_points.p1()-R);
+    _boundingBox.addPoint(_points.p1()+R);
+
+    if ( withTransform ) { _boundingBox.transform(_transformMatrix); }
+
+    boundingBoxChilds(withTransform);
+
+    return _boundingBox;
+}

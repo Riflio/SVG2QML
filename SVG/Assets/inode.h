@@ -4,7 +4,7 @@
 class INodeInterface
 {
 public:
-    virtual ~INodeInterface(){};
+    virtual ~INodeInterface() {};
     virtual void reset() =0;
     virtual void addNext(INodeInterface * iNode) =0;
     virtual void addPrev(INodeInterface * iNode) =0;

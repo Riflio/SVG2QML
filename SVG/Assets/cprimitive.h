@@ -18,10 +18,10 @@ template<class T>
 class CPrimitive: public CNodeInterface, public virtual IPrimitive
 {
 public:
-    CPrimitive(const CPrimitive&other);
-    CPrimitive(IPrimitive *other);
     CPrimitive();
     CPrimitive(PrimitiveType type);
+    CPrimitive(const CPrimitive&other);
+    CPrimitive(IPrimitive * other);
 
     virtual ~CPrimitive();
 
@@ -36,7 +36,7 @@ public:
     void setPoints(const CPoints &points) override;
     int pointsCount() const override;
 
-    virtual void cstream(QDataStream &dataStream, double scale) { Q_UNUSED(dataStream); Q_UNUSED(scale); }
+    void cstream(QDataStream &dataStream, double scale) override { Q_UNUSED(dataStream); Q_UNUSED(scale); }
 
     CBoundingBox boundingBox(bool withTransform=true) const override;
 
@@ -84,6 +84,8 @@ protected:
 
     QString _title;
     QString _descr;
+
+    CBoundingBox boundingBoxChilds(bool withTransform=true) const;
 
 };
 #include "cprimitive.cpp"

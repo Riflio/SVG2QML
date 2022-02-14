@@ -23,6 +23,8 @@ public:
 
     bool toPath() override;
 
+    CBoundingBox boundingBox(bool withTransform=true) const override;
+
 private:
     TRadius _radius;
 
