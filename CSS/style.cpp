@@ -12,7 +12,7 @@ void Style::set(QString styleName, QString value)
 {
     //-- Известные для Qt типы сразу парсим в нативные значения
     QRegularExpressionMatch rxURL = QRegularExpression("url\\((.+)\\)").match(value); //-- Для url()
-    QRegularExpressionMatchIterator rxMeasureUnit = QRegularExpression("([0-9]+(\\.[0-9]+)?)(px|%)?").globalMatch(value); //-- Число с единицами измерения
+    QRegularExpressionMatchIterator rxMeasureUnit = QRegularExpression("(\\.?[0-9]+(\\.[0-9]+)?)(px|%)?").globalMatch(value); //-- Число с единицами измерения
     QVariant vr;
 
     QColor color = parseColor(value);
