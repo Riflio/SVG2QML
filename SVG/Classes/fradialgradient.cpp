@@ -44,7 +44,7 @@ void FRadialGradient::setFY(float y)
     _focalPoint.setY(y);
 }
 
-void FRadialGradient::setCenterPoint(CPoint& cp)
+void FRadialGradient::setCenterPoint(const CPoint& cp)
 {
     _centerPoint = cp;
 }
@@ -55,24 +55,12 @@ CPoint FRadialGradient::centerPoint() const
     return _centerPoint;
 }
 
-CPoint& FRadialGradient::centerPoint()
-{
-    RELDEFVAL(_centerPoint);
-    return _centerPoint;
-}
-
-void FRadialGradient::setFocalPoint(CPoint& fp)
+void FRadialGradient::setFocalPoint(const CPoint& fp)
 {
     _focalPoint = fp;
 }
 
 CPoint FRadialGradient::focalPoint() const
-{
-    RELDEFVAL(_focalPoint);
-    return _focalPoint;
-}
-
-CPoint& FRadialGradient::focalPoint()
 {
     RELDEFVAL(_focalPoint);
     return _focalPoint;

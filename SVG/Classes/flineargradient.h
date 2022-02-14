@@ -20,9 +20,7 @@ public:
     void setEndPoint(const CPoint &e);
 
     CPoint startPoint() const;
-    CPoint &startPoint();
     CPoint endPoint() const;
-    CPoint &endPoint();
 
     TDefType defType() const override { return DF_LINEARGRADIENT;  }
 

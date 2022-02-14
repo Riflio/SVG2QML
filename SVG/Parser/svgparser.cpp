@@ -647,7 +647,6 @@ IPrimitive * SVGParser::parseLinearGradient(INodeInterface **level, QXmlStreamRe
 
     if ( !gs ) { return nullptr; }
 
-
     updateDependsHREFS(linearGradient);
 
     return nullptr;

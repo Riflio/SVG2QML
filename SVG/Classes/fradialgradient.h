@@ -16,13 +16,11 @@ public:
     void setFX(float x);
     void setFY(float y);
 
-    void setCenterPoint(CPoint &cp);
+    void setCenterPoint(const CPoint &cp);
     CPoint centerPoint() const;
-    CPoint &centerPoint();
 
-    void setFocalPoint(CPoint &fp);
+    void setFocalPoint(const CPoint &fp);
     CPoint focalPoint() const;
-    CPoint &focalPoint();
 
     void setRadius(float r);
     float radius() const;
