@@ -192,6 +192,8 @@ CBoundingBox CBezier::boundingBox(bool withTransform) const
 
     if ( withTransform ) { _boundingBox.transform(_transformMatrix); }
 
+    boundingBoxChilds(withTransform);
+
     return _boundingBox;
 }
 
