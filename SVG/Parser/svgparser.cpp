@@ -568,15 +568,19 @@ IPrimitive *SVGParser::parseRect(INodeInterface *level, QXmlStreamReader *xml)
 * @param xml
 * @return
 */
-CSS::Style SVGParser::parseStyle(QXmlStreamReader * xml)
+CSS::Style SVGParser::parseStyle(IPrimitive* itm, QXmlStreamReader * xml)
 {
     QString styles = xml->attributes().value("style").toString();
     QString nameClass = xml->attributes().value("class").toString();
     QString nameID = xml->attributes().value("id").toString();
 
-    CSS::Block block(styles); //-- Распарсим локально заданные элементы стиля
+    CSS::Block block;
 
-    if ( !block.parse() ) { qWarning()<<"Problem parse css block"; }
+    //-- Изначально зададим стили от предка
+    if ( itm->up()!=nullptr ) { block.unite(dynamic_cast<IPrimitive*>(itm->up())->styles()); }
+
+    //-- Распарсим локально заданные элементы стиля
+    if ( !block.parse(styles) ) { qWarning()<<"Problem parse css block"; }
 
     //-- У элемента так же могут быть заданы стили как атрибуты элемента - занесём их в стили
     QStringList cssTokens = {
@@ -588,11 +592,12 @@ CSS::Style SVGParser::parseStyle(QXmlStreamReader * xml)
     foreach(QString cssToken, cssTokens) {
         if ( xml->attributes().hasAttribute(cssToken) ) {
             QString val = xml->attributes().value(cssToken).toString();
-            if ( !val.isEmpty() && val!="none" ) { block.set(cssToken, val); }
+            if ( !val.isEmpty() ) { block.set(cssToken, val); }
         }
     }
 
-    CSS::Style style = _cssParser->applyStyles(QString(".%1").arg(nameClass), block); //-- Получим все стили для этого элемента, накладывая поверх локально заданные
+    //-- Получим все стили для этого элемента, накладывая поверх локально заданные
+    CSS::Style style = _cssParser->applyStyles(QString(".%1").arg(nameClass), block);
 
     return style;
 }
@@ -707,7 +712,7 @@ bool SVGParser::parseGradientStops(FGradient *gradient, QXmlStreamReader *xml)
             if ( xml->name().compare(QLatin1String("stop"))==0 )  {
                 FGradient::TGradientStop gs;
 
-                CSS::Style style = parseStyle(xml);
+                CSS::Style style = parseStyle(gradient, xml);
 
                 gs.position = xml->attributes().value("offset").toFloat();
 
@@ -746,7 +751,7 @@ void SVGParser::parseBaseAttributes(IPrimitive* itm, QXmlStreamReader *xml)
     if ( xml->attributes().hasAttribute("class")) { itm->setClassName(xml->attributes().value("class").toString()); }
 
     //-- Styles
-    CSS::Style styles = parseStyle(xml);
+    CSS::Style styles = parseStyle(itm, xml);
     itm->setStyles(styles);
 
     //-- Transforms    

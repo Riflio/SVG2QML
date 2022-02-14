@@ -86,7 +86,7 @@ private:
     QList<double> parseParams(QString params) const;
 
     CMatrix parseTransform(QXmlStreamReader * xml, QString attrName="transform");
-    CSS::Style parseStyle(QXmlStreamReader * xml);
+    CSS::Style parseStyle(IPrimitive* itm, QXmlStreamReader * xml);
 
     CDefs _defs;
 

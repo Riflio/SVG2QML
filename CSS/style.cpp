@@ -66,7 +66,9 @@ bool Style::has(const QString &key) const
 */
 bool Style::unite(const Style &other)
 {
-    _styles.insert(other._styles);
+    for (TStyles::const_iterator i = other._styles.constBegin(); i!=other._styles.constEnd(); ++i) {
+        _styles[i.key()] = i.value();
+    }
     return true;
 }
 

@@ -7,16 +7,15 @@
 /**
 * @brief Парсим всё, что между {...}.
 */
-
 namespace CSS {
 class Block: public Style
 {
 public:
-    Block(QString block="");
-    bool parse();
+    Block();
+    bool parse(QString block);
 
 protected:
-    QString _block;    
+
 };
 }
 #endif // BLOCK_H

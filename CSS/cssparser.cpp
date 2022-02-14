@@ -29,9 +29,9 @@ bool CssParser::parse(QString styles)
         QString tokenStyles = match.captured(2);
 
         foreach (QString token, tokens) {
-            Block block(tokenStyles);
+            Block block;
 
-            if ( block.parse() ) {
+            if ( block.parse(tokenStyles) ) {
                 if ( _blocks.contains(token) ) {
                     _blocks[token].unite(block);
                 } else {

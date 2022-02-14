@@ -5,14 +5,12 @@
 
 using namespace CSS;
 
-Block::Block(QString block)
-{
-    _block = block;
-}
+Block::Block() {}
 
-bool Block::parse()
+
+bool Block::parse(QString block)
 {
-    QRegularExpressionMatchIterator rxStyles = QRegularExpression("([a-zA-Z-]+):([^;]+)").globalMatch(_block); //-- Парсим стили (ключ-значение разделяем по ";" )
+    QRegularExpressionMatchIterator rxStyles = QRegularExpression("([a-zA-Z-]+):([^;]+)").globalMatch(block); //-- Парсим стили (ключ-значение разделяем по ";" )
 
     while ( rxStyles.hasNext() ) {
         QRegularExpressionMatch match = rxStyles.next();
